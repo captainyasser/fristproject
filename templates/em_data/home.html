@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load numbers_filters %}
+{% load static %}
+
+{% block content %}
+    <div class="card-body">
+        <table id="example1" class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>الترتيب</th>
+                    <th>الصورة</th>
+                    <th>الدرجة</th>
+                    <th>الاسم</th>
+                    <th>اللقب</th>
+                    <th>رقم الشرطة</th>
+                    <th>رقم التأمين</th>
+                    <th>العمر</th>
+                    <th>تاريخ الميلاد</th>
+                    <th>تاريخ التقاعد</th>
+                    <th>تاريخ دخول الإدارة</th>
+                    <th>تاريخ التعيين</th>
+                    <th>الرقم القومي</th>
+                    <th>رقم الهاتف</th>
+                    <th>رقم الهاتف البديل</th>
+                    <th>الحالة الاجتماعية</th>
+                    <th>الجنس</th>
+                    <th>المحافظة</th>
+                    <th>المنطقة</th>
+                    <th>العنوان</th>
+                    <th>الحالة الصحية</th>
+                    <th>القسم</th>
+                    <th>الإجراء</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for employee in employees %}
+                    <tr>
+                        <td>{{ employee.sort_number }}</td>
+                        <td>
+                            {% if employee.image %}
+                                <img src="{{ employee.image.url }}" alt="{{ employee.name }}" style="width: 50px; height: 50px; object-fit: cover;">
+                            {% else %}
+                                <span>لا توجد صورة</span>
+                            {% endif %}
+                        </td>
+                        <td class="arabic-numbers">{{ employee.rank|to_arabic_numbers }}</td>
+                        <td>{{ employee.name }}</td>
+                        <td>{{ employee.nickname }}</td>
+                        <td class="arabic-numbers">{{ employee.police_number|to_arabic_numbers }}</td>
+                        <td class="arabic-numbers">{{ employee.insurance_number|to_arabic_numbers }}</td>
+                        <td class="arabic-numbers">{{ employee.age|to_arabic_numbers }}</td>
+                        <td class="arabic-numbers">{{ employee.date_of_birth|date:"d/m/Y"|to_arabic_numbers }}</td>
+                        <td class="arabic-numbers">{{ employee.date_of_retirement|date:"d/m/Y"|to_arabic_numbers }}</td>
+                        <td class="arabic-numbers">{{ employee.date_of_edara|date:"d/m/Y"|to_arabic_numbers }}</td>
+                        <td class="arabic-numbers">{{ employee.date_of_appointment|date:"d/m/Y"|to_arabic_numbers }}</td>
+                        <td class="arabic-numbers">{{ employee.id_number|to_arabic_numbers }}</td>
+                        <td class="arabic-numbers">{{ employee.phone_number|to_arabic_numbers }}</td>
+                        <td class="arabic-numbers">{{ employee.alt_phone_number|to_arabic_numbers }}</td>
+                        <td>{{ employee.marital_status }}</td>
+                        <td>{{ employee.gender }}</td>
+                        <td>{{ employee.governorate }}</td>
+                        <td>{{ employee.district }}</td>
+                        <td>{{ employee.address }}</td>
+                        <td>{{ employee.health_status }}</td>
+                        <td>{{ employee.departments }}</td>
+                        <td>
+                            <a href="{% url 'edit_employee' employee.id %}">تعديل</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

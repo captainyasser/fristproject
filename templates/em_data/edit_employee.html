@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تعديل بيانات الموظف</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            background: #EEEEEE;
+            font-family: 'Tajawal', sans-serif;
+        }
+        .form-container {
+            background: #373A40;
+            color: #EEEEEE;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            max-width: 600px;
+            margin: auto;
+        }
+        h2 {
+            color: #DC5F00;
+            text-align: center;
+        }
+        label {
+            color: white;
+        }
+        .btn-primary {
+            background: #DC5F00;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="form-container">
+            <h2>تعديل بيانات الموظف</h2>
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label for="name">الاسم:</label>
+                    <input type="text" id="name" name="name" class="form-control" value="{{ employee.name }}">
+                </div>
+
+                <div class="mb-3">
+                    <label for="rank">الدرجة:</label>
+                    <select id="rank" name="rank" class="form-control">
+                        {% for value, label in rank_choices %}
+                            <option value="{{ value }}" {% if value == employee.rank %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="police_number">رقم الشرطة:</label>
+                    <input type="text" id="police_number" name="police_number" class="form-control" value="{{ employee.police_number }}">
+                </div>
+
+                <div class="mb-3">
+                    <label for="insurance_number">رقم التأمين:</label>
+                    <input type="text" id="insurance_number" name="insurance_number" class="form-control" value="{{ employee.insurance_number }}">
+                </div>
+
+                <div class="mb-3">
+                    <label for="date_of_birth">تاريخ الميلاد:</label>
+                    <input type="date" id="date_of_birth" name="date_of_birth" class="form-control" value="{{ employee.date_of_birth|date:'Y-m-d' }}">
+                </div>
+
+                <div class="mb-3">
+                    <label for="date_of_appointment">تاريخ التعيين:</label>
+                    <input type="date" id="date_of_appointment" name="date_of_appointment" class="form-control" value="{{ employee.date_of_appointment|date:'Y-m-d' }}">
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">حفظ التعديلات</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h2>قائمة الموظفين</h2>
+
+{% if employees %}
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>الاسم</th>
+            <th>الرتبة</th>
+            <th>رقم الشرطة</th>
+            <th>رقم التأمين</th>
+            <th>المعهد</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for employee in employees %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ employee.name }}</td>
+            <td>{{ employee.rank }}</td>
+            <td>{{ employee.police_number }}</td>
+            <td>{{ employee.insurance_number }}</td>
+            <td>{{ employee.institute.name }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Pagination Controls -->
+<div>
+    {% if employees.has_previous %}
+        <a href="?page=1">الأولى</a>
+        <a href="?page={{ employees.previous_page_number }}">السابق</a>
+    {% endif %}
+
+    صفحة {{ employees.number }} من {{ employees.paginator.num_pages }}
+
+    {% if employees.has_next %}
+        <a href="?page={{ employees.next_page_number }}">التالي</a>
+        <a href="?page={{ employees.paginator.num_pages }}">الأخيرة</a>
+    {% endif %}
+</div>
+
+{% else %}
+<p>لا يوجد موظفون لعرضهم.</p>
+{% endif %}
+
+{% endblock %}

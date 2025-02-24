@@ -1,0 +1,20 @@
+<div class="container">
+    <h2>تسجيل حساب جديد</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">تسجيل</button>
+    </form>
+    {% if form.errors %}
+        <div class="alert alert-danger">
+            <strong>حدث خطأ:</strong>
+            <ul>
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                        <li>{{ field }}: {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+</div>

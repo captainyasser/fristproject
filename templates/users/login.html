@@ -1,0 +1,57 @@
+    
+    {% load static %}
+
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="{% static 'adminlte/plugins/fontawesome-free/css/all.min.css' %}">
+    
+    <!-- Tempusdominus Bootstrap 4 -->
+    <link rel="stylesheet" href="{% static 'adminlte/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css' %}">
+    
+    <!-- Theme style -->
+    <link rel="stylesheet" href="{% static 'adminlte/dist/css/adminlte.min.css' %}">
+    
+    <!-- overlayScrollbars -->
+    <link rel="stylesheet" href="{% static 'adminlte/plugins/overlayScrollbars/css/OverlayScrollbars.min.css' %}">
+    
+    <!-- Bootstrap 4 RTL -->
+    <link rel="stylesheet" href="https://cdn.rtlcss.com/bootstrap/v4.2.1/css/bootstrap.min.css">
+    
+    <!-- Custom RTL Styles -->
+    <link rel="stylesheet" href="{% static 'adminlte/dist/css/custom.css' %}">
+    
+    {% block styles %}{% endblock %}
+</head>
+{% block content %}
+<div class="container d-flex justify-content-center align-items-center" style="height: 80vh;">
+    <div class="card p-4 shadow-lg" style="width: 400px;">
+        <h3 class="text-center">تسجيل الدخول</h3>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="username">اسم المستخدم</label>
+                <input type="text" class="form-control" name="username" id="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">كلمة المرور</label>
+                <input type="password" class="form-control" name="password" id="password" required>
+            </div>
+            {% if messages %}
+                <div class="alert alert-danger">
+                    {% for message in messages %}
+                        {{ message }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+            <button type="submit" class="btn btn-primary btn-block">تسجيل الدخول</button>
+        </form>
+        <a href="institutes/add_institute/" class="btn btn-success btn-block mt-3">إضافة معهد</a>
+        <a href="add/" class="btn btn-success btn-block mt-3">إضافة مستخدم</a>
+    </div>
+</div>
+{% endblock %}

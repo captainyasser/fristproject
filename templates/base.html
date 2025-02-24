@@ -1,0 +1,67 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>{% block title %}لوحة التحكم{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="{% static 'adminlte/plugins/fontawesome-free/css/all.min.css' %}">
+    
+    <!-- Tempusdominus Bootstrap 4 -->
+    <link rel="stylesheet" href="{% static 'adminlte/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css' %}">
+    
+    <!-- Theme style -->
+    <link rel="stylesheet" href="{% static 'adminlte/dist/css/adminlte.min.css' %}">
+    
+    <!-- overlayScrollbars -->
+    <link rel="stylesheet" href="{% static 'adminlte/plugins/overlayScrollbars/css/OverlayScrollbars.min.css' %}">
+    
+    <!-- Bootstrap 4 RTL -->
+    <link rel="stylesheet" href="https://cdn.rtlcss.com/bootstrap/v4.2.1/css/bootstrap.min.css">
+    
+    <!-- Custom RTL Styles -->
+    <link rel="stylesheet" href="{% static 'adminlte/dist/css/custom.css' %}">
+    
+    {% block styles %}{% endblock %}
+</head>
+<body class="hold-transition sidebar-mini layout-fixed">
+  <div class="wrapper">
+
+    <!-- Navbar -->
+    {% include "navbar.html" %}
+
+    <!-- Sidebar -->
+    {% include "sidebar.html" %}
+
+    <!-- Content Wrapper -->
+    <div class="content-wrapper">
+
+      <!-- Header -->
+      {% include "header.html" %}
+
+      <!-- Main Content -->
+      <section class="content">
+          {% block content %}
+          {% endblock %}
+      </section>
+
+    </div>
+
+    <!-- Footer -->
+    {% include "footer.html" %}
+  
+  </div>
+
+  <!-- JavaScript -->
+  {% include "js.html" %}
+  {% block scripts %}{% endblock %}
+</body>
+</html>
+
+
+
+
+
