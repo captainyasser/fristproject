@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}إدارة الدرجات{% endblock %}
+
+{% block content %}
+    <h2 class="text-center mb-4">إدارة الدرجات</h2>
+
+    <!-- نموذج إضافة درجة جديدة -->
+    <form method="POST" action="{% url 'add_rank' %}" class="mb-4">
+        {% csrf_token %}
+        <div class="input-group">
+            <input type="text" name="name" class="form-control" placeholder="اسم الدرجة" required>
+            <button type="submit" class="btn btn-success">إضافة درجة</button>
+        </div>
+    </form>
+
+    <!-- جدول عرض الدرجات -->
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>اسم الدرجة</th>
+                <th>الإجراءات</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rank in ranks %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ rank.name }}</td>
+                <td>
+                    <!-- زر تعديل -->
+                    <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#editModal{{ rank.id }}">تعديل</button>
+                    
+                    <!-- زر حذف -->
+<!-- زر حذف مع تشغيل نافذة التأكيد -->
+<button class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteModal{{ rank.id }}">حذف</button>
+
+<!-- نافذة التأكيد قبل الحذف -->
+<div class="modal fade" id="deleteModal{{ rank.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ rank.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">تأكيد الحذف</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="إغلاق">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>هل أنت متأكد أنك تريد حذف الدرجة "<strong>{{ rank.name }}</strong>"؟</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">إلغاء</button>
+                <a href="{% url 'delete_rank' rank.id %}" class="btn btn-danger">تأكيد الحذف</a>
+            </div>
+        </div>
+    </div>
+</div>
+                </td>
+            </tr>
+
+            <!-- نافذة تعديل -->
+            <div class="modal fade" id="editModal{{ rank.id }}" tabindex="-1" aria-labelledby="editModalLabel{{ rank.id }}" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title">تعديل الدرجة</h4>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="إغلاق">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form method="POST" action="{% url 'edit_rank' rank.id %}">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    <label for="rankName{{ rank.id }}" class="form-label">اسم الدرجة</label>
+                                    <input type="text" name="name" class="form-control" id="rankName{{ rank.id }}" value="{{ rank.name }}" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary">حفظ التعديلات</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

@@ -42,6 +42,10 @@ INSTALLED_APPS = [
     'em_data',
     'institutes',
     'users',
+    'departments',
+    'ranks',
+    'promotions',
+
 
 ]
 
@@ -82,30 +86,31 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'em',  # اسم قاعدة البيانات
+#         'USER': 'postgres',         # المستخدم
+#         'PASSWORD': 'Yassin*323', # كلمة المرور
+#         'HOST': '127.0.0.1',      # تشغيل محلي
+#         'PORT': '5432',           # المنفذ الافتراضي لـ PostgreSQL
+#     }
+# }
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'emm',  # اسم قاعدة البيانات
-        'USER': 'postgres',         # المستخدم
-        'PASSWORD': 'Yassin*323', # كلمة المرور
-        'HOST': '127.0.0.1',      # تشغيل محلي
-        'PORT': '5432',           # المنفذ الافتراضي لـ PostgreSQL
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'yasser',
+        'USER': 'root',
+        'PASSWORD': '',
+        'HOST': 'localhost', 
+        'PORT': '3306',
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+        },
     }
 }
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'emm',
-#         'USER': 'root',
-#         'PASSWORD': '',
-#         'HOST': 'localhost', 
-#         'PORT': '3306',
-#         'OPTIONS': {
-#             'charset': 'utf8mb4',
-#         },
-#     }
-# }
 
 
 LOGIN_URL = '/'

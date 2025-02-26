@@ -1,53 +1,175 @@
 
-from em_data.models import Employee
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
-from em_data.forms import EmployeeForm
-from django.shortcuts import get_object_or_404
 
+from django.contrib.auth.decorators import login_required
+from .models import Employee, Rank, Department
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 @login_required
 def home(request):
-    employees = Employee.objects.all().order_by("sort_number")  # ترتيب الموظفين حسب الرقم
-    return render(request, "em_data/home.html", {"employees": employees})
+    employees = Employee.objects.all().order_by("sort_number")
+    ranks = Rank.objects.all()
+    departments = Department.objects.all()
+
+    return render(request, "em_data/home.html", {
+        "employees": employees,
+        "ranks": ranks,
+        "departments": departments,
+    })
 
 @login_required
+def age_update(request):
+    employees = Employee.objects.all()
+    employees_to_update = []
+
+    for employee in employees:
+        updated = False
+        if employee.id_number:
+            new_date_of_birth = employee.extract_birth_date()
+            if new_date_of_birth and new_date_of_birth != employee.date_of_birth:
+                employee.date_of_birth = new_date_of_birth
+                updated = True
+
+        if employee.date_of_birth:
+            today = datetime.today().date()
+            age_delta = relativedelta(today, employee.date_of_birth)
+            if employee.age != age_delta.years:
+                employee.age = age_delta.years
+                updated = True
+            new_retirement = employee.date_of_birth + relativedelta(years=60)
+            if employee.date_of_retirement != new_retirement:
+                employee.date_of_retirement = new_retirement
+                updated = True
+
+        if updated:
+            employees_to_update.append(employee)
+
+    # تحديث جماعي
+    if employees_to_update:
+        Employee.objects.bulk_update(employees_to_update, ['date_of_birth', 'age', 'date_of_retirement'])
+
+    context = {
+        "updated_count": len(employees_to_update),
+        "total_employees": employees.count(),
+    }
+    return render(request, "em_data/age_update.html", context)
+
+
+
+
+@login_required(login_url='/login/')
 def add_employee(request):
+    user = request.user  # المستخدم الحالي
+
+    # التأكد من أن المستخدم لديه معهد
+    try:
+        user_institute = user.institute  # جلب معهد المستخدم
+    except AttributeError:
+        user_institute = None  # إذا لم يكن لديه معهد، ضع القيمة None
+
     if request.method == "POST":
-        form = EmployeeForm(request.POST, request.FILES)
-        if form.is_valid():
-            employee = form.save(commit=False)
-            if request.user.institute:  # التأكد من أن المستخدم مرتبط بمعهد
-                employee.institute = request.user.institute
-            employee.save()
-            return redirect("home")  # توجيه المستخدم إلى قائمة الموظفين بعد الإضافة
-    else:
-        form = EmployeeForm()
+        name = request.POST['name']
+        sort_number = request.POST['sort_number']
+        rank_id = request.POST['rank']
+        department_id = request.POST.get('department', None)
+        date_of_appointment = request.POST.get('date_of_appointment', None)
 
-    return render(request, "em_data/add_employee.html", {"form": form})
+        # إنشاء الموظف الجديد وربطه بمعهد المستخدم
+        Employee.objects.create(
+            name=name,
+            sort_number=sort_number,
+            rank_id=rank_id,
+            department_id=department_id,
+            institute=user_institute,  # تعيين معهد المستخدم افتراضيًا
+            date_of_appointment=date_of_appointment
+        )
 
+        return redirect('home')
 
+    ranks = Rank.objects.all()
+    departments = Department.objects.all()
 
-
+    return render(request, 'em_data/add_employee.html', {
+        'ranks': ranks,
+        'departments': departments,
+        'user_institute': user_institute  # تمرير المعهد إلى القالب
+    })
 
 
 
 
 @login_required
-def edit_employee(request, employee_id):  # Use 'employee_id' here
-    employee = get_object_or_404(Employee, id=employee_id)  # Match with 'id'
+def edit_employee(request, employee_id):
+    # جلب الموظف
+    employee = get_object_or_404(Employee, id=employee_id)
+    
+    # جلب الرتب والأقسام
+    ranks = Rank.objects.all()
+    departments = Department.objects.all()
 
-    if request.method == "POST":
-        employee.name = request.POST["name"]
-        employee.rank = request.POST["rank"]
-        employee.police_number = request.POST["police_number"]
-        employee.insurance_number = request.POST["insurance_number"]
-        employee.date_of_birth = request.POST.get("date_of_birth") or None
-        employee.date_of_appointment = request.POST.get("date_of_appointment") or None
-        employee.save()
-        return redirect("home")  # Redirect after saving
+    # طباعة للتحقق من البيانات
+    print("Ranks:", list(ranks))
+    print("Departments:", list(departments))
 
-    return render(request, "em_data/edit_employee.html", {
-        "employee": employee,
-        "rank_choices": Employee.RANK_CHOICES
+    if request.method == 'POST':
+        try:
+            # تحديث الحقول الأساسية
+            employee.name = request.POST.get('name', employee.name)
+            employee.nickname = request.POST.get('nickname', employee.nickname)
+            employee.sort_number = request.POST.get('sort_number', employee.sort_number)
+            employee.police_number = request.POST.get('police_number', employee.police_number)
+            employee.insurance_number = request.POST.get('insurance_number', employee.insurance_number)
+            employee.age = request.POST.get('age') or None
+            employee.date_of_birth = request.POST.get('date_of_birth') or None
+            employee.date_of_retirement = request.POST.get('date_of_retirement') or None
+            employee.date_of_edara = request.POST.get('date_of_edara') or None
+            employee.date_of_appointment = request.POST.get('date_of_appointment') or None
+            employee.id_number = request.POST.get('id_number', employee.id_number)
+            employee.phone_number = request.POST.get('phone_number', employee.phone_number)
+            employee.alt_phone_number = request.POST.get('alt_phone_number', employee.alt_phone_number)
+            employee.marital_status = request.POST.get('marital_status') or None
+            employee.gender = request.POST.get('gender') or None
+            employee.governorate = request.POST.get('governorate', employee.governorate)
+            employee.district = request.POST.get('district', employee.district)
+            employee.address = request.POST.get('address', employee.address)
+            employee.health_status = request.POST.get('health_status') or None
+
+            # تحديث الرتبة
+            rank_id = request.POST.get('rank')
+            employee.rank = Rank.objects.get(id=rank_id) if rank_id else None
+
+            # تحديث القسم
+            department_id = request.POST.get('department')
+            employee.department = Department.objects.get(id=department_id) if department_id else None
+
+            # حفظ التغييرات
+            employee.save()
+            messages.success(request, 'تم تعديل بيانات الموظف بنجاح!')
+            return redirect('home')
+
+        except Rank.DoesNotExist:
+            messages.error(request, 'الرتبة المختارة غير موجودة.')
+        except Department.DoesNotExist:
+            messages.error(request, 'القسم المختار غير موجود.')
+        except ValueError as e:
+            messages.error(request, f'خطأ في البيانات المدخلة: {str(e)}')
+        except Exception as e:
+            messages.error(request, f'حدث خطأ غير متوقع: {str(e)}')
+
+        # إعادة عرض الصفحة في حالة الخطأ
+        return render(request, 'em_data/home.html', {
+            'employee': employee,
+            'ranks': ranks,
+            'departments': departments,
+            'employees': Employee.objects.all().order_by('sort_number'),
+        })
+
+    # عرض النموذج عند طلب GET
+    return render(request, 'em_data/home.html', {
+        'employee': employee,
+        'ranks': ranks,
+        'departments': departments,
+        'employees': Employee.objects.all().order_by('sort_number'),
     })

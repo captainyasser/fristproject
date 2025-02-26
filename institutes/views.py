@@ -6,7 +6,7 @@ def add_institute(request):
         form = InstituteForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('/')  # استبدله بالصفحة التي تعرض المعاهد
+            return redirect('/')  
     else:
         form = InstituteForm()
     return render(request, 'institutes/add_institute.html', {'form': form})

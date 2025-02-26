@@ -1,11 +1,78 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block title %}إضافة فرد جديد{% endblock %}
+
 {% block content %}
-<div class="container mt-5">
-    <h2>إضافة موظف جديد</h2>
-    <form method="post" enctype="multipart/form-data">
+<div class="container mt-4">
+    <h2 class="text-center mb-4">إضافة فرد جديد</h2>
+
+    <!-- نموذج إضافة الفرد -->
+    <form method="POST" action="{% url 'add_employee' %}">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="btn btn-primary">إضافة</button>
+
+        <div class="mb-3">
+            <label for="name" class="form-label">اسم الفرد</label>
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                </div>
+                <input type="text" name="name" id="name" class="form-control" placeholder="أدخل اسم الفرد" required>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="sort_number" class="form-label">الرقم الترتيبي</label>
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <span class="input-group-text"><i class="fas fa-sort-numeric-down"></i></span>
+                </div>
+                <input type="text" name="sort_number" id="sort_number" class="form-control" placeholder="أدخل الرقم الترتيبي" required>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="rank" class="form-label">الدرجة</label>
+            <select name="rank" id="rank" class="form-control" required>
+                <option value="" disabled selected>اختر الدرجة</option>
+                {% for rank in ranks %}
+                <option value="{{ rank.id }}">{{ rank.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="department" class="form-label">القسم</label>
+            <select name="department" id="department" class="form-control">
+                <option value="" disabled selected>اختر القسم</option>
+                {% for department in departments %}
+                <option value="{{ department.id }}">{{ department.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="date_of_appointment" class="form-label">تاريخ التعيين</label>
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                </div>
+                <input type="date" name="date_of_appointment" id="date_of_appointment" class="form-control">
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="institute" class="form-label">المعهد</label>
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <span class="input-group-text"><i class="fas fa-building"></i></span>
+                </div>
+                <input type="text" name="institute" id="institute" class="form-control"
+                       value="{% if user_institute %}{{ user_institute.name }}{% endif %}" readonly>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-success w-100">إضافة الفرد</button>
     </form>
 </div>
 {% endblock %}

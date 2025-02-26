@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}إدارة الأقسام{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center mb-4">إدارة الأقسام</h2>
+
+    <!-- Button to Open the Add Department Modal -->
+    <button type="button" class="btn btn-success mb-3" data-toggle="modal" data-target="#addDepartmentModal">
+        إضافة قسم جديد
+    </button>
+
+    <!-- Departments Table -->
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>اسم القسم</th>
+                <th>الإجراءات</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for department in departments %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ department.name }}</td>
+                <td>
+                    <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#editModal{{ department.id }}">تعديل</button>
+<!-- زر حذف يفتح المودال -->
+<button class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteModal{{ department.id }}">حذف</button>
+
+<!-- مودال تأكيد الحذف -->
+<div class="modal fade" id="deleteModal{{ department.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ department.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">تأكيد الحذف</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="إغلاق">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>هل أنت متأكد أنك تريد حذف هذا القسم؟</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">إلغاء</button>
+                <a href="{% url 'delete_department' department.id %}" class="btn btn-danger">حذف</a>
+            </div>
+        </div>
+    </div>
+</div>
+                </td>
+            </tr>
+
+            <!-- Edit Modal -->
+            <div class="modal fade" id="editModal{{ department.id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-sm">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title">تعديل القسم</h4>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form method="POST" action="{% url 'edit_department' department.id %}">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    <label class="form-label">اسم القسم</label>
+                                    <input type="text" name="name" class="form-control" value="{{ department.name }}" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary">حفظ التعديلات</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Add Department Modal -->
+<div class="modal fade" id="addDepartmentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">إضافة قسم</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{% url 'add_department' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">اسم القسم</label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-success">إضافة</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

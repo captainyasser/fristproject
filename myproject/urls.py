@@ -23,5 +23,7 @@ urlpatterns = [
     path('em_data/', include('em_data.urls')),
     path('institutes/', include('institutes.urls')), 
     path('users/', include('users.urls')),
+    path('ranks/', include('ranks.urls')),
+    path('departments/', include('departments.urls')),
 
 ]

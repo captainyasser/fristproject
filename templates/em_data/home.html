@@ -2,73 +2,442 @@
 {% load numbers_filters %}
 {% load static %}
 
+{% block title %}قائمة الموظفين{% endblock %}
+
 {% block content %}
-    <div class="card-body">
-        <table id="example1" class="table table-bordered table-striped">
-            <thead>
-                <tr>
-                    <th>الترتيب</th>
-                    <th>الصورة</th>
-                    <th>الدرجة</th>
-                    <th>الاسم</th>
-                    <th>اللقب</th>
-                    <th>رقم الشرطة</th>
-                    <th>رقم التأمين</th>
-                    <th>العمر</th>
-                    <th>تاريخ الميلاد</th>
-                    <th>تاريخ التقاعد</th>
-                    <th>تاريخ دخول الإدارة</th>
-                    <th>تاريخ التعيين</th>
-                    <th>الرقم القومي</th>
-                    <th>رقم الهاتف</th>
-                    <th>رقم الهاتف البديل</th>
-                    <th>الحالة الاجتماعية</th>
-                    <th>الجنس</th>
-                    <th>المحافظة</th>
-                    <th>المنطقة</th>
-                    <th>العنوان</th>
-                    <th>الحالة الصحية</th>
-                    <th>القسم</th>
-                    <th>الإجراء</th>
-                </tr>
-            </thead>
-            <tbody>
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="text-center mb-0">قائمة الموظفين</h2>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <a href="{% url 'age_update' %}" class="btn btn-warning">تحديث بيانات العمر والتقاعد</a>
+            </div>
+            {% if employees %}
+                <!-- علامات التبويب -->
+                <ul class="nav nav-tabs" id="employeeTabs" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="personal-tab" data-toggle="tab" href="#personal" role="tab">المعلومات الشخصية</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="contact-tab" data-toggle="tab" href="#contact" role="tab">معلومات الاتصال</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="dates-tab" data-toggle="tab" href="#dates" role="tab">التواريخ</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="job-tab" data-toggle="tab" href="#job" role="tab">الوظيفة والحالة</a>
+                    </li>
+                </ul>
+
+                <!-- محتوى علامات التبويب -->
+                <div class="tab-content" id="employeeTabsContent">
+                    <!-- تبويب المعلومات الشخصية -->
+                    <div class="tab-pane fade show active" id="personal" role="tabpanel">
+                        <table id="personalTable" class="table table-bordered table-striped table-hover">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th>الترتيب</th>
+                                    <th>الصورة</th>
+                                    <th>الاسم</th>
+                                    <th>اللقب</th>
+                                    <th>الرقم القومي</th>
+                                    <th>الجنس</th>
+                                    <th>الحالة الاجتماعية</th>
+                                    <th>الإجراء</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for employee in employees %}
+                                    <tr>
+                                        <td>{{ employee.sort_number|default:"-" }}</td>
+                                        <td>
+                                            {% if employee.image %}
+                                                <img src="{{ employee.image.url }}" alt="{{ employee.name }}" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
+                                            {% else %}
+                                                <span class="text-muted">لا توجد صورة</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ employee.name|default:"-" }}</td>
+                                        <td>{{ employee.nickname|default:"-" }}</td>
+                                        <td class="arabic-numbers">{{ employee.id_number|to_arabic_numbers|default:"-" }}</td>
+                                        <td>{{ employee.gender|default:"-" }}</td>
+                                        <td>{{ employee.marital_status|default:"-" }}</td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editModal{{ employee.id }}">
+                                                <i class="fas fa-pencil-alt"></i> تعديل
+                                            </button>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- تبويب معلومات الاتصال -->
+                    <div class="tab-pane fade" id="contact" role="tabpanel">
+                        <table id="contactTable" class="table table-bordered table-striped table-hover">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th>الاسم</th>
+                                    <th>رقم الهاتف</th>
+                                    <th>رقم الهاتف البديل</th>
+                                    <th>المحافظة</th>
+                                    <th>المنطقة</th>
+                                    <th>العنوان</th>
+                                    <th>الإجراء</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for employee in employees %}
+                                    <tr>
+                                        <td>{{ employee.name|default:"-" }}</td>
+                                        <td class="arabic-numbers">{{ employee.phone_number|to_arabic_numbers|default:"-" }}</td>
+                                        <td class="arabic-numbers">{{ employee.alt_phone_number|to_arabic_numbers|default:"-" }}</td>
+                                        <td>{{ employee.governorate|default:"-" }}</td>
+                                        <td>{{ employee.district|default:"-" }}</td>
+                                        <td>{{ employee.address|default:"-" }}</td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editModal{{ employee.id }}">
+                                                <i class="fas fa-pencil-alt"></i> تعديل
+                                            </button>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- تبويب التواريخ -->
+                    <div class="tab-pane fade" id="dates" role="tabpanel">
+                        <table id="datesTable" class="table table-bordered table-striped table-hover">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th>الاسم</th>
+                                    <th>العمر</th>
+                                    <th>تاريخ الميلاد</th>
+                                    <th>تاريخ التقاعد</th>
+                                    <th>تاريخ دخول الإدارة</th>
+                                    <th>تاريخ التعيين</th>
+                                    <th>الإجراء</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for employee in employees %}
+                                    <tr>
+                                        <td>{{ employee.name|default:"-" }}</td>
+                                        <td class="arabic-numbers">{{ employee.age|to_arabic_numbers|default:"-" }}</td>
+                                        <td class="arabic-numbers">{{ employee.date_of_birth|date:"d/m/Y"|to_arabic_numbers|default:"-" }}</td>
+                                        <td class="arabic-numbers">{{ employee.date_of_retirement|date:"d/m/Y"|to_arabic_numbers|default:"-" }}</td>
+                                        <td class="arabic-numbers">{{ employee.date_of_edara|date:"d/m/Y"|to_arabic_numbers|default:"-" }}</td>
+                                        <td class="arabic-numbers">{{ employee.date_of_appointment|date:"d/m/Y"|to_arabic_numbers|default:"-" }}</td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editModal{{ employee.id }}">
+                                                <i class="fas fa-pencil-alt"></i> تعديل
+                                            </button>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- تبويب الوظيفة والحالة -->
+                    <div class="tab-pane fade" id="job" role="tabpanel">
+                        <table id="jobTable" class="table table-bordered table-striped table-hover">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th>الاسم</th>
+                                    <th>الدرجة</th>
+                                    <th>رقم الشرطة</th>
+                                    <th>رقم التأمين</th>
+                                    <th>الحالة الصحية</th>
+                                    <th>القسم</th>
+                                    <th>الإجراء</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for employee in employees %}
+                                    <tr>
+                                        <td>{{ employee.name|default:"-" }}</td>
+                                        <td class="arabic-numbers">{{ employee.rank|to_arabic_numbers|default:"غير متوفر" }}</td>
+                                        <td class="arabic-numbers">{{ employee.police_number|to_arabic_numbers|default:"-" }}</td>
+                                        <td class="arabic-numbers">{{ employee.insurance_number|to_arabic_numbers|default:"-" }}</td>
+                                        <td>{{ employee.health_status|default:"-" }}</td>
+                                        <td>{{ employee.departments|default:"-" }}</td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editModal{{ employee.id }}">
+                                                <i class="fas fa-pencil-alt"></i> تعديل
+                                            </button>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- نافذة التعديل (Modal) -->
                 {% for employee in employees %}
-                    <tr>
-                        <td>{{ employee.sort_number }}</td>
-                        <td>
-                            {% if employee.image %}
-                                <img src="{{ employee.image.url }}" alt="{{ employee.name }}" style="width: 50px; height: 50px; object-fit: cover;">
-                            {% else %}
-                                <span>لا توجد صورة</span>
-                            {% endif %}
-                        </td>
-                        <td class="arabic-numbers">{{ employee.rank|to_arabic_numbers }}</td>
-                        <td>{{ employee.name }}</td>
-                        <td>{{ employee.nickname }}</td>
-                        <td class="arabic-numbers">{{ employee.police_number|to_arabic_numbers }}</td>
-                        <td class="arabic-numbers">{{ employee.insurance_number|to_arabic_numbers }}</td>
-                        <td class="arabic-numbers">{{ employee.age|to_arabic_numbers }}</td>
-                        <td class="arabic-numbers">{{ employee.date_of_birth|date:"d/m/Y"|to_arabic_numbers }}</td>
-                        <td class="arabic-numbers">{{ employee.date_of_retirement|date:"d/m/Y"|to_arabic_numbers }}</td>
-                        <td class="arabic-numbers">{{ employee.date_of_edara|date:"d/m/Y"|to_arabic_numbers }}</td>
-                        <td class="arabic-numbers">{{ employee.date_of_appointment|date:"d/m/Y"|to_arabic_numbers }}</td>
-                        <td class="arabic-numbers">{{ employee.id_number|to_arabic_numbers }}</td>
-                        <td class="arabic-numbers">{{ employee.phone_number|to_arabic_numbers }}</td>
-                        <td class="arabic-numbers">{{ employee.alt_phone_number|to_arabic_numbers }}</td>
-                        <td>{{ employee.marital_status }}</td>
-                        <td>{{ employee.gender }}</td>
-                        <td>{{ employee.governorate }}</td>
-                        <td>{{ employee.district }}</td>
-                        <td>{{ employee.address }}</td>
-                        <td>{{ employee.health_status }}</td>
-                        <td>{{ employee.departments }}</td>
-                        <td>
-                            <a href="{% url 'edit_employee' employee.id %}">تعديل</a>
-                        </td>
-                    </tr>
+                    <div class="modal fade" id="editModal{{ employee.id }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h4 class="modal-title">تعديل بيانات {{ employee.name }}</h4>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">×</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    <form method="POST" action="{% url 'edit_employee' employee.id %}" enctype="multipart/form-data">
+                                        {% csrf_token %}
+                                        <div class="row">
+                                            <!-- معلومات أساسية -->
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">اسم الفرد</label>
+                                                    <input type="text" name="name" class="form-control" value="{{ employee.name }}" required>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">اللقب</label>
+                                                    <input type="text" name="nickname" class="form-control" value="{{ employee.nickname|default:'' }}">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">رقم الترتيب</label>
+                                                    <input type="number" name="sort_number" class="form-control" value="{{ employee.sort_number|default:'' }}" required>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">رقم الشرطة</label>
+                                                    <input type="text" name="police_number" class="form-control" value="{{ employee.police_number|default:'' }}">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">رقم التأمين</label>
+                                                    <input type="text" name="insurance_number" class="form-control" value="{{ employee.insurance_number|default:'' }}">
+                                                </div>
+                                            </div>
+                                    <!-- العمر -->
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">العمر</label>
+                                            <input type="number" name="age" class="form-control" value="{{ employee.age|default:'' }}" readonly>
+                                        </div>
+                                    </div>
+                                                        
+                                                                                <!-- تواريخ -->
+                                    <!-- تاريخ الميلاد -->
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">تاريخ الميلاد</label>
+                                            <input type="date" name="date_of_birth" class="form-control" value="{{ employee.date_of_birth|date:'Y-m-d'|default:'' }}" readonly>
+                                        </div>
+                                    </div>
+                                    <!-- تاريخ التقاعد -->
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">تاريخ التقاعد</label>
+                                            <input type="date" name="date_of_retirement" class="form-control" value="{{ employee.date_of_retirement|date:'Y-m-d'|default:'' }}" readonly>
+                                        </div>
+                                    </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">تاريخ دخول الإدارة</label>
+                                                    <input type="date" name="date_of_edara" class="form-control" value="{{ employee.date_of_edara|date:'Y-m-d'|default:'' }}">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">تاريخ التعيين</label>
+                                                    <input type="date" name="date_of_appointment" class="form-control" value="{{ employee.date_of_appointment|date:'Y-m-d'|default:'' }}">
+                                                </div>
+                                            </div>
+                    
+                                            <!-- معلومات الاتصال -->
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">الرقم القومي</label>
+                                                    <input type="text" name="id_number" class="form-control" value="{{ employee.id_number|default:'' }}">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">رقم الهاتف</label>
+                                                    <input type="text" name="phone_number" class="form-control" value="{{ employee.phone_number|default:'' }}">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">رقم الهاتف البديل</label>
+                                                    <input type="text" name="alt_phone_number" class="form-control" value="{{ employee.alt_phone_number|default:'' }}">
+                                                </div>
+                                            </div>
+                    
+                                            <!-- الحالة الاجتماعية والجنس -->
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">الحالة الاجتماعية</label>
+                                                    <select name="marital_status" class="form-control">
+                                                        <option value="" {% if not employee.marital_status %}selected{% endif %}>اختر الحالة</option>
+                                                        {% for choice_value, choice_label in employee.MARITAL_STATUS_CHOICES %}
+                                                            <option value="{{ choice_value }}" {% if employee.marital_status == choice_value %}selected{% endif %}>
+                                                                {{ choice_label }}
+                                                            </option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">الجنس</label>
+                                                    <select name="gender" class="form-control">
+                                                        <option value="" {% if not employee.gender %}selected{% endif %}>اختر الجنس</option>
+                                                        <option value="ذكر" {% if employee.gender == "ذكر" %}selected{% endif %}>ذكر</option>
+                                                        <option value="أنثى" {% if employee.gender == "أنثى" %}selected{% endif %}>أنثى</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                    
+                                            <!-- الموقع -->
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">المحافظة</label>
+                                                    <input type="text" name="governorate" class="form-control" value="{{ employee.governorate|default:'' }}">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">المنطقة</label>
+                                                    <input type="text" name="district" class="form-control" value="{{ employee.district|default:'' }}">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-12">
+                                                <div class="mb-3">
+                                                    <label class="form-label">العنوان</label>
+                                                    <input type="text" name="address" class="form-control" value="{{ employee.address|default:'' }}">
+                                                </div>
+                                            </div>
+                    
+                                            <!-- الحالة الصحية والقسم -->
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">الحالة الصحية</label>
+                                                    <select name="health_status" class="form-control">
+                                                        <option value="" {% if not employee.health_status %}selected{% endif %}>اختر الحالة</option>
+                                                        {% for choice_value, choice_label in employee.HEALTH_STATUS_CHOICES %}
+                                                            <option value="{{ choice_value }}" {% if employee.health_status == choice_value %}selected{% endif %}>
+                                                                {{ choice_label }}
+                                                            </option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">الرتبة</label>
+                                                    <select name="rank" class="form-control">
+                                                        <option value="">اختر الرتبة</option>
+                                                        {% for rank in ranks %}
+                                                            <option value="{{ rank.id }}" {% if employee.rank and employee.rank.id == rank.id %}selected{% endif %}>
+                                                                {{ rank.name }}  <!-- تغيير من rankname إلى name -->
+                                                            </option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">القسم</label>
+                                                    <select name="department" class="form-control">
+                                                        <option value="">اختر القسم</option>
+                                                        {% for department in departments %}
+                                                            <option value="{{ department.id }}" {% if employee.department and employee.department.id == department.id %}selected{% endif %}>
+                                                                {{ department.name }}  <!-- هذا صحيح بالفعل -->
+                                                            </option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            
+                                        <button type="submit" class="btn btn-primary">حفظ التعديلات</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 {% endfor %}
-            </tbody>
-        </table>
+            {% else %}
+                <div class="alert alert-info text-center" role="alert">
+                    لا توجد بيانات للموظفين حاليًا.
+                </div>
+            {% endif %}
+        </div>
     </div>
+</div>
+
+<!-- إعدادات DataTables لكل جدول -->
+<script>
+    $(document).ready(function() {
+        $('#personalTable').DataTable({
+            "paging": true,
+            "searching": true,
+            "ordering": true,
+            "info": true,
+            "autoWidth": false,
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Arabic.json"
+            },
+            "dom": 'Bfrtip',
+            "buttons": ['copy', 'excel', 'pdf', 'print']
+        });
+
+        $('#contactTable').DataTable({
+            "paging": true,
+            "searching": true,
+            "ordering": true,
+            "info": true,
+            "autoWidth": false,
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Arabic.json"
+            },
+            "dom": 'Bfrtip',
+            "buttons": ['copy', 'excel', 'pdf', 'print']
+        });
+
+        $('#datesTable').DataTable({
+            "paging": true,
+            "searching": true,
+            "ordering": true,
+            "info": true,
+            "autoWidth": false,
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Arabic.json"
+            },
+            "dom": 'Bfrtip',
+            "buttons": ['copy', 'excel', 'pdf', 'print']
+        });
+
+        $('#jobTable').DataTable({
+            "paging": true,
+            "searching": true,
+            "ordering": true,
+            "info": true,
+            "autoWidth": false,
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Arabic.json"
+            },
+            "dom": 'Bfrtip',
+            "buttons": ['copy', 'excel', 'pdf', 'print']
+        });
+    });
+</script>
 {% endblock %}
