@@ -2,18 +2,15 @@
 {% load numbers_filters %}
 {% load static %}
 
-{% block title %}قائمة الموظفين{% endblock %}
+{% block title %}قائمة الأفراد{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
     <div class="card">
         <div class="card-header">
-            <h2 class="text-center mb-0">قائمة الموظفين</h2>
+            <h2 class="text-center mb-0">قائمة الأفراد</h2>
         </div>
         <div class="card-body">
-            <div class="mb-3">
-                <a href="{% url 'age_update' %}" class="btn btn-warning">تحديث بيانات العمر والتقاعد</a>
-            </div>
             {% if employees %}
                 <!-- علامات التبويب -->
                 <ul class="nav nav-tabs" id="employeeTabs" role="tablist">
@@ -154,6 +151,7 @@
                                     <th>رقم التأمين</th>
                                     <th>الحالة الصحية</th>
                                     <th>القسم</th>
+                                    <th>التشغيل</th>
                                     <th>الإجراء</th>
                                 </tr>
                             </thead>
@@ -165,7 +163,9 @@
                                         <td class="arabic-numbers">{{ employee.police_number|to_arabic_numbers|default:"-" }}</td>
                                         <td class="arabic-numbers">{{ employee.insurance_number|to_arabic_numbers|default:"-" }}</td>
                                         <td>{{ employee.health_status|default:"-" }}</td>
-                                        <td>{{ employee.departments|default:"-" }}</td>
+                                        <td>{{ employee.department|default:"-" }}</td> <!-- تصحيح من departments إلى department -->
+                                        <td>{{ employee.operation|default:"-" }}</td>
+
                                         <td>
                                             <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editModal{{ employee.id }}">
                                                 <i class="fas fa-pencil-alt"></i> تعديل
@@ -178,210 +178,293 @@
                     </div>
                 </div>
 
-                <!-- نافذة التعديل (Modal) -->
-                {% for employee in employees %}
-                    <div class="modal fade" id="editModal{{ employee.id }}" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog modal-lg">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h4 class="modal-title">تعديل بيانات {{ employee.name }}</h4>
-                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                        <span aria-hidden="true">×</span>
-                                    </button>
-                                </div>
-                                <div class="modal-body">
-                                    <form method="POST" action="{% url 'edit_employee' employee.id %}" enctype="multipart/form-data">
-                                        {% csrf_token %}
-                                        <div class="row">
-                                            <!-- معلومات أساسية -->
-                                            <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label class="form-label">اسم الفرد</label>
-                                                    <input type="text" name="name" class="form-control" value="{{ employee.name }}" required>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label class="form-label">اللقب</label>
-                                                    <input type="text" name="nickname" class="form-control" value="{{ employee.nickname|default:'' }}">
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label class="form-label">رقم الترتيب</label>
-                                                    <input type="number" name="sort_number" class="form-control" value="{{ employee.sort_number|default:'' }}" required>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label class="form-label">رقم الشرطة</label>
-                                                    <input type="text" name="police_number" class="form-control" value="{{ employee.police_number|default:'' }}">
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label class="form-label">رقم التأمين</label>
-                                                    <input type="text" name="insurance_number" class="form-control" value="{{ employee.insurance_number|default:'' }}">
-                                                </div>
-                                            </div>
-                                    <!-- العمر -->
+        <!-- نافذة التعديل (Modal) -->
+            
+        {% for employee in employees %}
+            <div class="modal fade" id="editModal{{ employee.id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <!-- رأس النافذة -->
+                        <div class="modal-header">
+                            <h4 class="modal-title">تعديل بيانات {{ employee.name }}</h4>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">×</span>
+                            </button>
+                        </div>
+        
+                        <!-- جسم النافذة -->
+                        <div class="modal-body">
+                            <form method="POST" action="{% url 'edit_employee' employee.id %}" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <div class="row">
+        
+                                    <!-- 1. المعلومات الشخصية -->
+                                    <h5 class="col-12 mb-3">المعلومات الشخصية</h5>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">رقم الترتيب</label>
+                                            <input type="number" name="sort_number" class="form-control" value="{{ employee.sort_number|default:'' }}" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">اسم الفرد</label>
+                                            <input type="text" name="name" class="form-control" value="{{ employee.name }}" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">اللقب</label>
+                                            <input type="text" name="nickname" class="form-control" value="{{ employee.nickname|default:'' }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">الرقم القومي</label>
+                                            <input type="text" name="id_number" class="form-control" value="{{ employee.id_number|default:'' }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">الجنس</label>
+                                            <select name="gender" class="form-control">
+                                                <option value="" {% if not employee.gender %}selected{% endif %}>اختر الجنس</option>
+                                                <option value="ذكر" {% if employee.gender == "ذكر" %}selected{% endif %}>ذكر</option>
+                                                <option value="أنثى" {% if employee.gender == "أنثى" %}selected{% endif %}>أنثى</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">الحالة الاجتماعية</label>
+                                            <select name="marital_status" class="form-control">
+                                                <option value="" {% if not employee.marital_status %}selected{% endif %}>اختر الحالة</option>
+                                                {% for choice_value, choice_label in employee.MARITAL_STATUS_CHOICES %}
+                                                    <option value="{{ choice_value }}" {% if employee.marital_status == choice_value %}selected{% endif %}>
+                                                        {{ choice_label }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+        
+                                    <!-- 2. معلومات الاتصال -->
+                                    <h5 class="col-12 mb-3">معلومات الاتصال</h5>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">رقم الهاتف</label>
+                                            <input type="text" name="phone_number" class="form-control" value="{{ employee.phone_number|default:'' }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">رقم الهاتف البديل</label>
+                                            <input type="text" name="alt_phone_number" class="form-control" value="{{ employee.alt_phone_number|default:'' }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">المحافظة</label>
+                                            <input type="text" name="governorate" class="form-control" value="{{ employee.governorate|default:'' }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">المنطقة</label>
+                                            <input type="text" name="district" class="form-control" value="{{ employee.district|default:'' }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <div class="mb-3">
+                                            <label class="form-label">العنوان</label>
+                                            <input type="text" name="address" class="form-control" value="{{ employee.address|default:'' }}">
+                                        </div>
+                                    </div>
+        
+                                    <!-- 3. التواريخ -->
+                                    <h5 class="col-12 mb-3">التواريخ</h5>
                                     <div class="col-md-6">
                                         <div class="mb-3">
                                             <label class="form-label">العمر</label>
                                             <input type="number" name="age" class="form-control" value="{{ employee.age|default:'' }}" readonly>
                                         </div>
                                     </div>
-                                                        
-                                                                                <!-- تواريخ -->
-                                    <!-- تاريخ الميلاد -->
                                     <div class="col-md-6">
                                         <div class="mb-3">
                                             <label class="form-label">تاريخ الميلاد</label>
                                             <input type="date" name="date_of_birth" class="form-control" value="{{ employee.date_of_birth|date:'Y-m-d'|default:'' }}" readonly>
                                         </div>
                                     </div>
-                                    <!-- تاريخ التقاعد -->
                                     <div class="col-md-6">
                                         <div class="mb-3">
                                             <label class="form-label">تاريخ التقاعد</label>
                                             <input type="date" name="date_of_retirement" class="form-control" value="{{ employee.date_of_retirement|date:'Y-m-d'|default:'' }}" readonly>
                                         </div>
                                     </div>
-                                            <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label class="form-label">تاريخ دخول الإدارة</label>
-                                                    <input type="date" name="date_of_edara" class="form-control" value="{{ employee.date_of_edara|date:'Y-m-d'|default:'' }}">
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label class="form-label">تاريخ التعيين</label>
-                                                    <input type="date" name="date_of_appointment" class="form-control" value="{{ employee.date_of_appointment|date:'Y-m-d'|default:'' }}">
-                                                </div>
-                                            </div>
-                    
-                                            <!-- معلومات الاتصال -->
-                                            <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label class="form-label">الرقم القومي</label>
-                                                    <input type="text" name="id_number" class="form-control" value="{{ employee.id_number|default:'' }}">
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label class="form-label">رقم الهاتف</label>
-                                                    <input type="text" name="phone_number" class="form-control" value="{{ employee.phone_number|default:'' }}">
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label class="form-label">رقم الهاتف البديل</label>
-                                                    <input type="text" name="alt_phone_number" class="form-control" value="{{ employee.alt_phone_number|default:'' }}">
-                                                </div>
-                                            </div>
-                    
-                                            <!-- الحالة الاجتماعية والجنس -->
-                                            <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label class="form-label">الحالة الاجتماعية</label>
-                                                    <select name="marital_status" class="form-control">
-                                                        <option value="" {% if not employee.marital_status %}selected{% endif %}>اختر الحالة</option>
-                                                        {% for choice_value, choice_label in employee.MARITAL_STATUS_CHOICES %}
-                                                            <option value="{{ choice_value }}" {% if employee.marital_status == choice_value %}selected{% endif %}>
-                                                                {{ choice_label }}
-                                                            </option>
-                                                        {% endfor %}
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label class="form-label">الجنس</label>
-                                                    <select name="gender" class="form-control">
-                                                        <option value="" {% if not employee.gender %}selected{% endif %}>اختر الجنس</option>
-                                                        <option value="ذكر" {% if employee.gender == "ذكر" %}selected{% endif %}>ذكر</option>
-                                                        <option value="أنثى" {% if employee.gender == "أنثى" %}selected{% endif %}>أنثى</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                    
-                                            <!-- الموقع -->
-                                            <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label class="form-label">المحافظة</label>
-                                                    <input type="text" name="governorate" class="form-control" value="{{ employee.governorate|default:'' }}">
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label class="form-label">المنطقة</label>
-                                                    <input type="text" name="district" class="form-control" value="{{ employee.district|default:'' }}">
-                                                </div>
-                                            </div>
-                                            <div class="col-md-12">
-                                                <div class="mb-3">
-                                                    <label class="form-label">العنوان</label>
-                                                    <input type="text" name="address" class="form-control" value="{{ employee.address|default:'' }}">
-                                                </div>
-                                            </div>
-                    
-                                            <!-- الحالة الصحية والقسم -->
-                                            <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label class="form-label">الحالة الصحية</label>
-                                                    <select name="health_status" class="form-control">
-                                                        <option value="" {% if not employee.health_status %}selected{% endif %}>اختر الحالة</option>
-                                                        {% for choice_value, choice_label in employee.HEALTH_STATUS_CHOICES %}
-                                                            <option value="{{ choice_value }}" {% if employee.health_status == choice_value %}selected{% endif %}>
-                                                                {{ choice_label }}
-                                                            </option>
-                                                        {% endfor %}
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label class="form-label">الرتبة</label>
-                                                    <select name="rank" class="form-control">
-                                                        <option value="">اختر الرتبة</option>
-                                                        {% for rank in ranks %}
-                                                            <option value="{{ rank.id }}" {% if employee.rank and employee.rank.id == rank.id %}selected{% endif %}>
-                                                                {{ rank.name }}  <!-- تغيير من rankname إلى name -->
-                                                            </option>
-                                                        {% endfor %}
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            
-                                            <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label class="form-label">القسم</label>
-                                                    <select name="department" class="form-control">
-                                                        <option value="">اختر القسم</option>
-                                                        {% for department in departments %}
-                                                            <option value="{{ department.id }}" {% if employee.department and employee.department.id == department.id %}selected{% endif %}>
-                                                                {{ department.name }}  <!-- هذا صحيح بالفعل -->
-                                                            </option>
-                                                        {% endfor %}
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            
-                                        <button type="submit" class="btn btn-primary">حفظ التعديلات</button>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">تاريخ دخول الإدارة</label>
+                                            <input type="date" name="date_of_edara" class="form-control" value="{{ employee.date_of_edara|date:'Y-m-d'|default:'' }}">
                                         </div>
-                                    </form>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">تاريخ التعيين</label>
+                                            <input type="date" name="date_of_appointment" class="form-control" value="{{ employee.date_of_appointment|date:'Y-m-d'|default:'' }}">
+                                        </div>
+                                    </div>
+        
+                                    <!-- 4. الوظيفة والحالة -->
+                                    <h5 class="col-12 mb-3">الوظيفة والحالة</h5>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">رقم الشرطة</label>
+                                            <input type="text" name="police_number" class="form-control" value="{{ employee.police_number|default:'' }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">رقم التأمين</label>
+                                            <input type="text" name="insurance_number" class="form-control" value="{{ employee.insurance_number|default:'' }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">الحالة الصحية</label>
+                                            <select name="health_status" class="form-control">
+                                                <option value="" {% if not employee.health_status %}selected{% endif %}>اختر الحالة</option>
+                                                {% for choice_value, choice_label in employee.HEALTH_STATUS_CHOICES %}
+                                                    <option value="{{ choice_value }}" {% if employee.health_status == choice_value %}selected{% endif %}>
+                                                        {{ choice_label }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">الدرجة</label>
+                                            <select name="rank" class="form-control">
+                                                <option value="">اختر الدرجة</option>
+                                                {% for rank in ranks %}
+                                                    <option value="{{ rank.id }}" {% if employee.rank and employee.rank.id == rank.id %}selected{% endif %}>
+                                                        {{ rank.name }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">القسم</label>
+                                            <select name="department" class="form-control">
+                                                <option value="">اختر القسم</option>
+                                                {% for department in departments %}
+                                                    <option value="{{ department.id }}" {% if employee.department and employee.department.id == department.id %}selected{% endif %}>
+                                                        {{ department.name }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+        
+                                    <!-- 5. الإعدادات -->
+                                    <h5 class="col-12 mb-3">الإعدادات</h5>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">معهد أمناء / درجة أولى</label>
+                                            <select name="amen_or_ola" class="form-control">
+                                                <option value="1" {% if employee.amen_or_ola %}selected{% endif %}>معهد أمناء</option>
+                                                <option value="0" {% if not employee.amen_or_ola %}selected{% endif %}>درجة أولى</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">التشغيل</label>
+                                            <select name="operation" class="form-control">
+                                                <option value="السبت" {% if employee.operation == 'السبت' %}selected{% endif %}>السبت</option>
+                                                <option value="الأحد" {% if employee.operation == 'الأحد' %}selected{% endif %}>الأحد</option>
+                                                <option value="الاثنين" {% if employee.operation == 'الاثنين' %}selected{% endif %}>الاثنين</option>
+                                                <option value="الثلاثاء" {% if employee.operation == 'الثلاثاء' %}selected{% endif %}>الثلاثاء</option>
+                                                <option value="الأربعاء" {% if employee.operation == 'الأربعاء' %}selected{% endif %}>الأربعاء</option>
+                                                <option value="الخميس" {% if employee.operation == 'الخميس' %}selected{% endif %}>الخميس</option>
+                                                <option value="الجمعة" {% if employee.operation == 'الجمعة' %}selected{% endif %}>الجمعة</option>
+                                                <option value="عمل يومي" {% if employee.operation == 'عمل يومي' %}selected{% endif %}>عمل يومي</option>
+                                                <option value="انتداب" {% if employee.operation == 'انتداب' %}selected{% endif %}>انتداب</option>
+                                                <option value="مأمورية" {% if employee.operation == 'مأمورية' %}selected{% endif %}>مأمورية</option>
+                                                <option value="مرضي" {% if employee.operation == 'مرضي' %}selected{% endif %}>مرضي</option>
+                                                <option value="قرار66" {% if employee.operation == 'قرار66' %}selected{% endif %}>قرار66</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">نوع الدرجة</label>
+                                            <select name="rank_kind" class="form-control">
+                                                <option value="" {% if not employee.rank_kind %}selected{% endif %}>اختر نوع الدرجة</option>
+                                                <option value="1" {% if employee.rank_kind == 1 %}selected{% endif %}>أمناء</option>
+                                                <option value="2" {% if employee.rank_kind == 2 %}selected{% endif %}>مساعدين</option>
+                                                <option value="4" {% if employee.rank_kind == 4 %}selected{% endif %}>مندوبين</option>
+                                                <option value="5" {% if employee.rank_kind == 5 %}selected{% endif %}>درجة أولى</option>
+                                                <option value="6" {% if employee.rank_kind == 6 %}selected{% endif %}>معاونين</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">ترتيب مخصص</label>
+                                            <input type="number" name="dep_sort" class="form-control" value="{{ employee.dep_sort|default:'' }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">الوضع</label>
+                                            <select name="mainornot" class="form-control">
+                                                <option value="1" {% if employee.mainornot == 1 %}selected{% endif %}>قوة أساسية</option>
+                                                <option value="0" {% if employee.mainornot == 0 %}selected{% endif %}>منتدب</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">يستقل الأتوبيس</label>
+                                            <div class="form-check">
+                                                <input type="checkbox" name="bus" value="1" class="form-check-input" {% if employee.bus == 1 %}checked{% endif %}>
+                                                <label class="form-check-label">نعم (يستقل الأتوبيس)</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">مطالب بحضور التمام</label>
+                                            <div class="form-check">
+                                                <input type="checkbox" name="tmamam" value="1" class="form-check-input" {% if employee.tmamam == 1 %}checked{% endif %}>
+                                                <label class="form-check-label">نعم (يحضر التمام)</label>
+                                            </div>
+                                        </div>
+                                    </div>
+        
+                                    <!-- 6. زر الحفظ -->
+                                    <div class="col-12">
+                                        <button type="submit" class="btn btn-primary">حفظ التعديلات</button>
+                                    </div>
                                 </div>
-                            </div>
+                            </form>
                         </div>
                     </div>
-                {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+
             {% else %}
                 <div class="alert alert-info text-center" role="alert">
-                    لا توجد بيانات للموظفين حاليًا.
+                    لا توجد بيانات للأفراد حاليًا.
                 </div>
             {% endif %}
         </div>
     </div>
+
 </div>
 
 <!-- إعدادات DataTables لكل جدول -->
