@@ -182,3 +182,21 @@ def edit_employee(request, employee_id):
         'departments': departments,
         'employees': Employee.objects.all().order_by('sort_number'),
     })
+    
+    
+    
+
+
+def employee_statement(request):
+    employees = Employee.objects.all().order_by('sort_number')
+    selected_employee = None
+
+    if request.method == 'GET' and 'employee' in request.GET:
+        employee_id = request.GET.get('employee')
+        if employee_id:
+            selected_employee = Employee.objects.get(id=employee_id)
+
+    return render(request, 'em_data/employee_statement.html', {
+        'employees': employees,
+        'selected_employee': selected_employee,
+    })

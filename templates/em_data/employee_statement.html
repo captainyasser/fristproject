@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+    بيان حالة وظيفية
+{% endblock %}
+
+{% block content %}
+    <div class="container" dir="rtl">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="">
+                    <form method="GET" action="{% url 'employee_statement' %}" class="no-print">
+                        <div class="form-group">
+                            <label for="employee">اختر اسم الفرد:</label>
+                            <select id="employee" name="employee" class="form-control">
+                                <option value="">-- اختر اسم الفرد --</option>
+                                {% for emp in employees %}
+                                    <option value="{{ emp.id }}" {% if emp.id == selected_employee.id %}selected{% endif %}>{{ emp.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary mt-3 no-print">عرض البيانات</button>
+                    </form>
+                    <div class="rtitle" style="display: flex; justify-content: right;">
+                        <div>
+                            <h4>وزارة الداخلية</h4>
+                            <h4>قطاع التدريب</h4>
+                            <h4>الإدارة العامة للتدريب</h4>
+                            <h4>إدارة موسيقات الشرطة</h4>
+                        </div>
+                    </div>
+                    <br><br><br><br><br>
+                    {% if selected_employee %}
+                    <table class="table mt-3">
+                        <h1>بيان حالة وظيفية للأفراد</h1>
+                        <tbody>
+                            <tr>
+                                <td><h4>اسم الفرد</h4></td>
+                                <td><h4>{{ selected_employee.name }}</h4></td>
+                            </tr>
+                            <tr>
+                                <td><h4>الدرجة</h4></td>
+                                <td><h4>
+                                    {% if selected_employee.rank %}
+                                        {{ selected_employee.rank.name }}
+                                    {% else %}
+                                        غير متوفر
+                                    {% endif %}
+                                </h4></td>
+                            </tr>
+                            <tr>
+                                <td><h4>رقم الشرطة</h4></td>
+                                <td><h4 class="police-number">{{ selected_employee.police_number|default:"-" }}</h4></td>
+                            </tr>
+                            <tr>
+                                <td><h4>جهة العمل</h4></td>
+                                <td><h4>الإدارة العامة للتدريب – إدارة موسيقات الشرطة</h4></td>
+                            </tr>
+                            <tr>
+                                <td><h4>تاريخ الميلاد</h4></td>
+                                <td><h4 class="arabic-date">{{ selected_employee.date_of_birth|date:"Y/n/j"|default:"-" }}</h4></td>
+                                                            
+                            </tr>
+                            <tr>
+                                <td><h4>تاريخ التعيين</h4></td>
+                                <td><h4 class="arabic-date">{{ selected_employee.date_of_appointment|date:"Y/n/j"|default:"-" }}</h4></td>
+                            </tr>
+                            <tr>
+                                <td><h4>العنوان</h4></td>
+                                <td><h4>{{ selected_employee.address|default:"-" }} - {{ selected_employee.district|default:"-" }} - {{ selected_employee.governorate|default:"-" }}</h4></td>
+                            </tr>
+                            <tr>
+                                <td><h4>محل العمل</h4></td>
+                                <td><h4>طريق الواحات – بجوار مساكن عثمان – قسم ثالث أكتوبر</h4></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <h3>
+                        وذلك لتقديمه إلى <span contenteditable="true" class="editable-text" style="display: inline-block; min-width: 600px; text-align: right;"></span>
+                    </h3>
+                    <h3>بناءً على طلبه دون أدنى مسئولية على الإدارة</h3>
+                    <br><br><br><br><br><br>
+                    <div style="display: flex; text-align: right; justify-content: space-around;">
+                        <div>
+                            <h3>مدير إدارة موسيقات الشرطة</h3>
+                            <h3>/عميد</h3>
+                            <br>
+                            <h3>محمد زكي قورة</h3>
+                        </div>
+                        <div>
+                            <h3>رئيس قسم الشؤون</h3>
+                            <h3>/عقيد</h3>
+                            <br>
+                            <h3>محمد إمام</h3>
+                        </div>
+                    </div>
+                    <button class="btn btn-success mt-3 no-print" onclick="window.print()">طباعة البيانات</button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <br><br><br><br><br>
+    <br><br><br><br><br>
+{% endblock %}
+
+{% block extra_css %}
+    <style>
+                    footer.main-footer {
+font-size: 100px;
+            }
+        body, html {
+            direction: rtl;
+        }
+        .container {
+            text-align: right;
+            direction: rtl;
+        }
+        .table th, .table td {
+            text-align: right;
+        }
+        .no-print {
+            display: block; /* يظهر في الشاشة العادية */
+        }
+        
+        @media print {
+            .no-print {
+                display: none !important; /* إخفاء العناصر مثل زر الطباعة عند الطباعة */
+            }
+
+        }
+    </style>
+{% endblock %}
+
