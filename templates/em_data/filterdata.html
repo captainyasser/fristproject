@@ -78,24 +78,24 @@
             <div class="col-md-12">
                 <!-- Filter Form -->
                 <form method="get" action="{% url 'filterdata' %}">
-                    <!-- Rank Filter -->
-                    <fieldset>
-                        <legend>اختر الدرجة:</legend>
-                        <div style="display: flex; flex-wrap: wrap;">
-                            {% for rank in ranks %}
-                                <div class="icheck-success d-inline">
-                                    <input
-                                        type="checkbox"
-                                        id="rank_{{ forloop.counter }}"
-                                        name="rank"
-                                        value="{{ rank.name }}"
-                                        {% if rank.name in selected_ranks %}checked{% endif %}
-                                    >
-                                    <label for="rank_{{ forloop.counter }}">{{ rank.name }}</label>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    </fieldset>
+<!-- Rank Filter -->
+<fieldset>
+    <legend>اختر الدرجة:</legend>
+    <div style="display: flex; flex-wrap: wrap;">
+        {% for rank in ranks %}
+            <div class="icheck-success d-inline">
+                <input
+                    type="checkbox"
+                    id="rank_{{ forloop.counter }}"
+                    name="rank"
+                    value="{{ rank.id }}"
+                    {% if rank.id|stringformat:"s" in selected_ranks %}checked{% endif %}
+                >
+                <label for="rank_{{ forloop.counter }}">{{ rank.name }}</label>
+            </div>
+        {% endfor %}
+    </div>
+</fieldset>
 
                     <!-- Department Filter -->
                     <fieldset>
@@ -429,7 +429,6 @@
                 </form>
 
                 <!-- Employees Table -->
-                <h2>قائمة الموظفين</h2>
                 <table id="example1" dir="rtl" class="table table-bordered table-striped">
 
                                 

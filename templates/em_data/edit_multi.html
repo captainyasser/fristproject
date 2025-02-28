@@ -17,12 +17,18 @@
 
 {% block content %}
     <div class="container" dir="rtl">
-
                 <div class="container-fluid">
                     <div class="row">
                         <div class="col-md-12">
                             <h1>تعديل بيانات الأفراد</h1>
                             <form method="GET" action="{% url 'edit_multi' %}">
+                                <div class="form-group">
+                                    <label for="sort_by">ترتيب حسب:</label>
+                                    <select id="sort_by" name="sort_by" class="form-control" onchange="this.form.submit()">
+                                        <option value="sort_number" {% if sort_by == "sort_number" %}selected{% endif %}>رقم الترتيب</option>
+                                        <option value="dep_sort" {% if sort_by == "dep_sort" %}selected{% endif %}>ترتيب القسم</option>
+                                    </select>
+                                </div>
                                 <div class="form-group">
                                     <label for="field">اختر الحقل المراد تعديله:</label>
                                     <select id="field" name="field" class="form-control" onchange="this.form.submit()" required>
@@ -35,14 +41,15 @@
                                         <option value="governorate" {% if selected_field == "governorate" %}selected{% endif %}>المحافظة</option>
                                         <option value="district" {% if selected_field == "district" %}selected{% endif %}>المنطقة</option>
                                         <option value="address" {% if selected_field == "address" %}selected{% endif %}>العنوان</option>
-                                        <option value="operation" {% if selected_field == "operation" %}selected{% endif %}>العملية</option>
+                                        <option value="operation" {% if selected_field == "operation" %}selected{% endif %}>التشغيل</option>
                                         <option value="date_of_edara" {% if selected_field == "date_of_edara" %}selected{% endif %}>تاريخ دخول الإدارة</option>
                                         <option value="date_of_appointment" {% if selected_field == "date_of_appointment" %}selected{% endif %}>تاريخ التعيين</option>
                                         <option value="tmamam" {% if selected_field == "tmamam" %}selected{% endif %}>يحضر التمام</option>
-                                        <option value="food" {% if selected_field == "food" %}selected{% endif %}>الطعام</option>
+                                        <option value="food" {% if selected_field == "food" %}selected{% endif %}>الحصول علي تعيين</option>
                                         <option value="rahatcounter" {% if selected_field == "rahatcounter" %}selected{% endif %}>عداد الراحة</option>
                                         <option value="department" {% if selected_field == "department" %}selected{% endif %}>القسم</option>
                                         <option value="bus" {% if selected_field == "bus" %}selected{% endif %}>يستقل الأتوبيس</option>
+                                        <option value="nots" {% if selected_field == "nots" %}selected{% endif %}>ملاحظات</option>
                                     </select>
                                 </div>
                             </form>
@@ -109,6 +116,15 @@
                                                                     {% endfor %}
                                                                 </select>
                                                             {% endwith %}
+                                                        {% elif selected_field == "operation" %}
+                                                            <select name="values_{{ employee.id }}" class="form-control">
+                                                                <option value="">-- اختر عملية --</option>
+                                                                {% for choice_value, choice_label in operation_choices %}
+                                                                    <option value="{{ choice_value }}" {% if employee.operation == choice_value %}selected{% endif %}>{{ choice_label }}</option>
+                                                                {% endfor %}
+                                                            </select>
+                                                        {% elif selected_field == "nots" %}
+                                                            <textarea name="values_{{ employee.id }}" class="form-control">{{ employee|get_field_value:selected_field|default:'' }}</textarea>
                                                         {% else %}
                                                             <input type="text" name="values_{{ employee.id }}" class="form-control" 
                                                                    value="{{ employee|get_field_value:selected_field|default:'' }}">
@@ -134,7 +150,6 @@
                         </div>
                     </div>
                 </div>
-
     </div>
     <br><br><br><br><br>
 {% endblock %}

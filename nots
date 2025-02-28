@@ -3,7 +3,7 @@ git codes
 cd K:\myproject\myproject
 git status
 git add .
-git commit -m "add employee filter"
+git commit -m "add edit_multi"
 git push origin master
 
 

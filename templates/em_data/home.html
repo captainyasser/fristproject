@@ -66,6 +66,7 @@
                                                 <i class="fas fa-pencil-alt"></i> تعديل
                                             </button>
                                         </td>
+
                                     </tr>
                                 {% endfor %}
                             </tbody>
@@ -152,6 +153,7 @@
                                     <th>الحالة الصحية</th>
                                     <th>القسم</th>
                                     <th>التشغيل</th>
+                                    <th>ملاحظات</th>
                                     <th>الإجراء</th>
                                 </tr>
                             </thead>
@@ -165,6 +167,7 @@
                                         <td>{{ employee.health_status|default:"-" }}</td>
                                         <td>{{ employee.department|default:"-" }}</td> <!-- تصحيح من departments إلى department -->
                                         <td>{{ employee.operation|default:"-" }}</td>
+                                        <td>{{ employee.nots|default:"-" }}</td>
 
                                         <td>
                                             <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editModal{{ employee.id }}">
@@ -218,6 +221,7 @@
                                             <input type="text" name="nickname" class="form-control" value="{{ employee.nickname|default:'' }}">
                                         </div>
                                     </div>
+
                                     <div class="col-md-6">
                                         <div class="mb-3">
                                             <label class="form-label">الرقم القومي</label>
@@ -367,7 +371,12 @@
                                             </select>
                                         </div>
                                     </div>
-        
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">ملاحظات</label>
+                                            <input type="text" name="nots" class="form-control" value="{{ employee.nots|default:'' }}">
+                                        </div>
+                                    </div>
                                     <!-- 5. الإعدادات -->
                                     <h5 class="col-12 mb-3">الإعدادات</h5>
                                     <div class="col-md-6">

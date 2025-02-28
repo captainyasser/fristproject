@@ -77,6 +77,11 @@
                     <input type="date" id="date_of_appointment" name="date_of_appointment" class="form-control" value="{{ employee.date_of_appointment|date:'Y-m-d' }}">
                 </div>
 
+                <div class="mb-3">
+                    <label for="not">ملاحظات:</label>
+                    <input type="text" id="not" name="not" class="form-control" value="{{ employee.not|date:'Y-m-d' }}">
+                </div>
+
                 <button type="submit" class="btn btn-primary w-100">حفظ التعديلات</button>
             </form>
         </div>

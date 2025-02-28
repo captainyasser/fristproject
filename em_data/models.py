@@ -69,6 +69,7 @@ class Employee(models.Model):
     department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True)
     total_leave = models.IntegerField(default=0)
     bus = models.IntegerField(default=1)
+    nots = models.TextField(null=True, blank=True, verbose_name="ملاحظات")
     deleted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(null=True, auto_now_add=True)
     updated_at = models.DateTimeField(null=True, auto_now=True)

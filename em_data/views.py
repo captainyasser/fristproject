@@ -116,7 +116,6 @@ def edit_employee(request, employee_id):
             employee.age = employee.age
             employee.date_of_birth = employee.date_of_birth
             employee.date_of_retirement = employee.date_of_retirement
-            # تحويل القيمة الفارغة إلى None لـ DateField
             date_of_edara_value = request.POST.get('date_of_edara', employee.date_of_edara)
             employee.date_of_edara = date_of_edara_value if date_of_edara_value and date_of_edara_value != '' else None
             date_of_appointment_value = request.POST.get('date_of_appointment', employee.date_of_appointment)
@@ -130,6 +129,7 @@ def edit_employee(request, employee_id):
             employee.district = request.POST.get('district', employee.district)
             employee.address = request.POST.get('address', employee.address)
             employee.health_status = request.POST.get('health_status', employee.health_status) or None
+            employee.nots = request.POST.get('nots', employee.nots)  # إضافة حقل nots
 
             employee.amen_or_ola = bool(int(request.POST.get('amen_or_ola', employee.amen_or_ola)))
             employee.bus = 1 if request.POST.get('bus') else 0
@@ -183,8 +183,6 @@ def edit_employee(request, employee_id):
         'employees': Employee.objects.all().order_by('sort_number'),
     })
     
-    
-    
 
 
 def employee_statement(request):
@@ -208,34 +206,33 @@ def employee_statement(request):
 
 
 
-
 @login_required(login_url='/login/')
 def filterdata(request):
-    # جلب الدرجات من نموذج Rank
     ranks = Rank.objects.all()
-    # جلب جميع الأقسام من نموذج Department
     departments = Department.objects.all()
-    # جلب القيم المميزة للفلاتر الأخرى
     marital_statuses = Employee.objects.values_list('marital_status', flat=True).distinct()
     genders = Employee.objects.values_list('gender', flat=True).distinct()
     governorates = Employee.objects.values_list('governorate', flat=True).distinct()
 
     # جلب الفلاتر المختارة من الـ GET request
-    selected_ranks = request.GET.getlist('rank')
-    selected_departments = request.GET.getlist('department')  # الآن يحتوي على أسماء الأقسام
+    selected_ranks = request.GET.getlist('rank')  # تبقى كسلاسل نصية مثل ['1', '2']
+    selected_departments = request.GET.getlist('department')
     selected_marital_statuses = request.GET.getlist('marital_status')
     selected_genders = request.GET.getlist('gender')
     selected_governorates = request.GET.getlist('governorate')
     selected_columns = request.GET.getlist('columns')
 
-    # تعيين الأعمدة الافتراضية إذا لم يتم اختيار أي أعمدة
     if not selected_columns:
         selected_columns = ['show_sort_number', 'show_name', 'show_rank']
 
     # جلب الموظفين وتطبيق الفلاتر
     employees = Employee.objects.all().order_by('sort_number')
     if selected_ranks:
-        employees = employees.filter(rank__in=selected_ranks)
+        try:
+            rank_ids = [int(rank) for rank in selected_ranks if rank]  # تحويل إلى أعداد صحيحة للتصفية فقط
+            employees = employees.filter(rank__id__in=rank_ids)
+        except ValueError:
+            messages.error(request, 'يرجى اختيار رتبة صالحة.')
     if selected_departments:
         employees = employees.filter(department__name__in=selected_departments)
     if selected_marital_statuses:
@@ -252,7 +249,7 @@ def filterdata(request):
         'genders': genders,
         'governorates': governorates,
         'employees': employees,
-        'selected_ranks': selected_ranks,
+        'selected_ranks': selected_ranks,  # تبقى كسلاسل نصية للقالب
         'selected_departments': selected_departments,
         'selected_marital_statuses': selected_marital_statuses,
         'selected_genders': selected_genders,
@@ -266,15 +263,12 @@ def filterdata(request):
 
 
 
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from .models import Employee, Department
-from datetime import datetime
 
 @login_required
 def edit_multi(request):
-    employees = Employee.objects.all().order_by('sort_number')
     selected_field = None
+    sort_by = request.GET.get('sort_by', 'sort_number')
+    employees = Employee.objects.all().order_by(sort_by)
 
     if request.method == 'GET' and 'field' in request.GET:
         selected_field = request.GET.get('field')
@@ -282,7 +276,7 @@ def edit_multi(request):
             'nickname', 'police_number', 'insurance_number', 'phone_number',
             'alt_phone_number', 'governorate', 'district', 'address',
             'operation', 'date_of_edara', 'date_of_appointment', 'tmamam',
-            'food', 'rahatcounter', 'department', 'bus'
+            'food', 'rahatcounter', 'department', 'bus', 'nots'
         ]
         if selected_field not in allowed_fields:
             messages.error(request, 'الحقل المختار غير مدعوم.')
@@ -294,7 +288,7 @@ def edit_multi(request):
             'nickname', 'police_number', 'insurance_number', 'phone_number',
             'alt_phone_number', 'governorate', 'district', 'address',
             'operation', 'date_of_edara', 'date_of_appointment', 'tmamam',
-            'food', 'rahatcounter', 'department', 'bus'
+            'food', 'rahatcounter', 'department', 'bus', 'nots'
         ]
         
         if field not in allowed_fields:
@@ -305,7 +299,6 @@ def edit_multi(request):
             updated_employees = []
             for employee in employees:
                 if field in ['date_of_edara', 'date_of_appointment']:
-                    # استرجاع اليوم، الشهر، والسنة من القوائم المنسدلة
                     day = request.POST.get(f'day_{employee.id}')
                     month = request.POST.get(f'month_{employee.id}')
                     year = request.POST.get(f'year_{employee.id}')
@@ -332,7 +325,7 @@ def edit_multi(request):
                             if new_value != getattr(employee, field):
                                 setattr(employee, field, new_value)
                                 updated_employees.append(employee)
-                        else:
+                        else:  # الحقول النصية بما في ذلك operation و nots
                             if new_value != getattr(employee, field):
                                 setattr(employee, field, new_value)
                                 updated_employees.append(employee)
@@ -354,8 +347,23 @@ def edit_multi(request):
             return redirect('edit_multi')
 
     departments = Department.objects.all()
+    operation_choices = Employee.OPERATION_CHOICES  # تمرير خيارات operation إلى القالب
     return render(request, 'em_data/edit_multi.html', {
         'employees': employees,
         'selected_field': selected_field,
         'departments': departments,
-    })
+        'sort_by': sort_by,
+        'operation_choices': operation_choices,  # إضافة خيارات operation
+    })   
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
