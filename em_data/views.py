@@ -261,3 +261,101 @@ def filterdata(request):
     }
 
     return render(request, 'em_data/filterdata.html', context)
+
+
+
+
+
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from .models import Employee, Department
+from datetime import datetime
+
+@login_required
+def edit_multi(request):
+    employees = Employee.objects.all().order_by('sort_number')
+    selected_field = None
+
+    if request.method == 'GET' and 'field' in request.GET:
+        selected_field = request.GET.get('field')
+        allowed_fields = [
+            'nickname', 'police_number', 'insurance_number', 'phone_number',
+            'alt_phone_number', 'governorate', 'district', 'address',
+            'operation', 'date_of_edara', 'date_of_appointment', 'tmamam',
+            'food', 'rahatcounter', 'department', 'bus'
+        ]
+        if selected_field not in allowed_fields:
+            messages.error(request, 'الحقل المختار غير مدعوم.')
+            selected_field = None
+
+    if request.method == 'POST':
+        field = request.POST.get('field')
+        allowed_fields = [
+            'nickname', 'police_number', 'insurance_number', 'phone_number',
+            'alt_phone_number', 'governorate', 'district', 'address',
+            'operation', 'date_of_edara', 'date_of_appointment', 'tmamam',
+            'food', 'rahatcounter', 'department', 'bus'
+        ]
+        
+        if field not in allowed_fields:
+            messages.error(request, 'الحقل المختار غير مدعوم.')
+            return redirect('edit_multi')
+
+        try:
+            updated_employees = []
+            for employee in employees:
+                if field in ['date_of_edara', 'date_of_appointment']:
+                    # استرجاع اليوم، الشهر، والسنة من القوائم المنسدلة
+                    day = request.POST.get(f'day_{employee.id}')
+                    month = request.POST.get(f'month_{employee.id}')
+                    year = request.POST.get(f'year_{employee.id}')
+                    if day and month and year:
+                        new_value = datetime.strptime(f'{year}-{month}-{day}', '%Y-%m-%d').date()
+                        if new_value != getattr(employee, field):
+                            setattr(employee, field, new_value)
+                            updated_employees.append(employee)
+                else:
+                    new_value = request.POST.get(f'values_{employee.id}')
+                    if new_value is not None:
+                        if field in ['tmamam', 'food', 'bus']:
+                            new_value = 1 if new_value == 'on' else 0
+                            if new_value != getattr(employee, field):
+                                setattr(employee, field, new_value)
+                                updated_employees.append(employee)
+                        elif field == 'department':
+                            new_value = Department.objects.get(id=int(new_value)) if new_value else None
+                            if new_value != getattr(employee, field):
+                                setattr(employee, field, new_value)
+                                updated_employees.append(employee)
+                        elif field == 'rahatcounter':
+                            new_value = int(new_value) if new_value else None
+                            if new_value != getattr(employee, field):
+                                setattr(employee, field, new_value)
+                                updated_employees.append(employee)
+                        else:
+                            if new_value != getattr(employee, field):
+                                setattr(employee, field, new_value)
+                                updated_employees.append(employee)
+            
+            if updated_employees:
+                Employee.objects.bulk_update(updated_employees, [field])
+                messages.success(request, f'تم تعديل حقل {field} لـ {len(updated_employees)} فرد بنجاح.')
+            else:
+                messages.info(request, 'لم يتم إجراء أي تغييرات.')
+            return redirect('edit_multi')
+        except ValueError as e:
+            messages.error(request, f'خطأ في تنسيق القيمة: {str(e)} (مثال: التاريخ يجب أن يكون صالحًا)')
+            return redirect('edit_multi')
+        except Department.DoesNotExist:
+            messages.error(request, 'القسم المُدخل غير موجود.')
+            return redirect('edit_multi')
+        except Exception as e:
+            messages.error(request, f'حدث خطأ أثناء التعديل: {str(e)}')
+            return redirect('edit_multi')
+
+    departments = Department.objects.all()
+    return render(request, 'em_data/edit_multi.html', {
+        'employees': employees,
+        'selected_field': selected_field,
+        'departments': departments,
+    })
