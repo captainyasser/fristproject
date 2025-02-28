@@ -229,8 +229,8 @@
                                             <label class="form-label">الجنس</label>
                                             <select name="gender" class="form-control">
                                                 <option value="" {% if not employee.gender %}selected{% endif %}>اختر الجنس</option>
+                                                <option value="أنثي" {% if employee.gender == "أنثي" %}selected{% endif %}>أنثي</option>
                                                 <option value="ذكر" {% if employee.gender == "ذكر" %}selected{% endif %}>ذكر</option>
-                                                <option value="أنثى" {% if employee.gender == "أنثى" %}selected{% endif %}>أنثى</option>
                                             </select>
                                         </div>
                                     </div>

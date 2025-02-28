@@ -3,7 +3,7 @@ git codes
 cd K:\myproject\myproject
 git status
 git add .
-git commit -m "Fix date field handling in edit_employee to allow empty values"
+git commit -m "add employee statement"
 git push origin master
 
 

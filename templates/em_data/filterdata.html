@@ -1,0 +1,601 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+    فلتر البيانات
+{% endblock %}
+
+{% block styles %}
+    <style>
+        form {
+            margin-bottom: 20px;
+        }
+        fieldset {
+            margin-bottom: 15px;
+            padding: 10px;
+        }
+        legend {
+            font-weight: bold;
+        }
+        label {
+            margin-right: 15px;
+            padding: 5px;
+        }
+        button[type="submit"] {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+    </style>
+    <style>
+        /* محاذاة النص داخل الجدول إلى اليمين */
+        #example1 {
+            text-align: right;
+        }
+    
+        /* توجيه الجدول من اليمين إلى اليسار */
+        #example1 {
+            direction: rtl;
+        }
+    
+        /* تطبيق نفس التنسيق على الطباعة */
+        @media print {
+            #example1 {
+                text-align: right !important;
+                direction: rtl !important;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-md-12">
+                        {% block inner_content %}
+                            <!-- Filter Form -->
+                            <form method="get" action="{% url 'filterdata' %}">
+                                <!-- Rank Filter -->
+                                <fieldset>
+                                    <legend>اختر الدرجة:</legend>
+                                    <div style="display: flex; flex-wrap: wrap;">
+                                        {% for rank in ranks %}
+                                            <label style="margin-right: 20px;">
+                                                <input
+                                                    type="checkbox"
+                                                    name="rank"
+                                                    value="{{ rank.name }}"
+                                                    {% if rank.name in selected_ranks %}checked{% endif %}
+                                                >
+                                                {{ rank.name }}
+                                            </label>
+                                        {% endfor %}
+                                    </div>
+                                </fieldset>
+
+                                <!-- Department Filter -->
+                                <fieldset>
+                                    <legend>اختر القسم:</legend>
+                                    <div style="display: flex; flex-wrap: wrap;">
+                                        {% for department in departments %}
+                                            <label style="margin-right: 20px;">
+                                                <input
+                                                    type="checkbox"
+                                                    name="department"
+                                                    value="{{ department.name }}"
+                                                    {% if department.name in selected_departments %}checked{% endif %}
+                                                >
+                                                {{ department.name }}
+                                            </label>
+                                        {% endfor %}
+                                    </div>
+                                </fieldset>
+
+                                <!-- Marital Status Filter -->
+                                <fieldset>
+                                    <legend>اختر الحالة الاجتماعية:</legend>
+                                    <div style="display: flex; flex-wrap: wrap;">
+                                        {% for marital_status in marital_statuses %}
+                                            <label style="margin-right: 20px;">
+                                                <input
+                                                    type="checkbox"
+                                                    name="marital_status"
+                                                    value="{{ marital_status }}"
+                                                    {% if marital_status in selected_marital_statuses %}checked{% endif %}
+                                                >
+                                                {% if marital_status == '0' %}
+                                                    اعزب
+                                                {% elif marital_status == '1' %}
+                                                    متزوج
+                                                {% elif marital_status == '2' %}
+                                                    مطلق
+                                                {% else %}
+                                                    {{ marital_status }}
+                                                {% endif %}
+                                            </label>
+                                        {% endfor %}
+                                    </div>
+                                </fieldset>
+
+                                <!-- Gender Filter -->
+                                <fieldset>
+                                    <legend>اختر الجنس:</legend>
+                                    <div style="display: flex; flex-wrap: wrap;">
+                                        {% for gender in genders %}
+                                            <label style="margin-right: 20px;">
+                                                <input
+                                                    type="checkbox"
+                                                    name="gender"
+                                                    value="{{ gender }}"
+                                                    {% if gender in selected_genders %}checked{% endif %}
+                                                >
+                                                {{ gender }}
+                                            </label>
+                                        {% endfor %}
+                                    </div>
+                                </fieldset>
+
+                                <!-- Governorate Filter -->
+                                <fieldset>
+                                    <legend>اختر المحافظة:</legend>
+                                    <div style="display: flex; flex-wrap: wrap;">
+                                        {% for governorate in governorates %}
+                                            <label style="margin-right: 20px;">
+                                                <input
+                                                    type="checkbox"
+                                                    name="governorate"
+                                                    value="{{ governorate }}"
+                                                    {% if governorate in selected_governorates %}checked{% endif %}
+                                                >
+                                                {{ governorate }}
+                                            </label>
+                                        {% endfor %}
+                                    </div>
+                                </fieldset>
+
+                                <!-- Column Selection Filters -->
+                                <fieldset>
+                                    <legend>اختر ما تحتاج من بيانات:</legend>
+                                    <div style="display: flex; flex-wrap: wrap;">
+                                        <label style="margin-right: 20px;">
+                                            <input
+                                                type="checkbox"
+                                                name="columns"
+                                                value="show_sort_number"
+                                                {% if 'show_sort_number' in selected_columns %}checked{% endif %}
+                                            >
+                                            م
+                                        </label>
+                                        <label style="margin-right: 20px;">
+                                            <input
+                                                type="checkbox"
+                                                name="columns"
+                                                value="show_rank"
+                                                {% if 'show_rank' in selected_columns %}checked{% endif %}
+                                            >
+                                            الدرجة
+                                        </label>
+                                        <label style="margin-right: 20px;">
+                                            <input
+                                                type="checkbox"
+                                                name="columns"
+                                                value="show_name"
+                                                {% if 'show_name' in selected_columns %}checked{% endif %}
+                                            >
+                                            الاسم
+                                        </label>
+                                        <label style="margin-right: 20px;">
+                                            <input
+                                                type="checkbox"
+                                                name="columns"
+                                                value="show_nickname"
+                                                {% if 'show_nickname' in selected_columns %}checked{% endif %}
+                                            >
+                                            اللقب
+                                        </label>
+                                        <label style="margin-right: 20px;">
+                                            <input
+                                                type="checkbox"
+                                                name="columns"
+                                                value="show_operation"
+                                                {% if 'show_operation' in selected_columns %}checked{% endif %}
+                                            >
+                                            التشغيل
+                                        </label>
+                                        <label style="margin-right: 20px;">
+                                            <input
+                                                type="checkbox"
+                                                name="columns"
+                                                value="show_police_number"
+                                                {% if 'show_police_number' in selected_columns %}checked{% endif %}
+                                            >
+                                            رقم الشرطة
+                                        </label>
+                                        <label style="margin-right: 20px;">
+                                            <input
+                                                type="checkbox"
+                                                name="columns"
+                                                value="show_insurance_number"
+                                                {% if 'show_insurance_number' in selected_columns %}checked{% endif %}
+                                            >
+                                            رقم التأمين
+                                        </label>
+                                        <label style="margin-right: 20px;">
+                                            <input
+                                                type="checkbox"
+                                                name="columns"
+                                                value="show_age"
+                                                {% if 'show_age' in selected_columns %}checked{% endif %}
+                                            >
+                                            العمر
+                                        </label>
+                                        <label style="margin-right: 20px;">
+                                            <input
+                                                type="checkbox"
+                                                name="columns"
+                                                value="show_date_of_birth"
+                                                {% if 'show_date_of_birth' in selected_columns %}checked{% endif %}
+                                            >
+                                            تاريخ الميلاد
+                                        </label>
+                                        <label style="margin-right: 20px;">
+                                            <input
+                                                type="checkbox"
+                                                name="columns"
+                                                value="show_date_of_retirement"
+                                                {% if 'show_date_of_retirement' in selected_columns %}checked{% endif %}
+                                            >
+                                            تاريخ التقاعد
+                                        </label>
+                                        <label style="margin-right: 20px;">
+                                            <input
+                                                type="checkbox"
+                                                name="columns"
+                                                value="show_date_of_edara"
+                                                {% if 'show_date_of_edara' in selected_columns %}checked{% endif %}
+                                            >
+                                            تاريخ الإدارة
+                                        </label>
+                                        <label style="margin-right: 20px;">
+                                            <input
+                                                type="checkbox"
+                                                name="columns"
+                                                value="show_date_of_appointment"
+                                                {% if 'show_date_of_appointment' in selected_columns %}checked{% endif %}
+                                            >
+                                            تاريخ التعيين
+                                        </label>
+                                        <label style="margin-right: 20px;">
+                                            <input
+                                                type="checkbox"
+                                                name="columns"
+                                                value="show_id_number"
+                                                {% if 'show_id_number' in selected_columns %}checked{% endif %}
+                                            >
+                                            الرقم القومي
+                                        </label>
+                                        <label style="margin-right: 20px;">
+                                            <input
+                                                type="checkbox"
+                                                name="columns"
+                                                value="show_phone_number"
+                                                {% if 'show_phone_number' in selected_columns %}checked{% endif %}
+                                            >
+                                            رقم الهاتف
+                                        </label>
+                                        <label style="margin-right: 20px;">
+                                            <input
+                                                type="checkbox"
+                                                name="columns"
+                                                value="show_alt_phone_number"
+                                                {% if 'show_alt_phone_number' in selected_columns %}checked{% endif %}
+                                            >
+                                            رقم هاتف بديل
+                                        </label>
+                                        <label style="margin-right: 20px;">
+                                            <input
+                                                type="checkbox"
+                                                name="columns"
+                                                value="show_marital_status"
+                                                {% if 'show_marital_status' in selected_columns %}checked{% endif %}
+                                            >
+                                            الحالة الاجتماعية
+                                        </label>
+                                        <label style="margin-right: 20px;">
+                                            <input
+                                                type="checkbox"
+                                                name="columns"
+                                                value="show_gender"
+                                                {% if 'show_gender' in selected_columns %}checked{% endif %}
+                                            >
+                                            الجنس
+                                        </label>
+                                        <label style="margin-right: 20px;">
+                                            <input
+                                                type="checkbox"
+                                                name="columns"
+                                                value="show_governorate"
+                                                {% if 'show_governorate' in selected_columns %}checked{% endif %}
+                                            >
+                                            المحافظة
+                                        </label>
+                                        <label style="margin-right: 20px;">
+                                            <input
+                                                type="checkbox"
+                                                name="columns"
+                                                value="show_district"
+                                                {% if 'show_district' in selected_columns %}checked{% endif %}
+                                            >
+                                            المنطقة
+                                        </label>
+                                        <label style="margin-right: 20px;">
+                                            <input
+                                                type="checkbox"
+                                                name="columns"
+                                                value="show_address"
+                                                {% if 'show_address' in selected_columns %}checked{% endif %}
+                                            >
+                                            العنوان
+                                        </label>
+                                        <label style="margin-right: 20px;">
+                                            <input
+                                                type="checkbox"
+                                                name="columns"
+                                                value="show_health_status"
+                                                {% if 'show_health_status' in selected_columns %}checked{% endif %}
+                                            >
+                                            الحالة الصحية
+                                        </label>
+                                        <label style="margin-right: 20px;">
+                                            <input
+                                                type="checkbox"
+                                                name="columns"
+                                                value="show_departments"
+                                                {% if 'show_departments' in selected_columns %}checked{% endif %}
+                                            >
+                                            القسم
+                                        </label>
+                                        <label style="margin-right: 20px;">
+                                            <input
+                                                type="checkbox"
+                                                name="columns"
+                                                value="show_total_leave"
+                                                {% if 'show_total_leave' in selected_columns %}checked{% endif %}
+                                            >
+                                            الإجازات
+                                        </label>
+                                        <label style="margin-right: 20px;">
+                                            <input
+                                                type="checkbox"
+                                                name="columns"
+                                                value="show_rahatcounter"
+                                                {% if 'show_rahatcounter' in selected_columns %}checked{% endif %}
+                                            >
+                                            عداد الراحات
+                                        </label>
+                                    </div>
+                                </fieldset>
+
+                                <button type="submit">تصفية</button>
+                            </form>
+
+                            <!-- Employees Table -->
+                            <h2>قائمة الموظفين</h2>
+                            <table id="example1" dir="rtl" class="table table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>سيريال نمبر</th>
+                                        {% if 'show_rank' in selected_columns %}
+                                            <th>الدرجة</th>
+                                        {% endif %}
+                                        {% if 'show_name' in selected_columns %}
+                                            <th>الاسم</th>
+                                        {% endif %}
+                                        {% if 'show_nickname' in selected_columns %}
+                                            <th>اللقب</th>
+                                        {% endif %}
+                                        {% if 'show_operation' in selected_columns %}
+                                            <th>التشغيل</th>
+                                        {% endif %}
+                                        {% if 'show_police_number' in selected_columns %}
+                                            <th>رقم الشرطة</th>
+                                        {% endif %}
+                                        {% if 'show_insurance_number' in selected_columns %}
+                                            <th>رقم التأمين</th>
+                                        {% endif %}
+                                        {% if 'show_age' in selected_columns %}
+                                            <th>العمر</th>
+                                        {% endif %}
+                                        {% if 'show_date_of_birth' in selected_columns %}
+                                            <th>تاريخ الميلاد</th>
+                                        {% endif %}
+                                        {% if 'show_date_of_retirement' in selected_columns %}
+                                            <th>تاريخ التقاعد</th>
+                                        {% endif %}
+                                        {% if 'show_date_of_edara' in selected_columns %}
+                                            <th>تاريخ الإدارة</th>
+                                        {% endif %}
+                                        {% if 'show_date_of_appointment' in selected_columns %}
+                                            <th>تاريخ التعيين</th>
+                                        {% endif %}
+                                        {% if 'show_id_number' in selected_columns %}
+                                            <th>الرقم القومي</th>
+                                        {% endif %}
+                                        {% if 'show_phone_number' in selected_columns %}
+                                            <th>رقم الهاتف</th>
+                                        {% endif %}
+                                        {% if 'show_alt_phone_number' in selected_columns %}
+                                            <th>رقم هاتف بديل</th>
+                                        {% endif %}
+                                        {% if 'show_marital_status' in selected_columns %}
+                                            <th>الحالة الاجتماعية</th>
+                                        {% endif %}
+                                        {% if 'show_gender' in selected_columns %}
+                                            <th>الجنس</th>
+                                        {% endif %}
+                                        {% if 'show_governorate' in selected_columns %}
+                                            <th>المحافظة</th>
+                                        {% endif %}
+                                        {% if 'show_district' in selected_columns %}
+                                            <th>المنطقة</th>
+                                        {% endif %}
+                                        {% if 'show_address' in selected_columns %}
+                                            <th>العنوان</th>
+                                        {% endif %}
+                                        {% if 'show_health_status' in selected_columns %}
+                                            <th>الحالة الصحية</th>
+                                        {% endif %}
+                                        {% if 'show_departments' in selected_columns %}
+                                            <th>القسم</th>
+                                        {% endif %}
+                                        {% if 'show_total_leave' in selected_columns %}
+                                            <th>الإجازات</th>
+                                        {% endif %}
+                                        {% if 'show_rahatcounter' in selected_columns %}
+                                            <th>عداد الراحات</th>
+                                        {% endif %}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for employee in employees %}
+                                        <tr>
+                                            <td>{{ forloop.counter }}</td>
+                                            {% if 'show_rank' in selected_columns %}
+                                                <td>{{ employee.rank }}</td>
+                                            {% endif %}
+                                            {% if 'show_name' in selected_columns %}
+                                                <td>{{ employee.name }}</td>
+                                            {% endif %}
+                                            {% if 'show_nickname' in selected_columns %}
+                                                <td>{{ employee.nickname }}</td>
+                                            {% endif %}
+                                            {% if 'show_operation' in selected_columns %}
+                                                <td>{{ employee.operation }}</td>
+                                            {% endif %}
+                                            {% if 'show_police_number' in selected_columns %}
+                                                <td>{{ employee.police_number }}</td>
+                                            {% endif %}
+                                            {% if 'show_insurance_number' in selected_columns %}
+                                                <td>{{ employee.insurance_number }}</td>
+                                            {% endif %}
+                                            {% if 'show_age' in selected_columns %}
+                                                <td>{{ employee.age }}</td>
+                                            {% endif %}
+                                            {% if 'show_date_of_birth' in selected_columns %}
+                                                <td>{{ employee.date_of_birth|date:"Y/n/j" }}</td>
+                                            {% endif %}
+                                            {% if 'show_date_of_retirement' in selected_columns %}
+                                                <td>{{ employee.date_of_retirement|date:"Y/n/j" }}</td>
+                                            {% endif %}
+                                            {% if 'show_date_of_edara' in selected_columns %}
+                                                <td>{{ employee.date_of_edara|date:"Y/n/j" }}</td>
+                                            {% endif %}
+                                            {% if 'show_date_of_appointment' in selected_columns %}
+                                                <td>{{ employee.date_of_appointment|date:"Y/n/j" }}</td>
+                                            {% endif %}
+                                            {% if 'show_id_number' in selected_columns %}
+                                                <td>{{ employee.id_number }}</td>
+                                            {% endif %}
+                                            {% if 'show_phone_number' in selected_columns %}
+                                                <td>{{ employee.phone_number }}</td>
+                                            {% endif %}
+                                            {% if 'show_alt_phone_number' in selected_columns %}
+                                                <td>{{ employee.alt_phone_number }}</td>
+                                            {% endif %}
+                                            {% if 'show_marital_status' in selected_columns %}
+                                                <td>
+                                                    {% if employee.marital_status == '0' %}
+                                                        اعزب
+                                                    {% elif employee.marital_status == '1' %}
+                                                        متزوج
+                                                    {% elif employee.marital_status == '2' %}
+                                                        مطلق
+                                                    {% else %}
+                                                        {{ employee.marital_status }}
+                                                    {% endif %}
+                                                </td>
+                                            {% endif %}
+                                            {% if 'show_gender' in selected_columns %}
+                                                <td>{{ employee.gender }}</td>
+                                            {% endif %}
+                                            {% if 'show_governorate' in selected_columns %}
+                                                <td>{{ employee.governorate }}</td>
+                                            {% endif %}
+                                            {% if 'show_district' in selected_columns %}
+                                                <td>{{ employee.district }}</td>
+                                            {% endif %}
+                                            {% if 'show_address' in selected_columns %}
+                                                <td>{{ employee.address }}</td>
+                                            {% endif %}
+                                            {% if 'show_health_status' in selected_columns %}
+                                                <td>{{ employee.health_status }}</td>
+                                            {% endif %}
+                                            {% if 'show_departments' in selected_columns %}
+                                            <td>{{ employee.department.name }}</td>                                            {% endif %}
+                                            {% if 'show_total_leave' in selected_columns %}
+                                                <td>{{ employee.total_leave }}</td>
+                                            {% endif %}
+                                            {% if 'show_rahatcounter' in selected_columns %}
+                                                <td>{{ employee.rahatcounter }}</td>
+                                            {% endif %}
+                                        </tr>
+                                    {% empty %}
+                                        <tr>
+                                            <td colspan="30">لا توجد بيانات أفراد.</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% endblock %}
+                    </div>
+                </div>
+            </div>
+
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        $(document).ready(function() {
+            // Check if the table is already initialized, and destroy it if it is
+            if ($.fn.dataTable.isDataTable('#example1')) {
+                $('#example1').DataTable().destroy();
+            }
+        
+            // Initialize DataTable with Buttons
+            $('#example1').DataTable({
+                "language": {
+                    "search": "بحث:",
+                    "lengthMenu": "عرض _MENU_ سجلات",
+                    "info": "إظهار _START_ إلى _END_ من _TOTAL_ سجلات",
+                    "infoEmpty": "إظهار 0 إلى 0 من 0 سجلات",
+                    "infoFiltered": "(تم تصفيتها من _MAX_ سجلات)",
+                    "paginate": {
+                        "next": "التالي",
+                        "previous": "السابق"
+                    }
+                },
+                dom: 'Bfrtip',
+                buttons: [
+                    {
+                        extend: 'excel',
+                        text: 'تصدير إلى Excel',
+                        className: 'btn btn-success'
+                    },
+                    {
+                        extend: 'print',
+                        text: 'طباعة',
+                        className: 'btn btn-primary'
+                    },
+                    'copy', 'csv', 'pdf'
+                ]
+            });
+        });
+    </script>
+{% endblock %}

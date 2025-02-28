@@ -200,3 +200,64 @@ def employee_statement(request):
         'employees': employees,
         'selected_employee': selected_employee,
     })
+    
+    
+    
+    
+    
+
+
+
+
+@login_required(login_url='/login/')
+def filterdata(request):
+    # جلب الدرجات من نموذج Rank
+    ranks = Rank.objects.all()
+    # جلب جميع الأقسام من نموذج Department
+    departments = Department.objects.all()
+    # جلب القيم المميزة للفلاتر الأخرى
+    marital_statuses = Employee.objects.values_list('marital_status', flat=True).distinct()
+    genders = Employee.objects.values_list('gender', flat=True).distinct()
+    governorates = Employee.objects.values_list('governorate', flat=True).distinct()
+
+    # جلب الفلاتر المختارة من الـ GET request
+    selected_ranks = request.GET.getlist('rank')
+    selected_departments = request.GET.getlist('department')  # الآن يحتوي على أسماء الأقسام
+    selected_marital_statuses = request.GET.getlist('marital_status')
+    selected_genders = request.GET.getlist('gender')
+    selected_governorates = request.GET.getlist('governorate')
+    selected_columns = request.GET.getlist('columns')
+
+    # تعيين الأعمدة الافتراضية إذا لم يتم اختيار أي أعمدة
+    if not selected_columns:
+        selected_columns = ['show_sort_number', 'show_name', 'show_rank']
+
+    # جلب الموظفين وتطبيق الفلاتر
+    employees = Employee.objects.all().order_by('sort_number')
+    if selected_ranks:
+        employees = employees.filter(rank__in=selected_ranks)
+    if selected_departments:
+        employees = employees.filter(department__name__in=selected_departments)
+    if selected_marital_statuses:
+        employees = employees.filter(marital_status__in=selected_marital_statuses)
+    if selected_genders:
+        employees = employees.filter(gender__in=selected_genders)
+    if selected_governorates:
+        employees = employees.filter(governorate__in=selected_governorates)
+
+    context = {
+        'ranks': ranks,
+        'departments': departments,
+        'marital_statuses': marital_statuses,
+        'genders': genders,
+        'governorates': governorates,
+        'employees': employees,
+        'selected_ranks': selected_ranks,
+        'selected_departments': selected_departments,
+        'selected_marital_statuses': selected_marital_statuses,
+        'selected_genders': selected_genders,
+        'selected_governorates': selected_governorates,
+        'selected_columns': selected_columns,
+    }
+
+    return render(request, 'em_data/filterdata.html', context)
