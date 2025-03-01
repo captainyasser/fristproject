@@ -3,7 +3,7 @@ git codes
 cd K:\myproject\myproject
 git status
 git add .
-git commit -m "add edit_multi"
+git commit -m "end em data"
 git push origin master
 
 

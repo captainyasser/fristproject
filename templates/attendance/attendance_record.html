@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% load static %}
+{% load attendance_filters %}
+
+{% block title %}تسجيل الحضور{% endblock %}
+
+{% block content %}
+<div class="container" dir="rtl">
+    <h1>تسجيل الحضور</h1>
+    <form method="GET" class="mb-3">
+        <label for="start_date">اختر تاريخ البداية:</label>
+        <input type="date" id="start_date" name="start_date" value="{{ start_date|date:'Y-m-d' }}" onchange="this.form.submit()">
+    </form>
+    <form method="POST">
+        {% csrf_token %}
+        <table class="table table-bordered mt-3">
+            <thead>
+                <tr>
+                    <th>اسم الفرد</th>
+                    <th>رصيد الراحة</th>
+                    {% for day in days %}
+                        <th>{{ day|date:"D d/m" }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for employee in employees %}
+                    <tr>
+                        <td>{{ employee.name }}</td>
+                        <td>{{ employee.rahatcounter }}</td>
+                        {% for day in days %}
+                            {% with data=attendance_data|get_item:employee.id|get_item:day %}
+                            <td>
+                                <select name="state_{{ employee.id }}_{{ day|date:'Ymd' }}" class="form-control states" onchange="updateCheckboxes(this)">
+                                    <option value="_" {% if data.state == "_" %}selected{% endif %}>-</option>
+                                    <option value="نوبتجي" {% if data.state == "نوبتجي" %}selected{% endif %} style="background-color: #219C90; color: white;">نوبتجي</option>
+                                    <option value="يومي" {% if data.state == "يومي" %}selected{% endif %} style="background-color: #A7D397;">يومي</option>
+                                    <option value="راحة" {% if data.state == "راحة" %}selected{% endif %} style="background-color: #00A9FF; color: white;">راحة</option>
+                                    <option value="دورية" {% if data.state == "دورية" %}selected{% endif %} style="background-color: #C70039; color: white;">دورية</option>
+                                    <option value="ر بديلة" {% if data.state == "ر بديلة" %}selected{% endif %} style="background-color: #0a2df5; color: white;">ر بديلة</option>
+                                    <option value="طارئة" {% if data.state == "طارئة" %}selected{% endif %} style="background-color: #FF9130; color: white;">طارئة</option>
+                                    <option value="مأمورية" {% if data.state == "مأمورية" %}selected{% endif %} style="background-color: #eb5bad; color: white;">مأمورية</option>
+                                    <option value="مأمورية خ" {% if data.state == "مأمورية خ" %}selected{% endif %} style="background-color: #DA0C81; color: white;">مأمورية خ</option>
+                                    <option value="فرقة" {% if data.state == "فرقة" %}selected{% endif %} style="background-color: #BCA37F;">فرقة</option>
+                                    <option value="انتداب" {% if data.state == "انتداب" %}selected{% endif %} style="background-color: #713ABE; color: white;">انتداب</option>
+                                    <option value="مرضي" {% if data.state == "مرضي" %}selected{% endif %} style="background-color: yellow;">مرضي</option>
+                                    <option value="ج وضع" {% if data.state == "ج وضع" %}selected{% endif %} style="background-color: yellow;">ج وضع</option>
+                                    <option value="خاصه" {% if data.state == "خاصه" %}selected{% endif %} style="background-color: yellow;">خاصه</option>
+                                    <option value="8 صباحاً" {% if data.state == "8 صباحاً" %}selected{% endif %} style="background-color: #89CFF3;">8 صباحاً</option>
+                                    <option value="ت دوري" {% if data.state == "ت دوري" %}selected{% endif %} style="background-color: #FFF2D8;">ت دوري</option>
+                                    <option value="ت تكراري" {% if data.state == "ت تكراري" %}selected{% endif %} style="background-color: #EAD7BB;">ت تكراري</option>
+                                    <option value="منحة" {% if data.state == "منحة" %}selected{% endif %} style="background-color: #A0E9FF;">منحة</option>
+                                    <option value="عطلة" {% if data.state == "عطلة" %}selected{% endif %} style="background-color: #CDF5FD;">عطلة</option>
+                                    <option value="غياب" {% if data.state == "غياب" %}selected{% endif %} style="background-color: black; color: white;">غياب</option>
+                                    <option value="قرار66" {% if data.state == "قرار66" %}selected{% endif %} style="background-color: yellow;">قرار66</option>
+                                </select>
+                                <input type="checkbox" name="comfort_{{ employee.id }}_{{ day|date:'Ymd' }}" value="1" 
+                                    {% if data.comfort_adjustment == 1 %}checked{% endif %}
+                                    {% if data.state == "راحة" %}disabled{% endif %}
+                                    class="comfort-checkbox">
+                                <input type="checkbox" name="food_{{ employee.id }}_{{ day|date:'Ymd' }}" 
+                                    {% if data.food %}checked{% endif %}
+                                    class="food-checkbox">
+                            </td>
+                            {% endwith %}
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <button type="submit" class="btn btn-primary">حفظ التغييرات</button>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .states { width: 100px; display: inline-block; }
+    input[type="checkbox"] { margin-right: 5px; }
+    select.states option { padding: 5px; }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateCheckboxes(selectElement) {
+    const comfortCheckbox = selectElement.parentElement.querySelector('.comfort-checkbox');
+    const foodCheckbox = selectElement.parentElement.querySelector('.food-checkbox');
+    if (selectElement.value === 'نوبتجي') {
+        comfortCheckbox.checked = true;
+        foodCheckbox.checked = true;
+        comfortCheckbox.disabled = false;
+    } else if (selectElement.value === 'راحة') {
+        comfortCheckbox.checked = false;
+        comfortCheckbox.disabled = true;
+        foodCheckbox.checked = false;
+    } else {
+        comfortCheckbox.disabled = false;
+    }
+}
+</script>
+{% endblock %}
