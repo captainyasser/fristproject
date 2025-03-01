@@ -84,7 +84,7 @@ def attendance_record(request):
     
     
     
-    from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponseRedirect
 from django.core.paginator import Paginator
@@ -204,6 +204,8 @@ def attendance_3w(request):
 
 
 
+
+
 @login_required(login_url='/')
 def update_attendance(request):
     if request.method == 'POST':
@@ -212,6 +214,7 @@ def update_attendance(request):
         selected_value = request.POST.get('selected_value')
         comfort_adjustment = request.POST.get('comfort_adjustment')
         food = request.POST.get('food')
+        source = request.POST.get('source')
 
         try:
             employee = Employee.objects.get(id=employee_id)
@@ -229,42 +232,42 @@ def update_attendance(request):
             if selected_value:
                 attendance.state = selected_value
 
-            # التعامل مع "نوبتجي"
-            if selected_value == 'نوبتجي':
-                attendance.food = True  # دائمًا True عند اختيار "نوبتجي"
-                if old_state != 'راحة':
+            # التعامل مع اختيار القائمة المنسدلة
+            if source == 'select':
+                if selected_value == 'نوبتجي':
+                    attendance.food = True
+                    if old_comfort == -1:
+                        employee.rahatcounter += 2
+                    elif old_comfort == 0:
+                        employee.rahatcounter += 1
+                    attendance.comfort_adjustment = 1
+                elif selected_value in ['راحة', 'ر بديلة', '8 صباحاً']:  # إضافة الحالتين
+                    attendance.food = False
                     if old_comfort == 0:
-                        employee.rahatcounter += 1  # زيادة بمقدار 1
-                        attendance.comfort_adjustment = 1  # تعيين إلى 1
-                    # إذا كان old_comfort = 1، لا تغيير
-            # التعامل مع "راحة"
-            elif selected_value == 'راحة' and old_state != 'راحة':
-                if old_comfort == 0:
-                    employee.rahatcounter -= 1  # تقليل بمقدار 1
-                elif old_comfort == 1:
-                    employee.rahatcounter -= 2  # تقليل بمقدار 2
-                    attendance.comfort_adjustment = 0  # تعيين إلى 0
-                attendance.food = False  # دائمًا False عند "راحة"
-            # التعامل مع التبديل من "نوبتجي" إلى حالة غير "راحة"
-            elif old_state == 'نوبتجي' and selected_value != 'راحة':
-                if old_comfort == 1:
-                    employee.rahatcounter -= 1  # تقليل بمقدار 1
-                    attendance.comfort_adjustment = 0  # تعيين إلى 0
-                # إذا كان old_comfort = 0، لا تغيير
-            else:
+                        employee.rahatcounter -= 1
+                    elif old_comfort == 1:
+                        employee.rahatcounter -= 2
+                    attendance.comfort_adjustment = -1
+                else:
+                    attendance.food = False
+                    if old_comfort == 1:
+                        employee.rahatcounter -= 1
+                    elif old_comfort == -1:
+                        employee.rahatcounter += 1
+                    attendance.comfort_adjustment = 0
+
+            # التعامل مع التغييرات اليدوية
+            if source == 'checkbox':
                 if food is not None:
                     attendance.food = (food == '1')
                 if comfort_adjustment is not None:
                     new_comfort = int(comfort_adjustment)
-                    if old_comfort != new_comfort and selected_value != 'راحة':
-                        if old_comfort == 1 and new_comfort == 0:
-                            employee.rahatcounter -= 1
-                        elif old_comfort == 0 and new_comfort == 1:
+                    if old_comfort != new_comfort:
+                        if old_comfort == 0 and new_comfort == 1:
                             employee.rahatcounter += 1
+                        elif old_comfort == 1 and new_comfort == 0:
+                            employee.rahatcounter -= 1
                     attendance.comfort_adjustment = new_comfort
-
-            if selected_value != 'راحة' and old_state == 'راحة':
-                employee.rahatcounter += 1  # زيادة عند الخروج من "راحة"
 
             attendance.save()
             employee.save()
@@ -276,10 +279,6 @@ def update_attendance(request):
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
     return JsonResponse({'success': False, 'error': 'Invalid request'})
-
-
-
-
 
 
 

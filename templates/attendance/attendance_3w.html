@@ -237,7 +237,6 @@
 
 
 
-
 {% block scripts %}
 <script>
     function changeDate(days) {
@@ -253,7 +252,7 @@
         'يومي': '#A7D397',
         'راحة': '#00A9FF',
         'دورية': '#C70039',
-        'ر بديلة': '#0a2df5',
+        'ر بديلة': '#0a2df5', // نفس لون "راحة" أو يمكن تغييره
         'طارئة': '#FF9130',
         'مأمورية': '#eb5bad',
         'مأمورية خ': '#DA0C81',
@@ -262,7 +261,7 @@
         'مرضي': 'yellow',
         'ج وضع': 'yellow',
         'خاصه': 'yellow',
-        '8 صباحاً': '#89CFF3',
+        '8 صباحاً': '#89CFF3', // نفس لون "راحة" أو يمكن تغييره
         'ت دوري': '#FFF2D8',
         'ت تكراري': '#EAD7BB',
         'منحة': '#A0E9FF',
@@ -270,18 +269,6 @@
         'غياب': 'black',
         'قرار66': 'yellow'
     };
-
-    function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
 
     document.querySelectorAll('select.att-states').forEach(selectElement => {
         const selectedValue = selectElement.value;
@@ -291,120 +278,109 @@
         const selectedDate = selectElement.name.split('_')[3];
         const comfortCheckbox = document.querySelector(`input[name="comfort_${employeeId}_${selectedDate}"]`);
         const foodCheckbox = document.querySelector(`input[name="food_${employeeId}_${selectedDate}"]`);
-        if (selectedValue === 'راحة') {
-            if (comfortCheckbox) comfortCheckbox.disabled = true;
-            if (foodCheckbox) foodCheckbox.disabled = true;
-        }
 
-        const debouncedSubmit = debounce((employeeId, selectedDate, comfortValue, foodValue) => {
-            submitAttendanceForm(selectElement, employeeId, selectedDate, comfortValue, foodValue);
-        }, 300);
+        let isRequestPending = false;
+
+        async function submitAttendanceForm(employeeId, selectedDate, comfortValue, foodValue, source) {
+            if (isRequestPending) return;
+            isRequestPending = true;
+
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            const selectElement = document.querySelector(`select[name="attendance_state_${employeeId}_${selectedDate}"]`);
+
+            const formData = new FormData();
+            formData.append('employee_id', employeeId);
+            formData.append('selected_date', selectedDate);
+            if (selectElement) {
+                const selectedValue = selectElement.value;
+                formData.append('selected_value', selectedValue);
+            }
+            if (comfortValue !== null && comfortValue !== undefined) {
+                formData.append('comfort_adjustment', comfortValue);
+            }
+            if (foodValue !== null && foodValue !== undefined) {
+                formData.append('food', foodValue ? '1' : '0');
+            }
+            formData.append('source', source);
+
+            console.log('Sending:', {
+                employee_id: employeeId,
+                selected_date: selectedDate,
+                selected_value: selectElement ? selectElement.value : null,
+                comfort_adjustment: comfortValue !== null && comfortValue !== undefined ? comfortValue : 'not sent',
+                food: foodValue !== null && foodValue !== undefined ? (foodValue ? '1' : '0') : 'not sent',
+                source: source
+            });
+
+            try {
+                const response = await fetch("{% url 'update_attendance' %}", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                    },
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.success) {
+                    console.log('Attendance updated successfully');
+                    const rahatcounterElement = document.getElementById(`rahatcounter_${employeeId}`);
+                    if (rahatcounterElement && data.rahatcounter !== undefined) {
+                        rahatcounterElement.textContent = data.rahatcounter;
+                        updateButtonColor(employeeId, data.rahatcounter);
+                    }
+                } else {
+                    console.error('Error updating attendance:', data.error);
+                }
+            } catch (error) {
+                console.error('AJAX error:', error);
+            } finally {
+                isRequestPending = false;
+            }
+        }
 
         selectElement.addEventListener('change', function () {
             const newValue = this.value;
             this.style.backgroundColor = stateColors[newValue] || 'white';
 
-            const comfortCheckbox = document.querySelector(`input[name="comfort_${employeeId}_${selectedDate}"]`);
-            const foodCheckbox = document.querySelector(`input[name="food_${employeeId}_${selectedDate}"]`);
-
             if (newValue === 'نوبتجي') {
-                if (foodCheckbox) {
-                    foodCheckbox.checked = true;
-                    foodCheckbox.disabled = false;
-                }
+                if (foodCheckbox) foodCheckbox.checked = true;
                 if (comfortCheckbox) {
                     comfortCheckbox.checked = true;
                     comfortCheckbox.disabled = false;
                 }
-                debouncedSubmit(employeeId, selectedDate, 1, true);
-            } else if (newValue === 'راحة') {
-                if (foodCheckbox) {
-                    foodCheckbox.checked = false;
-                    foodCheckbox.disabled = true;
-                }
+                submitAttendanceForm(employeeId, selectedDate, 1, true, 'select');
+            } else if (newValue === 'راحة' || newValue === 'ر بديلة' || newValue === '8 صباحاً') { // إضافة الحالتين
+                if (foodCheckbox) foodCheckbox.checked = false;
                 if (comfortCheckbox) {
                     comfortCheckbox.checked = false;
-                    comfortCheckbox.disabled = true;
+                    comfortCheckbox.disabled = true; // تعطيل comfortCheckbox
                 }
-                debouncedSubmit(employeeId, selectedDate, 0, false);
+                submitAttendanceForm(employeeId, selectedDate, -1, false, 'select');
             } else {
-                if (foodCheckbox) {
-                    foodCheckbox.disabled = false;
-                }
+                if (foodCheckbox) foodCheckbox.checked = false;
                 if (comfortCheckbox) {
+                    comfortCheckbox.checked = false;
                     comfortCheckbox.disabled = false;
                 }
-                // عند التبديل من "نوبتجي" إلى حالة أخرى غير "راحة"، فرض comfort=0
-                const oldValue = this.getAttribute('data-old-value') || '_';
-                if (oldValue === 'نوبتجي') {
-                    debouncedSubmit(employeeId, selectedDate, 0, null); // فرض comfort=0
-                } else {
-                    debouncedSubmit(employeeId, selectedDate); // ترك القيم كما هي
-                }
+                submitAttendanceForm(employeeId, selectedDate, 0, false, 'select');
             }
-            this.setAttribute('data-old-value', newValue); // حفظ القيمة السابقة
+            this.setAttribute('data-old-value', newValue);
         });
 
-        // منع أحداث onchange للمربعات من التداخل
-        if (comfortCheckbox) comfortCheckbox.removeEventListener('change', submitAttendanceForm);
-        if (foodCheckbox) foodCheckbox.removeEventListener('change', submitAttendanceForm);
+        if (comfortCheckbox) {
+            comfortCheckbox.addEventListener('change', function () {
+                if (this.disabled) return;
+                const comfortValue = this.checked ? 1 : 0;
+                submitAttendanceForm(employeeId, selectedDate, comfortValue, null, 'checkbox');
+            });
+        }
+        if (foodCheckbox) {
+            foodCheckbox.addEventListener('change', function () {
+                const foodValue = this.checked ? true : false;
+                submitAttendanceForm(employeeId, selectedDate, null, foodValue, 'checkbox');
+            });
+        }
     });
-
-    function submitAttendanceForm(element, employeeId, selectedDate, comfortValue, foodValue) {
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        const selectElement = document.querySelector(`select[name="attendance_state_${employeeId}_${selectedDate}"]`);
-        const comfortCheckbox = document.querySelector(`input[name="comfort_${employeeId}_${selectedDate}"]`);
-        const foodCheckbox = document.querySelector(`input[name="food_${employeeId}_${selectedDate}"]`);
-
-        const selectedValue = selectElement ? selectElement.value : null;
-        const currentComfort = comfortValue !== undefined ? comfortValue : (comfortCheckbox ? (comfortCheckbox.checked ? 1 : 0) : null);
-        const currentFood = foodValue !== undefined ? (foodValue ? '1' : '0') : (foodCheckbox ? (foodCheckbox.checked ? '1' : '0') : null);
-
-        const formData = new FormData();
-        formData.append('employee_id', employeeId);
-        formData.append('selected_date', selectedDate);
-        if (selectedValue !== null) {
-            formData.append('selected_value', selectedValue);
-        }
-        if (currentComfort !== null) {
-            formData.append('comfort_adjustment', currentComfort);
-        }
-        if (currentFood !== null) {
-            formData.append('food', currentFood);
-        }
-
-        console.log('Sending:', {
-            employee_id: employeeId,
-            selected_date: selectedDate,
-            selected_value: selectedValue,
-            comfort_adjustment: currentComfort,
-            food: currentFood
-        });
-
-        fetch("{% url 'update_attendance' %}", {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrfToken,
-            },
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                console.log('Attendance updated successfully');
-                const rahatcounterElement = document.getElementById(`rahatcounter_${employeeId}`);
-                if (rahatcounterElement && data.rahatcounter !== undefined) {
-                    rahatcounterElement.textContent = data.rahatcounter;
-                    updateButtonColor(employeeId, data.rahatcounter);
-                }
-            } else {
-                console.error('Error updating attendance:', data.error);
-            }
-        })
-        .catch(error => {
-            console.error('AJAX error:', error);
-        });
-    }
 
     function updateButtonColor(employeeId, rahatcounter) {
         const button = document.querySelector(`#rahatcounter_${employeeId}`).nextElementSibling;
