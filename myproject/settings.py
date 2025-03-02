@@ -97,17 +97,36 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 #     }
 # }
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'yasser',
+#         'USER': 'root',
+#         'PASSWORD': '',
+#         'HOST': 'localhost', 
+#         'PORT': '3306',
+#         'OPTIONS': {
+#             'charset': 'utf8mb4',
+#         },
+#     }
+# }
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'yasser',
         'USER': 'root',
         'PASSWORD': '',
-        'HOST': 'localhost', 
+        'HOST': 'localhost',
         'PORT': '3306',
-        'OPTIONS': {
-            'charset': 'utf8mb4',
-        },
+    },
+    'em': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'em',
+        'USER': 'root',
+        'PASSWORD': '',
+        'HOST': 'localhost',
+        'PORT': '3306',
     }
 }
 

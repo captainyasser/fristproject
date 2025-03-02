@@ -43,6 +43,8 @@ class Attendance(models.Model):
         choices=[(0, 'لا تغيير'), (1, '+1'), (-1, '-1')],
         verbose_name="تعديل رصيد الراحة"
     )
+    
+    in_or_out = models.CharField(max_length=10, choices=[('in', 'In'), ('going', 'Going'), ('out', 'Out')], default='') 
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ الإنشاء")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="تاريخ التحديث")
 
