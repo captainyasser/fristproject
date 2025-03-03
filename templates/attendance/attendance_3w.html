@@ -1,3 +1,6 @@
+ممتاز
+ما رأيك في الكود التالي هل متكامل مع الكود السابق
+
 {% extends "base.html" %}
 {% load static attendance_filters %}
 
@@ -198,6 +201,10 @@
     </div>
 {% endblock %}
 
+
+
+
+
 {% block scripts %}
 <script>
     const stateColors = {
@@ -224,6 +231,8 @@
         'قرار66': 'yellow'
     };
 
+    let attendanceData = {}; // متغير عالمي لتخزين البيانات
+
     function changeDate(days) {
         const startDateInput = document.getElementById('start_date');
         const currentDate = new Date(startDateInput.value);
@@ -238,18 +247,39 @@
     async function fetchAttendanceData() {
         const startDate = document.getElementById('start_date').value;
         const numDays = document.getElementById('num_days').value;
-        const response = await fetch(`{% url 'get_attendance_data' %}?start_date=${startDate}&num_days=${numDays}`);
+        const page = new URLSearchParams(window.location.search).get('page') || '1';
+        const response = await fetch(`{% url 'get_attendance_data' %}?start_date=${startDate}&num_days=${numDays}&page=${page}`);
         const data = await response.json();
         if (data.success) {
-            populateAttendanceCells(data.attendance_data);
+            attendanceData = data.attendance_data;
+            observeRows(); // بدء مراقبة الصفوف
             addEventListeners();
         } else {
             console.error('Error fetching attendance data:', data.error);
         }
     }
 
-    function populateAttendanceCells(attendanceData) {
-        document.querySelectorAll('.attendance-cell').forEach(cell => {
+    function observeRows() {
+        const rows = document.querySelectorAll('tbody tr');
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const row = entry.target;
+                    const cells = row.querySelectorAll('.attendance-cell:not(.loaded)');
+                    populateAttendanceCellsForRow(cells);
+                    cells.forEach(cell => cell.classList.add('loaded'));
+                    observer.unobserve(row); // إيقاف المراقبة بعد التحميل
+                }
+            });
+        }, {
+            rootMargin: '100px' // تحميل الصفوف قبل ظهورها بـ 100 بكسل
+        });
+
+        rows.forEach(row => observer.observe(row));
+    }
+
+    function populateAttendanceCellsForRow(cells) {
+        cells.forEach(cell => {
             const employeeId = cell.dataset.employeeId;
             const date = cell.dataset.date;
             const dayData = attendanceData[employeeId]?.[date] || { state: '_', comfort_adjustment: 0, food: false };
@@ -296,7 +326,6 @@
             comfortCheckbox.checked = dayData.comfort_adjustment === 1;
             comfortCheckbox.className = 'att-comfort-checkbox';
             comfortCheckbox.title = 'يستحق راحة';
-            // تعطيل مربع الراحة للحالات: "راحة"، "ر بديلة"، "8 صباحاً"
             if (dayData.state === 'راحة' || dayData.state === 'ر بديلة' || dayData.state === '8 صباحاً') {
                 comfortCheckbox.disabled = true;
             }
@@ -343,8 +372,6 @@
                 formData.append(`changes[${key}][source]`, change.source);
             }
 
-            console.log('Sending data:', Object.fromEntries(formData));
-
             try {
                 const response = await fetch("{% url 'update_attendance' %}", {
                     method: 'POST',
@@ -353,7 +380,6 @@
                 });
                 const data = await response.json();
                 if (data.success) {
-                    console.log('Update successful:', data);
                     if (data.updates) {
                         Object.entries(data.updates).forEach(([key, update]) => {
                             const [empId, date] = key.split('_');
@@ -425,7 +451,6 @@
                     }
                     submitAttendanceForm(employeeId, selectedDate, 1, true, 'select');
                 } else if (newValue === 'راحة' || newValue === 'ر بديلة' || newValue === '8 صباحاً') {
-                    // تعطيل مربع الراحة للحالات الثلاث
                     if (foodCheckbox) foodCheckbox.checked = false;
                     if (comfortCheckbox) {
                         comfortCheckbox.checked = false;
@@ -474,10 +499,6 @@
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
         const url = "{% url 'reset_rahatcounter' %}";
     
-        console.log('Attempting to reset rahatcounter for employee:', employeeId);
-        console.log('URL:', url);
-        console.log('CSRF Token:', csrfToken);
-    
         try {
             const response = await fetch(url, {
                 method: 'POST',
@@ -489,7 +510,7 @@
             });
     
             if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status} - ${response.statusText}`);
+                throw new Error(`HTTP error! Status: ${response.status}`);
             }
     
             const data = await response.json();
@@ -500,14 +521,9 @@
                     updateButtonColor(employeeId, 0);
                 }
             } else {
-                console.error('Server returned an error:', data.error);
                 alert('خطأ أثناء تصفير عداد الراحات: ' + data.error);
             }
         } catch (error) {
-            console.error('AJAX error details:', {
-                message: error.message,
-                stack: error.stack
-            });
             alert('حدث خطأ في الاتصال بالخادم: ' + error.message);
         }
     }

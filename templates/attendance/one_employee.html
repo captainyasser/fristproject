@@ -1,0 +1,487 @@
+{% extends "base.html" %}
+{% load static attendance_filters %}
+
+{% block title %}
+بيانات فرد واحد
+{% endblock %}
+
+{% block styles %}
+    <style>
+        select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-color: white;
+            padding: 2px;
+            border: 1px solid #ccc;
+        }
+
+        option[value="_"] { background-color: white; color: black; }
+        option[value="نوبتجي"] { background-color: #219C90; color: white; }
+        option[value="يومي"] { background-color: #A7D397; color: black; }
+        option[value="راحة"] { background-color: #00A9FF; color: white; }
+        option[value="دورية"] { background-color: #C70039; color: white; }
+        option[value="ر بديلة"] { background-color: #0a2df5; color: white; }
+        option[value="طارئة"] { background-color: #FF9130; color: white; }
+        option[value="مأمورية"] { background-color: #eb5bad; color: white; }
+        option[value="مأمورية خ"] { background-color: #DA0C81; color: white; }
+        option[value="فرقة"] { background-color: #BCA37F; color: black; }
+        option[value="انتداب"] { background-color: #713ABE; color: white; }
+        option[value="مرضي"] { background-color: yellow; color: black; }
+        option[value="ج وضع"] { background-color: yellow; color: black; }
+        option[value="خاصه"] { background-color: yellow; color: black; }
+        option[value="8 صباحاً"] { background-color: #89CFF3; color: black; }
+        option[value="ت دوري"] { background-color: #FFF2D8; color: black; }
+        option[value="ت تكراري"] { background-color: #EAD7BB; color: black; }
+        option[value="منحة"] { background-color: #A0E9FF; color: black; }
+        option[value="عطلة"] { background-color: #CDF5FD; color: black; }
+        option[value="غياب"] { background-color: black; color: white; }
+        option[value="قرار66"] { background-color: yellow; color: black; }
+
+        .att-states {
+            margin: 0px;
+            padding: 0px;
+            font-size: 10px;
+            width: 100%;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        thead th {
+            position: sticky;
+            top: 0;
+            background-color: #f2f2f2;
+            z-index: 10;
+        }
+        table th {
+            border: 1px solid #fff;
+            text-align: center;
+            font-size: 10px;
+            color: #000;
+            padding: 0px;
+        }
+        table td {
+            border: 1px solid #fff;
+            text-align: center;
+            font-size: 13px;
+            color: #000;
+            padding: 15px 0px;
+            font-weight: bolder;
+        }
+        table tr:nth-child(odd) {
+            background-color: rgb(236, 237, 238);
+        }
+        table tr:nth-child(even) {
+            background-color: rgb(171, 211, 214);
+        }
+        input[type="checkbox"] {
+            margin-right: 5px;
+            width: 7px;
+            height: 7px;
+            accent-color: #219C90;
+        }
+        .employee-info {
+            margin-bottom: 20px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div dir="rtl">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12">
+                    <form method="get" action="{% url 'one_employee' %}" id="employee-form">
+                        <label for="employee">اختر الفرد:</label>
+                        <select name="employee" id="employee" onchange="updateDatesAndSubmit(this)" required>
+                            <option value="">-- اختر فرد --</option>
+                            {% for emp in employees %}
+                                <option value="{{ emp.id }}" {% if emp.id|stringformat:'s' == selected_employee %}selected{% endif %}>
+                                    {{ emp.nickname }} ({{ emp.operation }})
+                                </option>
+                            {% endfor %}
+                        </select>
+
+                        <label for="start_date">تاريخ البداية:</label>
+                        <input type="date" id="start_date" name="start_date" value="{{ start_date|date:'Y-m-d' }}" required>
+
+                        <label for="end_date">تاريخ النهاية:</label>
+                        <input type="date" id="end_date" name="end_date" value="{{ end_date|date:'Y-m-d' }}" required>
+
+                        <input type="submit" value="عرض" class="btn btn-primary">
+                    </form>
+
+                    {% if selected_employee and week_days_chunked %}
+                    <div class="employee-info">
+                        <span>الاسم: {{ employee.nickname }} ({{ employee.operation }})</span>
+                        <span style="margin-right: 20px;"> | الراحات: </span>
+                        <span id="rahatcounter_{{ employee.id }}">{{ employee.rahatcounter }}</span>
+                        <button type="button" 
+                                onclick="confirmReset('{{ employee.id }}')" 
+                                class="btn btn-sm 
+                                    {% if employee.rahatcounter == 0 %}btn-success
+                                    {% elif employee.rahatcounter > 0 %}btn-warning
+                                    {% else %}btn-danger{% endif %}">
+                            ـ
+                        </button>
+                    </div>
+
+                    <form method="post" class="mainform">
+                        {% csrf_token %}
+                        {% for week in week_days_chunked %}
+                        <table class="attendance-table">
+                            <thead>
+                                <tr>
+                                    {% for day in week %}
+                                    <th style="{% if day == today %}background-color: #F0E68C;{% endif %}">
+                                        {{ day|date:"l"|ar_day }}<br>{{ day|date:'Y-m-d' }}
+                                    </th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    {% for day in week %}
+                                    <td style="{% if day == today %}background-color:rgb(171, 211, 214);{% endif %}{% if day|date:'l'|ar_day == 'الجمعة' %}border-left: 3px solid #F26B0F;{% endif %}"
+                                        data-employee-id="{{ employee.id }}"
+                                        data-date="{{ day|date:'Ymd' }}"
+                                        class="attendance-cell">
+                                    </td>
+                                    {% endfor %}
+                                </tr>
+                            </tbody>
+                        </table>
+                        {% endfor %}
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const stateColors = {
+        '_': 'white',
+        'نوبتجي': '#219C90',
+        'يومي': '#A7D397',
+        'راحة': '#00A9FF',
+        'دورية': '#C70039',
+        'ر بديلة': '#0a2df5',
+        'طارئة': '#FF9130',
+        'مأمورية': '#eb5bad',
+        'مأمورية خ': '#DA0C81',
+        'فرقة': '#BCA37F',
+        'انتداب': '#713ABE',
+        'مرضي': 'yellow',
+        'ج وضع': 'yellow',
+        'خاصه': 'yellow',
+        '8 صباحاً': '#89CFF3',
+        'ت دوري': '#FFF2D8',
+        'ت تكراري': '#EAD7BB',
+        'منحة': '#A0E9FF',
+        'عطلة': '#CDF5FD',
+        'غياب': 'black',
+        'قرار66': 'yellow'
+    };
+
+    let attendanceData = {};
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (document.querySelector('.attendance-table')) {
+            fetchAttendanceData();
+        }
+    });
+
+    function updateDatesAndSubmit(select) {
+        if (!select.value) return;
+
+        const today = new Date();
+        const operation = select.options[select.selectedIndex].text.split('(')[1].split(')')[0];
+        const operationDayMap = {
+            'السبت': 5, 'الأحد': 6, 'الاثنين': 0, 'الثلاثاء': 1,
+            'الأربعاء': 2, 'الخميس': 3, 'الجمعة': 4
+        };
+
+        let startDate, endDate;
+
+        if (operation in operationDayMap) {
+            // إذا كان operation يومًا من أيام الأسبوع
+            const targetWeekday = operationDayMap[operation];
+            const daysToTarget = (today.getDay() - targetWeekday + 7) % 7;
+            startDate = new Date(today);
+            startDate.setDate(today.getDate() - daysToTarget - 34); // 5 أسابيع للخلف
+
+            endDate = new Date(today);
+            endDate.setMonth(endDate.getMonth() + 2);
+            endDate.setDate(0); // آخر يوم في الشهر التالي
+        } else {
+            // إذا لم يكن operation يومًا من أيام الأسبوع
+            startDate = new Date(today);
+            startDate.setMonth(startDate.getMonth() - 1); // الشهر الماضي
+            startDate.setDate(1); // أول يوم في الشهر الماضي
+            while (startDate.getDay() !== 6) { // السبت = 5
+                startDate.setDate(startDate.getDate() + 1); // تحريك التاريخ حتى يصبح سبتًا
+            }
+
+            endDate = new Date(today);
+            const daysToFriday = (5 - endDate.getDay() + 7) % 7; // الجمعة = 5
+            endDate.setDate(endDate.getDate() + daysToFriday + 7); // آخر يوم (الجمعة) في الأسبوع التالي
+        }
+
+        document.getElementById('start_date').value = startDate.toISOString().split('T')[0];
+        document.getElementById('end_date').value = endDate.toISOString().split('T')[0];
+        document.getElementById('employee-form').submit();
+    }
+
+    async function fetchAttendanceData() {
+        const startDate = document.getElementById('start_date').value;
+        const endDate = document.getElementById('end_date').value;
+        const employeeId = document.getElementById('employee').value;
+
+        try {
+            const response = await fetch(`{% url 'get_attendance_data' %}?start_date=${startDate}&end_date=${endDate}&employee_id=${employeeId}`);
+            const data = await response.json();
+            if (data.success) {
+                attendanceData = data.attendance_data;
+                populateAllTables();
+                setupEventListeners();
+            } else {
+                console.error('Error fetching attendance data:', data.error);
+            }
+        } catch (error) {
+            console.error('Fetch error:', error);
+        }
+    }
+
+    function populateAllTables() {
+        document.querySelectorAll('.attendance-table .attendance-cell').forEach(cell => {
+            const employeeId = cell.dataset.employeeId;
+            const date = cell.dataset.date;
+            const dayData = attendanceData[employeeId]?.[date] || { state: '_', comfort_adjustment: 0, food: false };
+
+            cell.innerHTML = '';
+
+            const select = document.createElement('select');
+            select.className = 'att-states';
+            select.name = `attendance_state_${employeeId}_${date}`;
+            const options = [
+                '_', 'نوبتجي', 'يومي', 'راحة', 'دورية', 'ر بديلة', 'طارئة', 'مأمورية', 'مأمورية خ', 
+                'فرقة', 'انتداب', 'مرضي', 'ج وضع', 'خاصه', '8 صباحاً', 'ت دوري', 'ت تكراري', 'منحة', 
+                'عطلة', 'غياب', 'قرار66'
+            ].map(value => ({
+                value,
+                text: value === '_' ? '-' : value
+            }));
+            options.forEach(opt => {
+                const option = document.createElement('option');
+                option.value = opt.value;
+                option.text = opt.text;
+                if (opt.value === dayData.state) option.selected = true;
+                select.appendChild(option);
+            });
+            select.style.backgroundColor = stateColors[dayData.state] || 'white';
+
+            const comfortCheckbox = document.createElement('input');
+            comfortCheckbox.type = 'checkbox';
+            comfortCheckbox.name = `comfort_${employeeId}_${date}`;
+            comfortCheckbox.value = '1';
+            comfortCheckbox.checked = dayData.comfort_adjustment === 1;
+            comfortCheckbox.className = 'att-comfort-checkbox';
+            comfortCheckbox.title = 'يستحق راحة';
+            if (['راحة', 'ر بديلة', '8 صباحاً'].includes(dayData.state)) {
+                comfortCheckbox.disabled = true;
+            }
+
+            const foodCheckbox = document.createElement('input');
+            foodCheckbox.type = 'checkbox';
+            foodCheckbox.name = `food_${employeeId}_${date}`;
+            foodCheckbox.checked = dayData.food;
+            foodCheckbox.className = 'att-food-checkbox';
+            foodCheckbox.title = 'يحصل على تعيين';
+
+            cell.appendChild(select);
+            cell.appendChild(comfortCheckbox);
+            cell.appendChild(foodCheckbox);
+        });
+    }
+
+    function setupEventListeners() {
+        document.querySelectorAll('.mainform').forEach(form => {
+            form.addEventListener('change', event => {
+                const target = event.target;
+                const cell = target.closest('.attendance-cell');
+                if (!cell) return;
+
+                const employeeId = cell.dataset.employeeId;
+                const selectedDate = cell.dataset.date;
+
+                if (target.classList.contains('att-states')) {
+                    const newValue = target.value;
+                    target.style.backgroundColor = stateColors[newValue] || 'white';
+
+                    const comfortCheckbox = cell.querySelector('.att-comfort-checkbox');
+                    const foodCheckbox = cell.querySelector('.att-food-checkbox');
+
+                    if (newValue === 'نوبتجي') {
+                        if (foodCheckbox) foodCheckbox.checked = true;
+                        if (comfortCheckbox) {
+                            comfortCheckbox.checked = true;
+                            comfortCheckbox.disabled = false;
+                        }
+                        submitAttendanceForm(employeeId, selectedDate, 1, true, 'select');
+                    } else if (['راحة', 'ر بديلة', '8 صباحاً'].includes(newValue)) {
+                        if (foodCheckbox) foodCheckbox.checked = false;
+                        if (comfortCheckbox) {
+                            comfortCheckbox.checked = false;
+                            comfortCheckbox.disabled = true;
+                        }
+                        submitAttendanceForm(employeeId, selectedDate, -1, false, 'select');
+                    } else {
+                        if (foodCheckbox) foodCheckbox.checked = false;
+                        if (comfortCheckbox) {
+                            comfortCheckbox.checked = false;
+                            comfortCheckbox.disabled = false;
+                        }
+                        submitAttendanceForm(employeeId, selectedDate, 0, false, 'select');
+                    }
+                } else if (target.classList.contains('att-comfort-checkbox') && !target.disabled) {
+                    const comfortValue = target.checked ? 1 : 0;
+                    submitAttendanceForm(employeeId, selectedDate, comfortValue, null, 'checkbox');
+                } else if (target.classList.contains('att-food-checkbox')) {
+                    const foodValue = target.checked;
+                    submitAttendanceForm(employeeId, selectedDate, null, foodValue, 'checkbox');
+                }
+            });
+        });
+    }
+
+    let pendingChanges = {};
+    let debounceTimeout = null;
+
+    async function submitAttendanceForm(employeeId, selectedDate, comfortValue, foodValue, source) {
+        const key = `${employeeId}_${selectedDate}`;
+        pendingChanges[key] = {
+            employee_id: employeeId,
+            selected_date: selectedDate,
+            selected_value: document.querySelector(`select[name="attendance_state_${employeeId}_${selectedDate}"]`)?.value || null,
+            comfort_adjustment: comfortValue,
+            food: foodValue !== null ? (foodValue ? '1' : '0') : null,
+            source: source
+        };
+
+        updateUI(employeeId, selectedDate, pendingChanges[key]);
+
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(async () => {
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            const formData = new FormData();
+            for (const [key, change] of Object.entries(pendingChanges)) {
+                formData.append(`changes[${key}][employee_id]`, change.employee_id);
+                formData.append(`changes[${key}][selected_date]`, change.selected_date);
+                if (change.selected_value) formData.append(`changes[${key}][selected_value]`, change.selected_value);
+                if (change.comfort_adjustment !== null) formData.append(`changes[${key}][comfort_adjustment]`, change.comfort_adjustment);
+                if (change.food !== null) formData.append(`changes[${key}][food]`, change.food);
+                formData.append(`changes[${key}][source]`, change.source);
+            }
+
+            try {
+                const response = await fetch("{% url 'update_attendance' %}", {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.success) {
+                    console.log('Updates applied:', data.updates);
+                    Object.entries(data.updates).forEach(([key, update]) => {
+                        const [empId, date] = key.split('_');
+                        const rahatcounterElement = document.getElementById(`rahatcounter_${empId}`);
+                        if (rahatcounterElement && update.rahatcounter !== undefined) {
+                            rahatcounterElement.textContent = update.rahatcounter;
+                            updateButtonColor(empId, update.rahatcounter);
+                        }
+                        updateUI(empId, date, {
+                            selected_value: update.state,
+                            comfort_adjustment: update.comfort_adjustment,
+                            food: update.food ? '1' : '0'
+                        });
+                    });
+                    pendingChanges = {};
+                } else {
+                    console.error('Update failed:', data.error);
+                    alert('حدث خطأ أثناء التحديث: ' + data.error);
+                }
+            } catch (error) {
+                console.error('AJAX error:', error);
+                alert('حدث خطأ في الاتصال بالخادم');
+            }
+        }, 50);
+    }
+
+    function updateUI(employeeId, selectedDate, change) {
+        const selectElement = document.querySelector(`select[name="attendance_state_${employeeId}_${selectedDate}"]`);
+        const comfortCheckbox = document.querySelector(`input[name="comfort_${employeeId}_${selectedDate}"]`);
+        const foodCheckbox = document.querySelector(`input[name="food_${employeeId}_${selectedDate}"]`);
+
+        if (change.selected_value && selectElement) {
+            selectElement.value = change.selected_value;
+            selectElement.style.backgroundColor = stateColors[change.selected_value] || 'white';
+        }
+        if (change.comfort_adjustment !== null && comfortCheckbox) {
+            comfortCheckbox.checked = change.comfort_adjustment === 1;
+        }
+        if (change.food !== null && foodCheckbox) {
+            foodCheckbox.checked = change.food === '1';
+        }
+    }
+
+    function updateButtonColor(employeeId, rahatcounter) {
+        const button = document.getElementById(`rahatcounter_${employeeId}`).nextElementSibling;
+        if (button) {
+            button.classList.remove('btn-success', 'btn-warning', 'btn-danger');
+            if (rahatcounter == 0) button.classList.add('btn-success');
+            else if (rahatcounter > 0) button.classList.add('btn-warning');
+            else button.classList.add('btn-danger');
+        }
+    }
+
+    function confirmReset(employeeId) {
+        if (confirm("هل أنت متأكد من تصفير عداد الراحات للفرد المحدد؟")) {
+            resetRahatcounter(employeeId);
+        }
+    }
+
+    async function resetRahatcounter(employeeId) {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        try {
+            const response = await fetch("{% url 'reset_rahatcounter' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ employee_id: employeeId })
+            });
+            const data = await response.json();
+            if (data.success) {
+                const rahatcounterElement = document.getElementById(`rahatcounter_${employeeId}`);
+                if (rahatcounterElement) {
+                    rahatcounterElement.textContent = '0';
+                    updateButtonColor(employeeId, 0);
+                }
+            } else {
+                alert('خطأ أثناء تصفير عداد الراحات: ' + data.error);
+            }
+        } catch (error) {
+            alert('حدث خطأ في الاتصال بالخادم: ' + error.message);
+        }
+    }
+</script>
+{% endblock %}
