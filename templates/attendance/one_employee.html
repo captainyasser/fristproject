@@ -246,7 +246,7 @@
         const employeeId = document.getElementById('employee').value;
 
         try {
-            const response = await fetch(`{% url 'get_attendance_data' %}?start_date=${startDate}&end_date=${endDate}&employee_id=${employeeId}`);
+            const response = await fetch(`{% url 'get_attendance' %}?start_date=${startDate}&end_date=${endDate}&employee_id=${employeeId}`);
             const data = await response.json();
             if (data.success) {
                 attendanceData = data.attendance_data;

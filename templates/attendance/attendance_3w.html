@@ -1,5 +1,3 @@
-ممتاز
-ما رأيك في الكود التالي هل متكامل مع الكود السابق
 
 {% extends "base.html" %}
 {% load static attendance_filters %}
@@ -248,7 +246,7 @@
         const startDate = document.getElementById('start_date').value;
         const numDays = document.getElementById('num_days').value;
         const page = new URLSearchParams(window.location.search).get('page') || '1';
-        const response = await fetch(`{% url 'get_attendance_data' %}?start_date=${startDate}&num_days=${numDays}&page=${page}`);
+        const response = await fetch(`{% url 'get_attendance' %}?start_date=${startDate}&num_days=${numDays}&page=${page}`);
         const data = await response.json();
         if (data.success) {
             attendanceData = data.attendance_data;
