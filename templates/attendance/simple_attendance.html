@@ -99,7 +99,7 @@
         <div class="container-fluid">
             <div class="row">
                 <div class="col-md-12">
-                    <form method="get" action="{% url 'attendance_3w' %}">
+                    <form method="get" action="{% url 'simple_attendance' %}">
                         <label for="start_date">تاريخ البداية:</label>
                         <input type="date" id="start_date" name="start_date" value="{{ start_date|date:'Y-m-d' }}" required>
                         <button type="button" onclick="changeDate(-7)">- 7 أيام</button>
@@ -254,7 +254,7 @@
         const startDate = document.getElementById('start_date').value;
         const numDays = document.getElementById('num_days').value;
         const page = new URLSearchParams(window.location.search).get('page') || '1';
-        const response = await fetch(`{% url 'get_attendance' %}?start_date=${startDate}&num_days=${numDays}&page=${page}`);
+        const response = await fetch(`{% url 'simple_get_att' %}?start_date=${startDate}&num_days=${numDays}&page=${page}`);
         const data = await response.json();
         if (data.success) {
             attendanceData = data.attendance_data;
@@ -293,7 +293,6 @@
             alert('حدث خطأ في الاتصال بالخادم');
         }
     }
-
 
     function observeRows() {
         const rows = document.querySelectorAll('tbody tr');
@@ -355,27 +354,7 @@
             });
             select.style.backgroundColor = stateColors[dayData.state] || 'white';
 
-            const comfortCheckbox = document.createElement('input');
-            comfortCheckbox.type = 'checkbox';
-            comfortCheckbox.name = `comfort_${employeeId}_${date}`;
-            comfortCheckbox.value = '1';
-            comfortCheckbox.checked = dayData.comfort_adjustment === 1;
-            comfortCheckbox.className = 'att-comfort-checkbox';
-            comfortCheckbox.title = 'يستحق راحة';
-            if (dayData.state === 'راحة' || dayData.state === 'ر بديلة' || dayData.state === '8 صباحاً') {
-                comfortCheckbox.disabled = true;
-            }
-
-            const foodCheckbox = document.createElement('input');
-            foodCheckbox.type = 'checkbox';
-            foodCheckbox.name = `food_${employeeId}_${date}`;
-            foodCheckbox.checked = dayData.food;
-            foodCheckbox.className = 'att-food-checkbox';
-            foodCheckbox.title = 'يحصل على تعيين';
-
             cell.appendChild(select);
-            cell.appendChild(comfortCheckbox);
-            cell.appendChild(foodCheckbox);
         });
     }
 
@@ -429,14 +408,6 @@
                                 selectElement.value = update.state;
                                 selectElement.style.backgroundColor = stateColors[update.state] || 'white';
                             }
-                            const comfortCheckbox = document.querySelector(`input[name="comfort_${empId}_${date}"]`);
-                            if (comfortCheckbox && update.comfort_adjustment !== undefined) {
-                                comfortCheckbox.checked = update.comfort_adjustment === 1;
-                            }
-                            const foodCheckbox = document.querySelector(`input[name="food_${empId}_${date}"]`);
-                            if (foodCheckbox && update.food !== undefined) {
-                                foodCheckbox.checked = update.food;
-                            }
                         });
                     }
                     pendingChanges = {};
@@ -453,18 +424,9 @@
 
     function updateUI(employeeId, selectedDate, change) {
         const selectElement = document.querySelector(`select[name="attendance_state_${employeeId}_${selectedDate}"]`);
-        const comfortCheckbox = document.querySelector(`input[name="comfort_${employeeId}_${selectedDate}"]`);
-        const foodCheckbox = document.querySelector(`input[name="food_${employeeId}_${selectedDate}"]`);
-
         if (change.selected_value && selectElement) {
             selectElement.value = change.selected_value;
             selectElement.style.backgroundColor = stateColors[change.selected_value] || 'white';
-        }
-        if (change.comfort_adjustment !== null && comfortCheckbox) {
-            comfortCheckbox.checked = change.comfort_adjustment === 1;
-        }
-        if (change.food !== null && foodCheckbox) {
-            foodCheckbox.checked = change.food === '1';
         }
     }
 
@@ -476,41 +438,13 @@
                 const newValue = target.value;
                 target.style.backgroundColor = stateColors[newValue] || 'white';
 
-                const comfortCheckbox = document.querySelector(`input[name="comfort_${employeeId}_${selectedDate}"]`);
-                const foodCheckbox = document.querySelector(`input[name="food_${employeeId}_${selectedDate}"]`);
-
                 if (newValue === 'نوبتجي') {
-                    if (foodCheckbox) foodCheckbox.checked = true;
-                    if (comfortCheckbox) {
-                        comfortCheckbox.checked = true;
-                        comfortCheckbox.disabled = false;
-                    }
                     submitAttendanceForm(employeeId, selectedDate, 1, true, 'select');
                 } else if (newValue === 'راحة' || newValue === 'ر بديلة' || newValue === '8 صباحاً') {
-                    if (foodCheckbox) foodCheckbox.checked = false;
-                    if (comfortCheckbox) {
-                        comfortCheckbox.checked = false;
-                        comfortCheckbox.disabled = true;
-                    }
                     submitAttendanceForm(employeeId, selectedDate, -1, false, 'select');
                 } else {
-                    if (foodCheckbox) foodCheckbox.checked = false;
-                    if (comfortCheckbox) {
-                        comfortCheckbox.checked = false;
-                        comfortCheckbox.disabled = false;
-                    }
                     submitAttendanceForm(employeeId, selectedDate, 0, false, 'select');
                 }
-            } else if (target.name.startsWith('comfort_')) {
-                const [_, employeeId, selectedDate] = target.name.split('_');
-                if (!target.disabled) {
-                    const comfortValue = target.checked ? 1 : 0;
-                    submitAttendanceForm(employeeId, selectedDate, comfortValue, null, 'checkbox');
-                }
-            } else if (target.name.startsWith('food_')) {
-                const [_, employeeId, selectedDate] = target.name.split('_');
-                const foodValue = target.checked;
-                submitAttendanceForm(employeeId, selectedDate, null, foodValue, 'checkbox');
             }
         });
     }

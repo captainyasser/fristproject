@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .views import  add_employee, edit_employee
+from .views import  add_employee
 
 
 urlpatterns = [

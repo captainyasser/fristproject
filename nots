@@ -3,8 +3,35 @@ git codes
 cd K:\myproject\myproject
 git status
 git add .
-git commit -m "attendance done"
+git commit -m "add attendance simple"
 git push origin master
 
 
 git add em_data/views.py
+
+
+كود نقل الاقسام
+
+
+UPDATE yasser.employees AS y
+JOIN em.employees AS e ON y.id = e.id
+JOIN yasser.departments AS d ON e.departments = d.name
+SET y.department_id = d.id
+WHERE e.departments IN (
+    'شئون الأفراد',
+    'شئون الدارسين',
+    'شئون المجندين',
+    'شئون الضباط',
+    'شئون المالية',
+    'الحملة',
+    'المخبز',
+    'الأمن',
+    'التحريات',
+    'السلاح',
+    'السويتش',
+    'الخدمات المعاونة',
+    'العهدة',
+    'فريق الموسيقي',
+    'قرار66',
+    'بوسته'
+);
