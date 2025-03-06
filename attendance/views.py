@@ -624,7 +624,7 @@ from django.contrib import messages
 from .models import Attendance
 from em_data.models import Employee
 from datetime import datetime, timedelta, date
-from dateutil.relativedelta import relativedelta
+# from dateutil.relativedelta import relativedelta
 
 
 @login_required(login_url="/")

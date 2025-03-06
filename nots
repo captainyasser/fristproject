@@ -3,7 +3,7 @@ git codes
 cd K:\myproject\myproject
 git status
 git add .
-git commit -m "add attendance simple"
+git commit -m "test"
 git push origin master
 
 
