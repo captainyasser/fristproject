@@ -6,3 +6,8 @@ class DateForm(forms.Form):
         widget=forms.DateInput(attrs={'type': 'date'}),
         label='التاريخ'  # Date label in Arabic
     )
+    
+
+
+class ChunkSizeForm(forms.Form):
+    chunk_size = forms.IntegerField(min_value=1, label="Chunk Size")

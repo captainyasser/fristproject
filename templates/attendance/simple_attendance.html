@@ -126,7 +126,10 @@
                         
                         <input type="submit" value="عرض" class="btn btn-primary">
                     </form>
-
+                    <button onclick="location.href='{% url 'attendance_3w' %}';">
+                        التبديل الي الوضع المتقدم
+                    </button>
+                    
                     <form method="post" class="mainform">
                         {% csrf_token %}
                         <br><br><br>

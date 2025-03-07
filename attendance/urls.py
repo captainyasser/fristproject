@@ -22,6 +22,8 @@ urlpatterns = [
     path('foodlist/', views.foodlist, name='foodlist'),
     path('amtmam/',  views.amtmam_view, name='amtmam'),
     path('numreport/', views.numreport, name='numreport'),
+    path('outs/', views.outs, name='outs'),
+    path('insertmany/', views.insert_many_attendance, name='insert_many_attendance'),
 
 
     # path('one_employee/', views.one_employee, name='one_employee'),

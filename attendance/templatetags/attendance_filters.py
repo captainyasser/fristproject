@@ -95,3 +95,11 @@ def format_state(state):
         "فرقة": "💡",
     }
     return mapping.get(state, state)
+
+
+
+
+@register.filter(name='subtract')
+def subtract(value, arg):
+    """Subtracts the arg from the value, ensuring the result is not negative."""
+    return max(value - arg, 0)

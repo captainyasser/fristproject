@@ -3,7 +3,7 @@ git codes
 cd K:\myproject\myproject
 git status
 git add .
-git commit -m "add kashf tmam and numreport"
+git commit -m "add insert many and outs"
 git push origin master
 
 
@@ -53,3 +53,23 @@ SELECT
     employee_id, 
     in_or_out
 FROM em.emdata_attendance;
+
+
+
+
+نقل عكسي للتشغيل
+
+INSERT INTO em.emdata_attendance (name, date, state, food, in_or_out, employee_id)
+SELECT 
+    emp.name, 
+    att.date, 
+    att.state, 
+    att.food, 
+    att.in_or_out, 
+    att.employee_id
+FROM yasser.attendance_attendance att
+JOIN em.employees emp ON att.employee_id = emp.id
+ON DUPLICATE KEY UPDATE 
+    state = VALUES(state),
+    food = VALUES(food),
+    in_or_out = VALUES(in_or_out);

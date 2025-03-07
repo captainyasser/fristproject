@@ -60,7 +60,7 @@ def attendance_3w(request):
     # تحديد القسم الافتراضي ليكون id = 16 إذا لم يتم تحديده في GET
     department_filter = request.GET.get("departments")
     if not department_filter:
-        department_filter = "16"  # تعيين القسم الافتراضي
+        department_filter = "14"  # تعيين القسم الافتراضي
     elif department_filter == "0":  # إذا اختار المستخدم "كل الأقسام"
         department_filter = None
 
@@ -193,7 +193,7 @@ def simple_attendance(request):
     # تحديد القسم الافتراضي ليكون id = 16 إذا لم يتم تحديده في GET
     department_filter = request.GET.get("departments")
     if not department_filter:
-        department_filter = "0"  # تعيين القسم الافتراضي
+        department_filter = "14"  # تعيين القسم الافتراضي
     elif department_filter == "0":  # إذا اختار المستخدم "كل الأقسام"
         department_filter = None
 
@@ -1344,6 +1344,228 @@ def kashftmam(request):
         'last_number': end,
         'padding_size': padding_size,
     })
+    
+    
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from datetime import datetime, date, timedelta
+from babel.dates import format_date
+from .forms import DateForm, ChunkSizeForm
+from .models import Attendance
+
+def split_into_chunks(lst, chunk_size):
+    """Split a list into chunks of specified size."""
+    for i in range(0, len(lst), chunk_size):
+        yield lst[i:i + chunk_size]
+
+@login_required(login_url='/login/')
+def outs(request):
+    # Calculate tomorrow's date
+    tomorrow = datetime.now() + timedelta(days=1)
+    tomorrow_str = tomorrow.strftime('%Y-%m-%d')
+
+    # Initialize the forms with default values
+    selected_date = request.GET.get('date', tomorrow_str)
+    chunk_size = int(request.GET.get('chunk_size', 40))  # Default to 40
+
+    # Process the form submissions
+    date_form = DateForm(request.GET or {'date': tomorrow_str})
+    chunk_size_form = ChunkSizeForm(request.GET or {'chunk_size': chunk_size})
+
+    if date_form.is_valid():
+        selected_date = date_form.cleaned_data['date']
+    if chunk_size_form.is_valid():
+        chunk_size = chunk_size_form.cleaned_data['chunk_size']
+
+    # Ensure selected_date is a date object
+    if not isinstance(selected_date, date):
+        selected_date_obj = datetime.strptime(selected_date, '%Y-%m-%d').date()
+    else:
+        selected_date_obj = selected_date
+
+    # Format the selected date in Arabic
+    formatted_date = format_date(selected_date_obj, format='EEEE dd/MM/yyyy', locale='ar')
+
+    # Fetch records for the selected date
+    records = Attendance.objects.filter(date=selected_date_obj, in_or_out='3').select_related('employee')
+
+    # Organize data by state
+    data = {}
+    for record in records:
+        # Merge specific states into broader categories
+        state_mappings = {
+            'منحة': 'راحات', 'عطلة': 'راحات', '8 صباحاً': 'راحات', 'ر بديلة': 'راحات', 'راحة': 'راحات',
+            'فرقة': 'فرق', 'ت دوري': 'فرق', 'ت تكراري': 'فرق',
+            'مأمورية': 'مأمورية', 'مأمورية خ': 'مأمورية',
+            'مرضي': 'مرضي', 'قرار66': 'مرضي',
+            'خاصه': 'خاصه', 'ج وضع': 'خاصه'
+        }
+        state = state_mappings.get(record.state, record.state)
+        if state not in data:
+            data[state] = []
+        data[state].append(record.employee.nickname)
+
+    # Add serial numbers and 5 empty rows
+    serialized_data = {}
+    for state, nicknames in data.items():
+        entries = [(i + 1, nickname) for i, nickname in enumerate(nicknames)]
+        last_serial = entries[-1][0] if entries else 0
+        entries.extend((last_serial + i, '') for i in range(1, 6))  # Add 5 empty rows
+        serialized_data[state] = entries
+
+    # Calculate totals
+    out_states = [
+        'راحة', 'دورية', 'ر بديلة', 'طارئة', 'مأمورية', 'مأمورية خ', 'فرقة', 'انتداب', 
+        'مرضي', 'ج وضع', 'خاصه', '8 صباحاً', 'ت دوري', 'ت تكراري', 'منحة', 'عطلة', 'غياب', 'قرار66'
+    ]
+    total_out_states_records = Attendance.objects.filter(
+        date=selected_date_obj, state__in=out_states
+    ).count()
+
+    in_states = ['نوبتجي', 'يومي']
+    total_in_states_records = Attendance.objects.filter(
+        date=selected_date_obj, state__in=in_states
+    ).count()
+
+    not_states = ['_']
+    total_not_states_records = Attendance.objects.filter(
+        date=selected_date_obj, state__in=not_states
+    ).count()
+
+    total_all_states = total_in_states_records + total_out_states_records + total_not_states_records
+
+    # Order data for display
+    STATE_ORDER = ['دورية', '_', 'طارئة', 'مرضي', 'خاصه', 'فرق', 'انتداب', 'مأمورية', 'راحات', 'غياب']
+    ordered_data = []
+    for state in STATE_ORDER:
+        if state in serialized_data:
+            ordered_data.extend((state, serial, nickname) for serial, nickname in serialized_data[state])
+
+    # Split into chunks
+    grouped_data = list(split_into_chunks(ordered_data, chunk_size))
+
+    context = {
+        'date_form': date_form,
+        'chunk_size_form': chunk_size_form,
+        'selected_date': selected_date_obj,
+        'formatted_date': formatted_date,
+        'grouped_data': grouped_data,
+        'serialized_data': serialized_data,
+        'total_in_states_records': total_in_states_records,
+        'total_out_states_records': total_out_states_records,
+        'total_all_states': total_all_states,
+    }
+    return render(request, 'attendance/outs.html', context)
+    
+    
+    
+    
+    
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from datetime import datetime, timedelta
+from .models import Attendance
+from em_data.models import Employee
+
+@login_required(login_url='/login/')
+def insert_many_attendance(request):
+    employees = Employee.objects.all().order_by('sort_number')
+    if request.method == 'POST':
+        from_date = request.POST.get('from_date')
+        to_date = request.POST.get('to_date')
+        employee_ids = request.POST.getlist('employee_ids')  # Get multiple employee IDs as a list
+        state = request.POST.get('state')
+        in_or_out = 'out'  # تصحيح لتتناسب مع خيارات النموذج
+        food = False  # تصحيح لأن الحقل BooleanField
+
+        print(f"POST Data: {request.POST}")  # تصحيح الأخطاء: طباعة البيانات
+        print(f"From Date: {from_date}, To Date: {to_date}, Employee IDs: {employee_ids}, State: {state}")
+
+        if from_date and to_date and employee_ids and state:
+            try:
+                from_date = datetime.strptime(from_date, "%Y-%m-%d").date()
+                to_date = datetime.strptime(to_date, "%Y-%m-%d").date()
+            except ValueError as e:
+                return render(request, 'attendance/insertmany.html', {
+                    'employees': employees,
+                    'error': 'تنسيق التاريخ غير صحيح'
+                })
+
+            if from_date > to_date:
+                return render(request, 'attendance/insertmany.html', {
+                    'employees': employees,
+                    'error': 'نطاق التاريخ غير صالح'
+                })
+
+            # قائمة لتخزين السجلات الجديدة لـ bulk_create
+            new_attendance_records = []
+
+            # حلقة عبر كل موظف
+            for employee_id in employee_ids:
+                try:
+                    employee = Employee.objects.get(id=employee_id)
+                    print(f"Found Employee: {employee.name}")  # تصحيح الأخطاء: طباعة معلومات الموظف
+                except Employee.DoesNotExist:
+                    return render(request, 'attendance/insertmany.html', {
+                        'employees': employees,
+                        'error': f'معرف الموظف {employee_id} غير موجود'
+                    })
+
+                # توليد التواريخ في النطاق
+                current_date = from_date
+                while current_date <= to_date:
+                    # التحقق من وجود سجل حالي
+                    existing_record = Attendance.objects.filter(
+                        employee=employee,  # استخدام الكائن بدلاً من employee_id
+                        date=current_date
+                    ).first()
+
+                    if existing_record:
+                        # تحديث السجل الموجود
+                        existing_record.state = state
+                        existing_record.in_or_out = in_or_out
+                        existing_record.food = food
+                        existing_record.save()
+                        print(f"Updated record for {employee.name} on {current_date}")
+                    else:
+                        # إضافة سجل جديد إلى القائمة
+                        new_attendance_records.append(
+                            Attendance(
+                                employee=employee,  # استخدام كائن Employee
+                                date=current_date,
+                                state=state,
+                                in_or_out=in_or_out,
+                                food=food
+                            )
+                        )
+                        print(f"Queued new record for {employee.name} on {current_date}")
+
+                    # الانتقال إلى التاريخ التالي
+                    current_date += timedelta(days=1)
+
+            # إنشاء السجلات الجديدة دفعة واحدة
+            if new_attendance_records:
+                Attendance.objects.bulk_create(new_attendance_records)
+                print(f"Created {len(new_attendance_records)} new records")
+
+            print("Records processed successfully")  # تصحيح الأخطاء: طباعة النجاح
+            return redirect('insert_many_attendance')  # إعادة توجيه عند النجاح
+
+        else:
+            return render(request, 'attendance/insertmany.html', {
+                'employees': employees,
+                'error': 'يرجى ملء جميع الحقول المطلوبة'
+            })
+
+    return render(request, 'attendance/insertmany.html', {'employees': employees})
+
+
+
+
+
+
+
+
 
 
 

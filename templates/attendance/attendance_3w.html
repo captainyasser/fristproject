@@ -126,7 +126,9 @@
                         
                         <input type="submit" value="عرض" class="btn btn-primary">
                     </form>
-
+                    <button onclick="location.href='{% url 'simple_attendance' %}';">
+                        التبديل الي  الوضع العادي
+                    </button>
                     <form method="post" class="mainform">
                         {% csrf_token %}
                         <br><br><br>

@@ -121,7 +121,7 @@
               </a>
               <ul class="nav nav-treeview">
                 <li class="nav-item">
-                  <a href="{% url 'attendance_3w' %}" class="nav-link">
+                  <a href="{% url 'simple_attendance' %}" class="nav-link">
                     <i class="far fa-circle nav-icon"></i>
                     <p>التشغيل</p>
                   </a>
@@ -163,9 +163,27 @@
                   </a>
                 </li>
                 <li class="nav-item">
+                  <a href="{% url 'outs' %}" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>يومية خوارج (بالأسماء)</p>
+                  </a>
+                </li>
+                <li class="nav-item">
                   <a href="{% url 'bus_view' %}" class="nav-link">
                     <i class="far fa-circle nav-icon"></i>
                     <p>يومية الأتوبيس</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="{% url 'kashftmam' %}" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>كشف التمام</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="{% url 'insert_many_attendance' %}" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>إدخال حالات لمدة</p>
                   </a>
                 </li>
               </ul>
