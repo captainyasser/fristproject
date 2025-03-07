@@ -9,13 +9,11 @@ from departments.models import Department
 from datetime import datetime, timedelta, date
 import json
 import logging
-
 from datetime import datetime, timedelta, date
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
-
 from datetime import datetime, timedelta, date
 from django.shortcuts import render, redirect
 from django.contrib import messages
@@ -27,14 +25,14 @@ from django.contrib.auth.decorators import login_required
 def attendance_3w(request):
     today = date.today()
     start_date = request.GET.get("start_date")
-    num_days = request.GET.get("num_days", "15")
+    num_days = request.GET.get("num_days", "20")
 
     # ضبط عدد الأيام ليكون بين 1 و 21
     try:
         num_days = int(num_days)
-        num_days = max(1, min(21, num_days))
+        num_days = max(1, min(20, num_days))
     except ValueError:
-        num_days = 15
+        num_days = 20
 
     # تحديد تاريخ البدء والنهاية
     if start_date:
@@ -78,7 +76,7 @@ def attendance_3w(request):
         employees = employees.order_by(sort_by)
 
     # تقسيم البيانات إلى صفحات (200 موظف لكل صفحة)
-    paginator = Paginator(employees, 100)
+    paginator = Paginator(employees, 200)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
@@ -624,7 +622,7 @@ from django.contrib import messages
 from .models import Attendance
 from em_data.models import Employee
 from datetime import datetime, timedelta, date
-# from dateutil.relativedelta import relativedelta
+from dateutil.relativedelta import relativedelta
 
 
 @login_required(login_url="/")
@@ -729,7 +727,7 @@ def get_attendance(request):
                 for i in range((end_date - start_date).days + 1)
             ]
         else:
-            week_days = [start_date + timedelta(days=i) for i in range(5)]
+            week_days = [start_date + timedelta(days=i) for i in range(32)]
 
         if employee_id:
             employees = Employee.objects.filter(id=employee_id)
@@ -776,7 +774,7 @@ def simple_get_att(request):
                 for i in range((end_date - start_date).days + 0)
             ]
         else:
-            week_days = [start_date + timedelta(days=i) for i in range(27)]
+            week_days = [start_date + timedelta(days=i) for i in range(32)]
 
         if employee_id:
             employees = Employee.objects.filter(id=employee_id)
@@ -844,295 +842,223 @@ def update_operation(request):
             return JsonResponse({"success": False, "error": str(e)})
     return JsonResponse({"success": False, "error": "Invalid request"})
 
-    # @login_required
-    # def attendance_record(request):
-    #     employees = Employee.objects.all().order_by('sort_number')
-    #     start_date = request.GET.get('start_date', datetime.today().date().strftime('%Y-%m-%d'))
-    #     start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
-    #     days = [start_date + timedelta(days=i) for i in range(21)]
 
-    #     # جمع بيانات الحضور
-    #     attendance_data = {}
-    #     for employee in employees:
-    #         attendance_data[employee.id] = {}
-    #         for day in days:
-    #             attendance, created = Attendance.objects.get_or_create(
-    #                 employee=employee,
-    #                 date=day,
-    #                 defaults={'state': '_', 'food': False, 'comfort_adjustment': 0}
-    #             )
-    #             # إذا كان السجل جديدًا و"نوبتجي"، نضبط القيم الافتراضية
-    #             if created and attendance.state == 'نوبتجي':
-    #                 attendance.comfort_adjustment = 1
-    #                 attendance.food = True
-    #                 attendance.save()
-    #             attendance_data[employee.id][day] = {
-    #                 'state': attendance.state,
-    #                 'food': attendance.food,
-    #                 'comfort_adjustment': attendance.comfort_adjustment
-    #             }
 
-    #     if request.method == 'POST':
-    #         for employee in employees:
-    #             for day in days:
-    #                 state_key = f'state_{employee.id}_{day.strftime("%Y%m%d")}'
-    #                 food_key = f'food_{employee.id}_{day.strftime("%Y%m%d")}'
-    #                 comfort_key = f'comfort_{employee.id}_{day.strftime("%Y%m%d")}'
 
-    #                 state = request.POST.get(state_key, '_')
-    #                 food = request.POST.get(food_key) == 'on'
-    #                 comfort_adjustment = int(request.POST.get(comfort_key, '0'))
 
-    #                 # تحديث السجل
-    #                 attendance, created = Attendance.objects.get_or_create(
-    #                     employee=employee,
-    #                     date=day,
-    #                     defaults={'state': state, 'food': food, 'comfort_adjustment': comfort_adjustment}
-    #                 )
-    #                 if not created:
-    #                     old_comfort = attendance.comfort_adjustment
-    #                     attendance.state = state
-    #                     # لا نفرض food أو comfort_adjustment لـ "نوبتجي"، نتركها للإدخال اليدوي
-    #                     attendance.food = food
-    #                     attendance.comfort_adjustment = comfort_adjustment
+# yourapp/views.py
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from .forms import DateForm
+from .models import Attendance
+from django.db.models import F
+from math import ceil
+from datetime import date
 
-    #                     # تحديث rahatcounter
-    #                     if state == 'راحة' and attendance.state != 'راحة':  # إذا تغيرت إلى "راحة"
-    #                         employee.rahatcounter -= 1
-    #                     elif state != 'راحة' and attendance.state == 'راحة':  # إذا تغيرت من "راحة"
-    #                         employee.rahatcounter += 1
+# قاموس الأيام باللغة العربية
+ARABIC_DAYS = {
+    0: 'الإثنين',
+    1: 'الثلاثاء',
+    2: 'الأربعاء',
+    3: 'الخميس',
+    4: 'الجمعة',
+    5: 'السبت',
+    6: 'الأحد',
+}
 
-    #                     if old_comfort != comfort_adjustment:
-    #                         if old_comfort == 1 and comfort_adjustment != 1:
-    #                             employee.rahatcounter -= 1
-    #                         elif old_comfort != 1 and comfort_adjustment == 1:
-    #                             employee.rahatcounter += 1
-    #                     attendance.save()
-    #                     employee.save()
+# yourapp/views.py
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from .forms import DateForm
+from .models import Attendance
+from django.db.models import F
+from math import ceil
+from datetime import date
 
-    #         return redirect('attendance_record')
+# قاموس الأيام باللغة العربية
+ARABIC_DAYS = {
+    0: 'الإثنين',
+    1: 'الثلاثاء',
+    2: 'الأربعاء',
+    3: 'الخميس',
+    4: 'الجمعة',
+    5: 'السبت',
+    6: 'الأحد',
+}
 
-    #     return render(request, 'attendance/attendance_record.html', {
-    #         'employees': employees,
-    #         'days': days,
-    #         'attendance_data': attendance_data,
-    #         'start_date': start_date,
-    #     })
+@login_required(login_url='/login/')
+def foodlist(request):
+    names_with_serials = []
+    selected_date = None
+    formatted_date = None
 
-    # @login_required(login_url='/')
-    # def get_rahatcounter(request):
-    #     employee_id = request.GET.get('employee_id')
-    #     try:
-    #         employee = Employee.objects.get(id=employee_id)
-    #         return JsonResponse({'success': True, 'rahatcounter': employee.rahatcounter})
-    #     except Employee.DoesNotExist:
-    #         return JsonResponse({'success': False, 'error': 'Employee not found'})
-    #     except Exception as e:
-    #         return JsonResponse({'success': False, 'error': str(e)})
+    if request.method == 'POST':
+        form = DateForm(request.POST)
+        if form.is_valid():
+            selected_date = form.cleaned_data['date']
+            if selected_date:
+                # Fetch 'name' from the related Employee model
+                names = Attendance.objects.filter(
+                    date=selected_date,
+                    food=1,
+                    state__in=['نوبتجي', 'يومي'],
+                    employee__food=1
+                ).annotate(dep_sort=F('employee__dep_sort')) \
+                .order_by('dep_sort') \
+                .values_list('employee__name', flat=True)  # Changed 'name' to 'employee__name'
+                
+                # إضافة الأرقام التسلسلية
+                names_with_serials = [(index + 1, name) for index, name in enumerate(names)]
+                
+                # تنسيق التاريخ يدويًا
+                day_name = ARABIC_DAYS[selected_date.weekday()]
+                formatted_date = f"{day_name} {selected_date.day:02d}/{selected_date.month:02d}/{selected_date.year}"
+    else:
+        form = DateForm()
+        selected_date = date.today()
+        # تنسيق التاريخ يدويًا للتاريخ الافتراضي
+        day_name = ARABIC_DAYS[selected_date.weekday()]
+        formatted_date = f"{day_name} {selected_date.day:02d}/{selected_date.month:02d}/{selected_date.year}"
 
-    # from django.shortcuts import render
-    # from django.http import JsonResponse
-    # from django.views.decorators.csrf import csrf_exempt
-    # from em_data.models import Employee
-    # from .models import Attendance
-    # from datetime import datetime
-    # import json
+    total_rows = 39
+    num_columns = max(2, ceil(len(names_with_serials) / total_rows))
+    columns = [names_with_serials[i * total_rows: (i + 1) * total_rows] for i in range(num_columns)]
 
-    # from django.shortcuts import render
-    # from datetime import datetime, timedelta
-    # from em_data.models import Employee
-    # from .models import Attendance
-    # from django.contrib.auth.decorators import login_required
+    context = {
+        'form': form,
+        'selected_date': selected_date,
+        'formatted_date': formatted_date,
+        'columns': columns,
+        'num_rows': total_rows,
+    }
+    return render(request, 'attendance/foodlist.html', context)
 
-    # from django.shortcuts import render
-    # from datetime import datetime, timedelta
-    # from em_data.models import Employee
-    # from .models import Attendance
-    # from django.contrib.auth.decorators import login_required
 
-    # @login_required(login_url='/')
-    # def manage_single_employee(request):
-    #     employees = Employee.objects.all().order_by('nickname')
-    #     employee_id = request.GET.get('employee_id')
-    #     start_date = request.GET.get('start_date')
-    #     end_date = request.GET.get('end_date')
 
-    #     # Default date range if not provided
-    #     if not start_date or not end_date:
-    #         today = datetime.today()
-    #         if not start_date:
-    #             start_date = today - timedelta(weeks=5)
-    #         if not end_date:
-    #             end_date = today.replace(month=today.month + 2, day=1) - timedelta(days=1)
-    #     else:
-    #         start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
-    #         end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
 
-    #     days = [start_date + timedelta(days=i) for i in range((end_date - start_date).days + 1)]
-    #     weeks = [days[i:i + 7] for i in range(0, len(days), 7)]
 
-    #     attendance_data = {}
-    #     selected_employee_id = None
-    #     if employee_id:
-    #         try:
-    #             selected_employee = Employee.objects.get(id=employee_id)
-    #             selected_employee_id = selected_employee.id
-    #             attendance_records = Attendance.objects.filter(
-    #                 employee=selected_employee,
-    #                 date__range=[start_date, end_date]
-    #             )
-    #             for record in attendance_records:
-    #                 date_str = record.date.strftime('%Y%m%d')
-    #                 attendance_data[selected_employee.id] = attendance_data.get(selected_employee.id, {})
-    #                 attendance_data[selected_employee.id][date_str] = {
-    #                     'state': record.state,
-    #                     'comfort_adjustment': record.comfort_adjustment,
-    #                     'food': record.food
-    #                 }
-    #         except Employee.DoesNotExist:
-    #             selected_employee_id = None
 
-    #     # Get attendance state choices from the model
-    #     attendance_states = Attendance._meta.get_field('state').choices
 
-    #     return render(request, 'attendance/one_employee.html', {
-    #         'employees': employees,
-    #         'selected_employee_id': selected_employee_id,
-    #         'start_date': start_date,
-    #         'end_date': end_date,
-    #         'weeks': weeks,
-    #         'attendance_data': attendance_data,
-    #         'attendance_states': attendance_states,
-    #         'stateColors': {
-    #             '_': 'white',
-    #             'نوبتجي': '#219C90',
-    #             'يومي': '#A7D397',
-    #             'راحة': '#00A9FF',
-    #             'دورية': '#C70039',
-    #             'ر بديلة': '#0a2df5',
-    #             'طارئة': '#FF9130',
-    #             'مأمورية': '#eb5bad',
-    #             'مأمورية خ': '#DA0C81',
-    #             'فرقة': '#BCA37F',
-    #             'انتداب': '#713ABE',
-    #             'مرضي': 'yellow',
-    #             'ج وضع': 'yellow',
-    #             'خاصه': 'yellow',
-    #             '8 صباحاً': '#89CFF3',
-    #             'ت دوري': '#FFF2D8',
-    #             'ت تكراري': '#EAD7BB',
-    #             'منحة': '#A0E9FF',
-    #             'عطلة': '#CDF5FD',
-    #             'غياب': 'black',
-    #             'قرار66': 'yellow'
-    #         }
-    #     })
+from datetime import datetime, timedelta
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from .models import Attendance
+from math import ceil
 
-    # def get_employee_data2(request):
-    #     """Get basic employee data for the selected employee"""
-    #     employee_id = request.GET.get('employee_id')
-    #     if not employee_id:
-    #         return JsonResponse({'success': False, 'error': 'لم يتم تحديد الموظف'})
+# قاموس الأيام باللغة العربية
+ARABIC_DAYS = {
+    0: 'الإثنين',
+    1: 'الثلاثاء',
+    2: 'الأربعاء',
+    3: 'الخميس',
+    4: 'الجمعة',
+    5: 'السبت',
+    6: 'الأحد',
+}
 
-    #     try:
-    #         employee = Employee.objects.get(id=employee_id)
-    #         return JsonResponse({
-    #             'success': True,
-    #             'employee': {
-    #                 'id': employee.id,
-    #                 'operation': employee.operation,
-    #                 'nickname': employee.nickname
-    #             }
-    #         })
-    #     except Employee.DoesNotExist:
-    #         return JsonResponse({'success': False, 'error': 'الموظف غير موجود'})
-    #     except Exception as e:
-    #         return JsonResponse({'success': False, 'error': str(e)})
+from datetime import datetime, timedelta
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from .models import Attendance
+from math import ceil
 
-    # def get_single_employee_attendance_data2(request):
-    #     """Get attendance data for a specific employee within date range"""
-    #     employee_id = request.GET.get('employee_id')
-    #     start_date = request.GET.get('start_date')
-    #     end_date = request.GET.get('end_date')
+# قاموس الأيام باللغة العربية
+ARABIC_DAYS = {
+    0: 'الإثنين',
+    1: 'الثلاثاء',
+    2: 'الأربعاء',
+    3: 'الخميس',
+    4: 'الجمعة',
+    5: 'السبت',
+    6: 'الأحد',
+}
 
-    #     if not all([employee_id, start_date, end_date]):
-    #         return JsonResponse({'success': False, 'error': 'البيانات المطلوبة غير كاملة'})
+@login_required(login_url='/login/')
+def amtmam_view(request):
+    # Get the selected date from the request (default to tomorrow)
+    default_date = datetime.now().date() + timedelta(days=1)  # Tomorrow as default
+    selected_date = request.GET.get('date', default_date.strftime('%Y-%m-%d'))
 
-    #     try:
-    #         attendance_records = Attendance.objects.filter(
-    #             employee_id=employee_id,
-    #             date__range=[start_date, end_date]
-    #         ).select_related('employee')
-
-    #         # Format attendance data
-    #         attendance_data = {}
-    #         for record in attendance_records:
-    #             date_str = record.date.strftime('%Y%m%d')
-    #             if employee_id not in attendance_data:
-    #                 attendance_data[employee_id] = {}
-    #             attendance_data[employee_id][date_str] = {
-    #                 'state': record.state,
-    #                 'comfort_adjustment': record.comfort_adjustment,
-    #                 'food': record.food
-    #             }
-
-    #         return JsonResponse({
-    #             'success': True,
-    #             'attendance_data': attendance_data
-    #         })
-    #     except Exception as e:
-    #         return JsonResponse({'success': False, 'error': str(e)})
-
-    # @csrf_exempt
-    # def update_attendance2(request):
-    """Update attendance records"""
-    if request.method != "POST":
-        return JsonResponse({"success": False, "error": "Method not allowed"})
-
+    # Ensure selected_date is a datetime.date object
     try:
-        # Get changes from the request
-        changes = {}
-        for key, value in request.POST.items():
-            if key.startswith("changes["):
-                parts = key.split("[")
-                change_key = parts[1].rstrip("]")
-                field = parts[2].rstrip("]")
-                if change_key not in changes:
-                    changes[change_key] = {}
-                changes[change_key][field] = value
+        selected_date = datetime.strptime(selected_date, '%Y-%m-%d').date()
+    except ValueError:
+        selected_date = default_date
 
-        # Process each change
-        for change in changes.values():
-            employee_id = change.get("employee_id")
-            date_str = change.get("selected_date")
-            selected_value = change.get("selected_value")
-            comfort_adjustment = change.get("comfort_adjustment")
-            food = change.get("food")
-            source = change.get("source")
+    # Format the selected date in Arabic manually
+    day_name = ARABIC_DAYS[selected_date.weekday()]
+    formatted_date = f"{day_name} {selected_date.day:02d}/{selected_date.month:02d}/{selected_date.year}"
 
-            if not all([employee_id, date_str]):
-                continue
+    # Calculate the next day
+    next_day = selected_date + timedelta(days=1)
 
-            # Convert date format
-            date = datetime.strptime(date_str, "%Y%m%d").date()
+    # Fetch records for the selected date where in_or_out is 1 or 2
+    records = Attendance.objects.filter(date=selected_date, in_or_out__in=[1, 2]).select_related('employee__department')
 
-            # Get or create attendance record
-            attendance, created = Attendance.objects.get_or_create(
-                employee_id=employee_id,
-                date=date,
-                defaults={"state": "_", "food": False, "comfort_adjustment": 0},
-            )
+    # Fetch records for the next day where food = 1
+    tomorrow_food_count = Attendance.objects.filter(date=next_day, food=1).count()
 
-            # Update fields if provided
-            if selected_value and source == "select":
-                attendance.state = selected_value
-            if comfort_adjustment is not None and source == "checkbox":
-                attendance.comfort_adjustment = int(comfort_adjustment)
-            if food is not None and source == "checkbox":
-                attendance.food = bool(int(food))
+    # Helper function to process data for a table
+    def process_table_data(records, condition):
+        data = []
+        for record in records:
+            if condition(record):
+                name = record.employee.nickname
+                if record.state == 'نوبتجي':
+                    name = " ★ " + name
+                data.append((record.employee.gender, record.employee.sort_number, name))  # Store gender, sort_number, and name
+        # Sort by gender (ذكر first, then أنثي), then by sort_number
+        data.sort(key=lambda x: (x[0] != 'ذكر', x[1]))  # 'ذكر' comes before 'أنثي', then sort by sort_number
+        return [name for (gender, sort_number, name) in data]  # Extract names after sorting
 
-            attendance.save()
+    # Filter and process data for table1_data (department != فريق الموسيقي and tmamam = 1)
+    table1_data = process_table_data(
+        records,
+        lambda record: record.employee.tmamam == 1 and (record.employee.department is None or record.employee.department.name != 'فريق الموسيقي')
+    )
 
-        return JsonResponse({"success": True})
-    except Exception as e:
-        return JsonResponse({"success": False, "error": str(e)})
+    # Filter and process data for table2_data (department = فريق الموسيقي and tmamam = 1)
+    table2_data = process_table_data(
+        records,
+        lambda record: record.employee.tmamam == 1 and record.employee.department is not None and record.employee.department.name == 'فريق الموسيقي'
+    )
+
+    # Filter and process data for table3_data (tmamam = 0)
+    table3_data = process_table_data(
+        records,
+        lambda record: record.employee.tmamam == 0
+    )
+
+    # Add serial numbers to the data
+    table1_with_serials = [(i + 1, name) for i, name in enumerate(table1_data)]
+    table2_with_serials = [(i + 1, name) for i, name in enumerate(table2_data)]
+    table3_with_serials = [(i + 1, name) for i, name in enumerate(table3_data)]
+
+    # Split data into columns
+    total_rows = 39
+    table1_columns = [table1_with_serials[i * total_rows: (i + 1) * total_rows] for i in range(ceil(len(table1_with_serials) / total_rows))]
+    table2_columns = [table2_with_serials[i * total_rows: (i + 1) * total_rows] for i in range(ceil(len(table2_with_serials) / total_rows))]
+    table3_columns = [table3_with_serials[i * total_rows: (i + 1) * total_rows] for i in range(ceil(len(table3_with_serials) / total_rows))]
+
+    # Calculate totals
+    intamam = len(table1_data) + len(table2_data)
+    outtamam = len(table3_data)
+    alltamam = intamam + outtamam
+
+    context = {
+        'selected_date': selected_date,
+        'formatted_date': formatted_date,
+        'table1_columns': table1_columns,
+        'table2_columns': table2_columns,
+        'table3_columns': table3_columns,
+        'num_rows': total_rows,
+        'intamam': intamam,
+        'outtamam': outtamam,
+        'alltamam': alltamam,
+        'tomorrow_food_count': tomorrow_food_count,
+    }
+    return render(request, 'attendance/amtmam.html', context)
+
+
+
+

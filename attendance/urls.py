@@ -17,12 +17,10 @@ urlpatterns = [
     path('attendance/get-attendance-data/', views.get_attendance, name='get_attendance'),
     path('attendance/get-attendance-data2/', views.simple_get_att, name='simple_get_att'),
     path('attendance/insert-for-date/', views.insert_attendance_for_date, name='insert_attendance_for_date'),
-    # path('attendance/update-operation/', views.update_operation, name='update_operation'),
-
-    
-    
     path('one-employee/', views.one_employee, name='one_employee'),
-    
+    path('foodlist/', views.foodlist, name='foodlist'),
+    path('amtmam/',  views.amtmam_view, name='amtmam'),
+
 
     # path('one_employee/', views.one_employee, name='one_employee'),
     # path('get_employee_data/', views.get_employee_data, name='get_employee_data'),

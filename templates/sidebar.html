@@ -127,6 +127,12 @@
                   </a>
                 </li>
                 <li class="nav-item">
+                  <a href="{% url 'one_employee' %}" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>تشغيل فردي</p>
+                  </a>
+                </li>
+                <li class="nav-item">
                   <a href="pages/charts/flot.html" class="nav-link">
                     <i class="far fa-circle nav-icon"></i>
                     <p>Flot</p>
@@ -140,6 +146,38 @@
                 </li>
               </ul>
             </li>
+
+            <li class="nav-item has-treeview">
+              <a href="#" class="nav-link">
+                <i class="nav-icon fas fa-edit"></i>
+                <p>
+                  اليوميات
+                  <i class="fas fa-angle-left right"></i>
+                </p>
+              </a>
+              <ul class="nav nav-treeview">
+                <li class="nav-item">
+                  <a href="{% url 'foodlist' %}" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>يومية التعيين</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="{% url 'amtmam' %}" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>يومية صباحية</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="pages/forms/editors.html" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Editors</p>
+                  </a>
+                </li>
+              </ul>
+            </li>
+
+
             <li class="nav-item has-treeview">
               <a href="#" class="nav-link">
                 <i class="nav-icon fas fa-tree"></i>
@@ -199,35 +237,7 @@
                 </li>
               </ul>
             </li>
-            <li class="nav-item has-treeview">
-              <a href="#" class="nav-link">
-                <i class="nav-icon fas fa-edit"></i>
-                <p>
-                  Forms
-                  <i class="fas fa-angle-left right"></i>
-                </p>
-              </a>
-              <ul class="nav nav-treeview">
-                <li class="nav-item">
-                  <a href="pages/forms/general.html" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>General Elements</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="pages/forms/advanced.html" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>Advanced Elements</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="pages/forms/editors.html" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>Editors</p>
-                  </a>
-                </li>
-              </ul>
-            </li>
+
             <li class="nav-item has-treeview">
               <a href="#" class="nav-link">
                 <i class="nav-icon fas fa-table"></i>

@@ -5,7 +5,7 @@ from .models import Employee, Rank, Department
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from datetime import datetime
-# from dateutil.relativedelta import relativedelta
+from dateutil.relativedelta import relativedelta
 
 @login_required
 def home(request):
@@ -263,106 +263,108 @@ def filterdata(request):
 
 
 
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from .models import Employee, Rank, Department
+from datetime import datetime
 
 @login_required
 def edit_multi(request):
     selected_field = None
-    sort_by = request.GET.get('sort_by', 'sort_number')
-    employees = Employee.objects.all().order_by(sort_by)
+    sort_by = request.GET.get('sort_by', 'id')
+    items = Employee.objects.all().order_by(sort_by)  # نموذج Employee فقط
+    allowed_fields = [
+        'nickname', 'police_number', 'insurance_number', 'phone_number',
+        'alt_phone_number', 'governorate', 'district', 'address',
+        'operation','marital_status','health_status', 'date_of_edara', 'date_of_appointment', 'tmamam',
+        'food', 'rahatcounter', 'department', 'bus', 'nots', 'rank'
+    ]
 
     if request.method == 'GET' and 'field' in request.GET:
         selected_field = request.GET.get('field')
-        allowed_fields = [
-            'nickname', 'police_number', 'insurance_number', 'phone_number',
-            'alt_phone_number', 'governorate', 'district', 'address',
-            'operation', 'date_of_edara', 'date_of_appointment', 'tmamam',
-            'food', 'rahatcounter', 'department', 'bus', 'nots'
-        ]
         if selected_field not in allowed_fields:
             messages.error(request, 'الحقل المختار غير مدعوم.')
             selected_field = None
 
     if request.method == 'POST':
         field = request.POST.get('field')
-        allowed_fields = [
-            'nickname', 'police_number', 'insurance_number', 'phone_number',
-            'alt_phone_number', 'governorate', 'district', 'address',
-            'operation', 'date_of_edara', 'date_of_appointment', 'tmamam',
-            'food', 'rahatcounter', 'department', 'bus', 'nots'
-        ]
-        
         if field not in allowed_fields:
             messages.error(request, 'الحقل المختار غير مدعوم.')
             return redirect('edit_multi')
 
         try:
-            updated_employees = []
-            for employee in employees:
+            updated_items = []
+            for item in items:
                 if field in ['date_of_edara', 'date_of_appointment']:
-                    day = request.POST.get(f'day_{employee.id}')
-                    month = request.POST.get(f'month_{employee.id}')
-                    year = request.POST.get(f'year_{employee.id}')
+                    day = request.POST.get(f'day_{item.id}')
+                    month = request.POST.get(f'month_{item.id}')
+                    year = request.POST.get(f'year_{item.id}')
                     if day and month and year:
                         new_value = datetime.strptime(f'{year}-{month}-{day}', '%Y-%m-%d').date()
-                        if new_value != getattr(employee, field):
-                            setattr(employee, field, new_value)
-                            updated_employees.append(employee)
+                        if new_value != getattr(item, field):
+                            setattr(item, field, new_value)
+                            updated_items.append(item)
                 else:
-                    new_value = request.POST.get(f'values_{employee.id}')
+                    new_value = request.POST.get(f'values_{item.id}')
                     if new_value is not None:
                         if field in ['tmamam', 'food', 'bus']:
                             new_value = 1 if new_value == 'on' else 0
-                            if new_value != getattr(employee, field):
-                                setattr(employee, field, new_value)
-                                updated_employees.append(employee)
+                            if new_value != getattr(item, field):
+                                setattr(item, field, new_value)
+                                updated_items.append(item)
                         elif field == 'department':
                             new_value = Department.objects.get(id=int(new_value)) if new_value else None
-                            if new_value != getattr(employee, field):
-                                setattr(employee, field, new_value)
-                                updated_employees.append(employee)
+                            if new_value != getattr(item, field):
+                                setattr(item, field, new_value)
+                                updated_items.append(item)
+                        elif field == 'rank':
+                            new_value = Rank.objects.get(id=int(new_value)) if new_value else None
+                            if new_value != getattr(item, field):
+                                setattr(item, field, new_value)
+                                updated_items.append(item)
                         elif field == 'rahatcounter':
                             new_value = int(new_value) if new_value else None
-                            if new_value != getattr(employee, field):
-                                setattr(employee, field, new_value)
-                                updated_employees.append(employee)
-                        else:  # الحقول النصية بما في ذلك operation و nots
-                            if new_value != getattr(employee, field):
-                                setattr(employee, field, new_value)
-                                updated_employees.append(employee)
-            
-            if updated_employees:
-                Employee.objects.bulk_update(updated_employees, [field])
-                messages.success(request, f'تم تعديل حقل {field} لـ {len(updated_employees)} فرد بنجاح.')
+                            if new_value != getattr(item, field):
+                                setattr(item, field, new_value)
+                                updated_items.append(item)
+                        else:
+                            if new_value != getattr(item, field):
+                                setattr(item, field, new_value)
+                                updated_items.append(item)
+
+            if updated_items:
+                Employee.objects.bulk_update(updated_items, [field])
+                messages.success(request, f'تم تعديل حقل {field} لـ {len(updated_items)} فرد بنجاح.')
             else:
                 messages.info(request, 'لم يتم إجراء أي تغييرات.')
             return redirect('edit_multi')
         except ValueError as e:
-            messages.error(request, f'خطأ في تنسيق القيمة: {str(e)} (مثال: التاريخ يجب أن يكون صالحًا)')
+            messages.error(request, f'خطأ في تنسيق القيمة: {str(e)}')
             return redirect('edit_multi')
-        except Department.DoesNotExist:
-            messages.error(request, 'القسم المُدخل غير موجود.')
+        except (Department.DoesNotExist, Rank.DoesNotExist):
+            messages.error(request, 'القسم أو الدرجة المُدخلة غير موجودة.')
             return redirect('edit_multi')
         except Exception as e:
             messages.error(request, f'حدث خطأ أثناء التعديل: {str(e)}')
             return redirect('edit_multi')
 
     departments = Department.objects.all()
-    operation_choices = Employee.OPERATION_CHOICES  # تمرير خيارات operation إلى القالب
+    ranks = Rank.objects.all()
+    operation_choices = Employee.OPERATION_CHOICES
+    MARITAL_STATUS_CHOICES = Employee.MARITAL_STATUS_CHOICES
+    HEALTH_STATUS_CHOICES = Employee.HEALTH_STATUS_CHOICES
     return render(request, 'em_data/edit_multi.html', {
-        'employees': employees,
+        'items': items,
         'selected_field': selected_field,
         'departments': departments,
+        'ranks': ranks,
         'sort_by': sort_by,
-        'operation_choices': operation_choices,  # إضافة خيارات operation
-    })   
-    
-    
-    
-    
-    
-    
-    
-    
+        'operation_choices': operation_choices,
+        'marital_status_choices': MARITAL_STATUS_CHOICES,
+        'health_status_choices': HEALTH_STATUS_CHOICES,
+        'allowed_fields': allowed_fields,
+    })
     
     
     

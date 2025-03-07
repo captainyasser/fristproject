@@ -3,7 +3,7 @@ git codes
 cd K:\myproject\myproject
 git status
 git add .
-git commit -m "test"
+git commit -m "add food and am reports"
 git push origin master
 
 
@@ -35,3 +35,21 @@ WHERE e.departments IN (
     'قرار66',
     'بوسته'
 );
+
+
+
+INSERT INTO yasser.attendance_attendance (date, state, food, comfort_adjustment,created_at, updated_at, employee_id, in_or_out)
+SELECT 
+    date, 
+    state, 
+    food, 
+    CASE 
+        WHEN state = 'نوبتجي' THEN 1
+        WHEN state IN ('راحة', 'ر بديلة', '8 صباحاً') THEN -1
+        ELSE 0
+    END AS comfort_adjustment,
+    NOW() AS created_at, 
+    NOW() AS updated_at,
+    employee_id, 
+    in_or_out
+FROM em.emdata_attendance;

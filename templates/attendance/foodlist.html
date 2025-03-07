@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% load static attendance_filters %}
+
+{% block title %}
+يومية التعيين
+{% endblock %}
+
+{% block styles %}
+<style>
+    /* Table Container */
+    .table-container {
+        width: 100%;
+        overflow-x: auto;
+        margin: 20px 0;
+    }
+
+    /* Styled Table */
+    .content-wrapper .table-container .styled-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: 'Arial', sans-serif;
+        font-size: 16px;
+        background-color: #fff;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .content-wrapper .table-container .styled-table thead th {
+        background-color: #2c3e50;
+        color: #ffffff;
+        font-weight: bold;
+        padding: 10px;
+        text-align: right;
+        border-bottom: 2px solid #1a252f;
+    }
+
+    .content-wrapper .table-container .styled-table th,
+    .content-wrapper .table-container .styled-table td {
+        padding: 1px;
+        border: 1px solid #ddd;
+        text-align: right;
+    }
+
+    .content-wrapper .table-container .styled-table th:first-child,
+    .content-wrapper .table-container .styled-table td:first-child {
+        width: 5px;
+    }
+
+    .content-wrapper .table-container .styled-table tbody tr {
+        height: 5px;
+    }
+
+    .content-wrapper .table-container .styled-table tbody tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+
+    .content-wrapper .table-container .styled-table tbody tr:hover {
+        background-color: #f1f1f1;
+    }
+
+    /* Button Styling */
+    .content-wrapper button {
+        padding: 8px 16px;
+        background-color: #3498db;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    .content-wrapper button:hover {
+        background-color: #2980b9;
+    }
+
+    /* Print Styles */
+    @media print {
+        .form-container,
+        .print-btn-container {
+            display: none !important;
+        }
+
+        .content-wrapper .table-container .styled-table {
+            box-shadow: none;
+            font-size: 20px;
+            font-weight: bolder;
+        }
+
+        .content-wrapper .table-container .styled-table th,
+        .content-wrapper .table-container .styled-table td {
+            padding: 0px;
+            margin: 0px;
+            border: .5px solid #000;
+        }
+
+        .content-wrapper .table-container .styled-table thead th {
+            background-color: #fff !important;
+            color: #000 !important;
+            border-bottom: 2px solid #000;
+        }
+
+        .content-wrapper .table-container .styled-table tbody tr:nth-child(even) {
+            background-color: #fff;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" dir="rtl">
+    <div class="content">
+        <div class="form-container">
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit">عرض</button>
+            </form>
+        </div>
+        <br>
+        <div class="print-btn-container">
+            <button onclick="window.print()">طباعة</button>
+        </div>
+        <h5 style="margin: 0px;">يومية التعيين عن يوم: {{ formatted_date }}</h5>
+        <div class="table-container">
+            <table class="styled-table">
+                <thead>
+                    <tr>
+                        {% for column_index in columns|length|r_filter %}
+                        <th>م</th>
+                        <th>الأســـــــــــــــــم</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        {% for row_index in num_rows|r_filter %}
+                        <tr>
+                            {% for column in columns %}
+                            {% with item=column|indexing:row_index %}
+                            <td>{{ item.0 }}</td>
+                            <td>{{ item.1 }}</td>
+                            {% endwith %}
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+            </table>
+        </div>
+        <div style="display: flex; justify-content: space-between; text-align: right;">
+            <div>
+                <h4>بلوكامين الشئون</h4>
+                <h4>أ.ش / </h4>
+                <h4></h4>
+            </div>
+            <div>
+                <h4>رئيس قسم الشئون</h4>
+                <h4>عقيد / </h4>
+                <h4>محمد امام</h4>
+            </div>
+            <div>
+                <h4>مدير إدارة موسيقات الشرطة</h4>
+                <h4>عميد / </h4>
+                <h4>محمد زكي قورة</h4>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

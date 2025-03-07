@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% load static attendance_filters %}
+
+{% block title %}
+يومية صباحية
+{% endblock %}
+
+{% block styles %}
+<style>
+    .styled-table {
+        border-collapse: collapse;
+        margin: 20px 0;
+        font-size: 0.7em;
+        font-family: sans-serif;
+        min-width: 300px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+        table-layout: fixed;
+    }
+
+    /* Ensure single-column tables have a width of 30px */
+    .styled-table:only-child {
+        width: 30px !important;
+    }
+
+    /* Ensure cells in single-column tables have a width of 30px */
+    .styled-table:only-child th,
+    .styled-table:only-child td {
+        width: 30px !important;
+    }
+
+    .styled-table thead tr {
+        background-color: rgb(223, 95, 22);
+        color: rgb(0, 0, 0);
+        text-align: center;
+    }
+
+    .styled-table th.mm,
+    .styled-table td.mm {
+        width: 15px !important;
+        font-size: 15px;
+        padding: 0px;
+        border: 1px solid #ddd;
+        text-align: center;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .styled-table th.tt,
+    .styled-table td.tt {
+        width: 40px !important;
+        font-size: 20px;
+        padding: 0px;
+        border: 1px solid #ddd;
+        text-align: right;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .styled-table tbody tr {
+        border-bottom: 1px solid #ddd;
+        min-height: 20px;
+        height: 20px;
+    }
+
+    .styled-table tbody tr:nth-of-type(even) {
+        background-color: #f3f3f3;
+    }
+
+    .styled-table tbody tr:last-of-type {
+        border-bottom: 2px solid #009879;
+    }
+
+    .table-container {
+        display: flex;
+        width: 100%;
+        overflow-x: auto;
+        gap: 10px; /* Add some spacing between tables */
+    }
+
+    /* تحديد عرض الجداول */
+    .table-container .table-quarter {
+        flex: 1; /* ربع الصفحة */
+    }
+
+    .table-container .table-half {
+        flex: 2; /* نصف الصفحة */
+    }
+
+    @media print {
+        .form-container,
+        .print-btn-container {
+            display: none !important;
+        }
+
+        .styled-table th,
+        .styled-table td {
+            font-size: 20px;
+            font-weight: bolder;
+            padding: 0px;
+            border: 1px solid #ddd;
+            text-align: right;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .styled-table tbody tr {
+            border-bottom: 1px solid #ddd;
+            min-height: 30px;
+            height: 30px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+        <div class="container" dir="rtl">
+            <div class="content">
+                <div class="form-container">
+                    <form method="get" action="">
+                        <label for="date">اختر اليوم:</label>
+                        <input type="date" id="date" name="date" value="{{ selected_date|date:'Y-m-d' }}">
+                        <button type="submit">عرض</button>
+                    </form>
+                </div>
+                <br>
+                <div class="print-btn-container">
+                    <button onclick="window.print()">طباعة</button>
+                </div>
+                <h4>يومية تمام صباحي عن يوم {{ formatted_date }}</h4>
+                <table class="styled-table table-quarter">
+                    <thead>
+                        <tr>
+                            <th class="mm" style="width:20px">موجود بالتمام</th>
+                            <th class="mm">خوارج التمام</th>
+                            <th class="mm">اجمالي موجود بالادارة</th>
+                            <th class="mm">يومية تعيين غدا</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="mm">{{ intamam }}</td>
+                            <td class="mm">{{ outtamam }}</td>
+                            <td class="mm">{{ alltamam }}</td>
+                            <td class="mm">{{ tomorrow_food_count }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="table-container">
+                    <!-- Table 0: Summary Statistics -->
+
+
+                    <!-- Table 1: Non-Music Team (tmamam = 1) -->
+                    <table class="styled-table table-quarter">
+                        <thead>
+                            <tr>
+                                {% for column in table1_columns %}
+                                <th class="mm" style="width:20px">م</th>
+                                <th class="tt">أفراد إداري</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row_index in num_rows|r_filter %}
+                            <tr>
+                                {% for column in table1_columns %}
+                                {% with item=column|indexing:row_index %}
+                                <td class="mm">{{ item.0 }}</td>
+                                <td class="tt">{{ item.1 }}</td>
+                                {% endwith %}
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <!-- Table 2: Music Team (tmamam = 1) -->
+                    <table class="styled-table table-half">
+                        <thead>
+                            <tr>
+                                {% for column in table2_columns %}
+                                <th class="mm" style="width:20px">م</th>
+                                <th class="tt">فريق الموسيقي</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row_index in num_rows|r_filter %}
+                            <tr>
+                                {% for column in table2_columns %}
+                                {% with item=column|indexing:row_index %}
+                                <td class="mm">{{ item.0 }}</td>
+                                <td class="tt">{{ item.1 }}</td>
+                                {% endwith %}
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <!-- Table 3: tmamam = 0 -->
+                    <table class="styled-table table-quarter">
+                        <thead>
+                            <tr>
+                                {% for column in table3_columns %}
+                                <th class="mm" style="width:20px">م</th>
+                                <th class="tt">خوارج التمام</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row_index in num_rows|r_filter %}
+                            <tr>
+                                {% for column in table3_columns %}
+                                {% with item=column|indexing:row_index %}
+                                <td class="mm">{{ item.0 }}</td>
+                                <td class="tt">{{ item.1 }}</td>
+                                {% endwith %}
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+{% endblock %}
