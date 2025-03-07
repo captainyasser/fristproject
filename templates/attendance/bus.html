@@ -1,0 +1,174 @@
+
+{% extends "base.html" %}
+{% load static attendance_filters %}
+<title>
+    يومية الاتوبيس
+</title>
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+    <body class="hold-transition sidebar-mini layout-fixed">
+
+        
+        <!-- Main content container -->
+        <div class="container">
+            <div class="content">
+        
+                <!-- Main content block (this is where child templates will inject content) -->
+                {% block content %}
+                <div class="content-wrapper">
+                    <section class="content">
+                        <div class="container-fluid">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <!-- Your content will be inserted here -->
+                                    {% block inner_content %}
+
+
+
+                                    <!DOCTYPE html>
+                                    <html lang="ar">
+                                    <head>
+                                        <meta charset="UTF-8">
+                                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                                        <title>الأفراد المنصرفين اليوم والحضور غدًا</title>
+                                        <style>
+                                            /* تنسيق الجداول */
+                                            table {
+                                                width: 100%;
+                                                border-collapse: collapse;
+                                                margin-bottom: 20px;
+                                            }
+                                            th, td {
+                                                border: 1px solid #ddd;
+                                                padding: 8px;
+                                                text-align: center;
+                                            }
+                                            th {
+                                                background-color: #f2f2f2;
+                                            }
+                                    
+                                            /* تنسيق الأسماء في ثلاثة أعمدة */
+                                            .names-container {
+                                                display: flex;
+                                                flex-wrap: wrap;
+                                                gap: 10px;
+                                            }
+                                            .names-column {
+                                                flex: 1;
+                                                min-width: 30%;
+                                            }
+                                            .names-column p {
+                                                margin: 5px 0;
+                                            }
+                                    
+                                            /* تنسيق زر الطباعة */
+                                            .print-button {
+                                                margin: 20px 0;
+                                                padding: 10px 20px;
+                                                background-color: #4CAF50;
+                                                color: white;
+                                                border: none;
+                                                cursor: pointer;
+                                                font-size: 16px;
+                                            }
+                                            .print-button:hover {
+                                                background-color: #45a049;
+                                            }
+                                    
+                                            /* تنسيقات الطباعة */
+                                            @media print {
+                                                .print-button {
+                                                    display: none;
+                                                }
+                                                h1, h2 {
+                                                    color: black;
+                                                }
+                                            }
+                                        </style>
+                                    </head>
+                                    <body>
+                                        <h1>اختر التاريخ لعرض الأسماء</h1>
+                                        <form method="get">
+                                            <label for="date">اختر التاريخ:</label>
+                                            <input type="date" id="date" name="date" required>
+                                            <button type="submit">عرض الأسماء</button>
+                                        </form>
+                                    
+                                        {% if selected_date %}
+                                            <!-- زر الطباعة -->
+                                            <button class="print-button" onclick="window.print()">طباعة الصفحة</button>
+                                    
+                                            <!-- جدول الأفراد المنصرفين اليوم -->
+                                            <h2>الأفراد المنصرفين اليوم ({{ selected_date|date:"l d/m/Y" }})</h2>                                            <p><strong>العدد: {{ departing_today|length }}</strong></p>
+
+                                            {% if departing_today %}
+                                                <div class="names-container">
+                                                    <div class="names-column">
+                                                        {% for employee in departing_today|slice:":20" %}
+                                                            <p>{{ forloop.counter }}. {{ employee.employee__name }}</p>
+                                                        {% endfor %}
+                                                    </div>
+                                                    <div class="names-column">
+                                                        {% for employee in departing_today|slice:"20:40" %}
+                                                            <p>{{ forloop.counter|add:20 }}. {{ employee.employee__name }}</p>
+                                                        {% endfor %}
+                                                    </div>
+                                                    <div class="names-column">
+                                                        {% for employee in departing_today|slice:"40:60" %}
+                                                            <p>{{ forloop.counter|add:40 }}. {{ employee.employee__name }}</p>
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
+                                            {% else %}
+                                                <p>لا يوجد أفراد منصرفين اليوم.</p>
+                                            {% endif %}
+                                    
+                                            <!-- جدول الأفراد الذين سيستقلون الاتوبيس غدًا -->
+                                            <h2>حضور غدا بالاتوبيس ({{ tomorrow|date:"l d/m/Y" }})</h2>                                            <p><strong>العدد: {{ attending_tomorrow|length }}</strong></p>
+
+                                            {% if attending_tomorrow %}
+                                                <div class="names-container">
+                                                    <div class="names-column">
+                                                        {% for employee in attending_tomorrow|slice:":20" %}
+                                                            <p>{{ forloop.counter }}. {{ employee.employee__name }}</p>
+                                                        {% endfor %}
+                                                    </div>
+                                                    <div class="names-column">
+                                                        {% for employee in attending_tomorrow|slice:"20:40" %}
+                                                            <p>{{ forloop.counter|add:20 }}. {{ employee.employee__name }}</p>
+                                                        {% endfor %}
+                                                    </div>
+                                                    <div class="names-column">
+                                                        {% for employee in attending_tomorrow|slice:"40:60" %}
+                                                            <p>{{ forloop.counter|add:40 }}. {{ employee.employee__name }}</p>
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
+                                            {% else %}
+                                                <p>لا يوجد أفراد سيستقلون الاتوبيس غدًا.</p>
+                                            {% endif %}
+                                        {% endif %}
+                                    
+                                        <script>
+                                            // يمكنك إضافة أي وظائف إضافية هنا إذا لزم الأمر
+                                        </script>
+                                    </body>
+                                    </html>
+
+
+
+                                          
+                                    {% endblock %}
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+                {% endblock %}
+            </div>
+        </div>
+        
+
+    </body>
+</html>

@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% load static attendance_filters %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            {% block inner_content %}
+            <form method="get" action="" id="date-form">
+                <label for="date">حدد بداية الأسبوع:</label>
+                <input type="date" id="date" name="date" required>
+                
+                <label for="start">من رقم:</label>
+                <input type="number" id="start" name="start" min="1" value="1">
+                
+                <label for="end">إلى رقم:</label>
+                <input type="number" id="end" name="end" min="1" value="47">
+                <br>
+                <label for="padding_size">التباعد الداخلي:</label>
+                <input type="number" id="padding_size" name="padding_size" min="1" max="20" value="1">
+            
+                <button type="submit" class="btn btn-primary">عرض</button>
+                <button type="button" class="btn btn-success" onclick="printTable()">طباعة</button>
+            </form>
+
+            <!-- الأزرار الأربعة لفتح الصفحات مع التباعد الداخلي -->
+            <div style="margin-top: 10px;">
+                <button class="btn btn-info" onclick="openPage(1, 47, 1)">الصفحة 1 (1-47)</button>
+                <button class="btn btn-info" onclick="openPage(48, 94, 1)">الصفحة 2 (48-94)</button>
+                <button class="btn btn-info" onclick="openPage(95, 135, 3)">الصفحة 3 (95-135)</button>
+                <button class="btn btn-info" onclick="openPage(136, 170, 6)">الصفحة 4 (136-170)</button>
+            </div>
+
+            {% if selected_date %}
+                <table class="table table-bordered" dir="rtl" id="attendance-table">
+                    <thead>
+                        <tr>
+                            <th>م</th>
+                            <th>القسم</th>
+                            <th>الاســـــــــــم</th>
+                            <th>التشغيل</th>
+                            {% for date in date_range %}
+                                <th style="width:70px;">{{ date|date:"l"|ar_day }} <br> {{ date|date:"n/j" }}</th>
+                            {% endfor %}
+                            <th>ر</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for employee in filtered_employees %}
+                            <tr>
+                                <td style="font-weight:bolder; text-align: center; font-size:12px; width:5px;">{{ employee.serial_number }}</td>
+                                <td style="font-weight:bolder; text-align: right; font-size:10px; width:50px;">{{ employee.department|format_department }}</td>
+                                <td style="font-weight:bolder; text-align: center; font-size:18px; width:320px;">{{ employee.name }}</td>
+                                <td style="font-weight:bolder; text-align: right; font-size:18px; width:5px;">{{ employee.operation|format_ope|default:"-" }}</td>
+                                {% for date in date_range %}
+                                    <td style="text-align:left; font-size:11px; width:70px;
+                                        {% for record in attendance_data %}
+                                            {% if record.employee.name == employee.name and record.date == date %}
+                                                background-color: {% if record.state == 'انتداب' or record.state == 'مرضي' or record.state == 'فرقة' or record.state == 'خاصه' or record.state == 'طارئة' or record.state == 'دورية' or record.state == 'ج وضع' %}rgb(255, 255, 255){% else %}transparent{% endif %};
+                                                color: {% if record.state == 'انتداب' or record.state == 'مرضي' or record.state == 'فرقة' or record.state == 'خاصه' or record.state == 'طارئة' or record.state == 'دورية' or record.state == 'ج وضع' %}rgb(0, 0, 0){% else %}#3D3D3D{% endif %};
+                                            {% endif %}
+                                        {% endfor %}">
+                                        {% for record in attendance_data %}
+                                            {% if record.employee.name == employee.name and record.date == date %}
+                                                {{ record.state|format_state }}
+                                            {% endif %}
+                                        {% endfor %}
+                                    </td>
+                                {% endfor %}
+                                <td style="font-weight:bolder; text-align: center; font-size:10px; width:5px;">{{ employee.rahatcounter }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>حدد يوم بداية الأسبوع</p>
+            {% endif %}
+            {% endblock %}
+        </div>
+    </div>
+</div>
+
+<!-- Custom CSS for styling -->
+<style>
+    body {
+        padding: 0px;
+        margin: 0px;
+    }
+
+    #attendance-table th, #attendance-table td {
+        border: 1px solid black;
+        text-align: center;
+        font-size: 10px;
+        padding: {{ padding_size }}px;
+    }
+
+    @media print {
+        #date-form {
+            display: none;
+        }
+        .btn {
+            display: none;
+        }
+        #attendance-table td, #attendance-table th {
+            border: 1px solid black !important;
+        }
+    }
+</style>
+
+<style>
+    #attendance-table {
+        border: 1px solid red;
+        border-collapse: collapse;
+    }
+</style>
+
+<!-- JavaScript -->
+<script>
+    function printTable() {
+        window.print();
+    }
+
+    function getNextSaturday() {
+        const today = new Date();
+        const dayOfWeek = today.getDay();
+        const daysUntilSaturday = (6 - dayOfWeek + 7) % 7 || 7;
+        const nextSaturday = new Date(today);
+        nextSaturday.setDate(today.getDate() + daysUntilSaturday);
+        return nextSaturday;
+    }
+
+    // دالة لفتح صفحة جديدة مع التباعد الداخلي فقط
+    function openPage(start, end, paddingSize) {
+        const date = document.getElementById('date').value;
+        if (!date) {
+            alert('يرجى تحديد تاريخ بداية الأسبوع أولاً!');
+            return;
+        }
+        const url = `${window.location.pathname}?date=${date}&start=${start}&end=${end}&padding_size=${paddingSize}`;
+        window.open(url, '_blank');
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const nextSaturday = getNextSaturday();
+        const dateInput = document.getElementById('date');
+        dateInput.value = nextSaturday.toISOString().split('T')[0];
+    });
+</script>
+{% endblock %}

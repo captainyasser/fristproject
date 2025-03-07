@@ -9,7 +9,8 @@ urlpatterns = [
     # path('attendance/get-data/', views.get_attendance_data, name='get_attendance_data'),
     path('update_operation/', views.update_operation, name='update_operation'),
     path('update_attendance/', views.update_attendance, name='update_attendance'),
-
+    path('bus/', views.bus_view, name='bus_view'),
+    path('kashftmam/', views.kashftmam, name='kashftmam'),
     path('attendance/3w/', views.attendance_3w, name='attendance_3w'),
     path('attendance/simple/', views.simple_attendance, name='simple_attendance'),
     path('attendance/update/', views.update_attendance, name='update_attendance'),
@@ -20,6 +21,7 @@ urlpatterns = [
     path('one-employee/', views.one_employee, name='one_employee'),
     path('foodlist/', views.foodlist, name='foodlist'),
     path('amtmam/',  views.amtmam_view, name='amtmam'),
+    path('numreport/', views.numreport, name='numreport'),
 
 
     # path('one_employee/', views.one_employee, name='one_employee'),

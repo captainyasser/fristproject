@@ -3,7 +3,7 @@ git codes
 cd K:\myproject\myproject
 git status
 git add .
-git commit -m "add food and am reports"
+git commit -m "add kashf tmam and numreport"
 git push origin master
 
 

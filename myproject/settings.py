@@ -132,10 +132,13 @@ DATABASES = {
 }
 
 
+LOGIN_URL = '/users/login/'
 
-LOGIN_URL = '/'
+# LOGIN_URL = '/'
 LOGIN_REDIRECT_URL = 'home'
-LOGOUT_REDIRECT_URL = '/' 
+LOGOUT_REDIRECT_URL = '/users/login/'
+
+
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
@@ -154,18 +157,18 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+# LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
 USE_TZ = True
-
+LANGUAGE_CODE = 'ar'  # Arabic
+USE_L10N = True       # Localization
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/

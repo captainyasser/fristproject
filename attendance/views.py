@@ -866,14 +866,15 @@ ARABIC_DAYS = {
     6: 'الأحد',
 }
 
-# yourapp/views.py
+
+
+from datetime import date, timedelta 
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from .forms import DateForm
 from .models import Attendance
 from django.db.models import F
 from math import ceil
-from datetime import date
 
 # قاموس الأيام باللغة العربية
 ARABIC_DAYS = {
@@ -905,7 +906,7 @@ def foodlist(request):
                     employee__food=1
                 ).annotate(dep_sort=F('employee__dep_sort')) \
                 .order_by('dep_sort') \
-                .values_list('employee__name', flat=True)  # Changed 'name' to 'employee__name'
+                .values_list('employee__name', flat=True)
                 
                 # إضافة الأرقام التسلسلية
                 names_with_serials = [(index + 1, name) for index, name in enumerate(names)]
@@ -914,8 +915,9 @@ def foodlist(request):
                 day_name = ARABIC_DAYS[selected_date.weekday()]
                 formatted_date = f"{day_name} {selected_date.day:02d}/{selected_date.month:02d}/{selected_date.year}"
     else:
-        form = DateForm()
-        selected_date = date.today()
+        # تعيين التاريخ الافتراضي إلى غدًا
+        selected_date = date.today() + timedelta(days=1)
+        form = DateForm(initial={'date': selected_date})  # تهيئة النموذج بالتاريخ الافتراضي
         # تنسيق التاريخ يدويًا للتاريخ الافتراضي
         day_name = ARABIC_DAYS[selected_date.weekday()]
         formatted_date = f"{day_name} {selected_date.day:02d}/{selected_date.month:02d}/{selected_date.year}"
@@ -932,8 +934,6 @@ def foodlist(request):
         'num_rows': total_rows,
     }
     return render(request, 'attendance/foodlist.html', context)
-
-
 
 
 
@@ -1059,6 +1059,291 @@ def amtmam_view(request):
     }
     return render(request, 'attendance/amtmam.html', context)
 
+
+
+
+
+
+from datetime import datetime, timedelta
+from django.shortcuts import render
+from django.db.models import Q
+from babel.dates import format_date as babel_format_date
+from .models import Employee, Attendance
+
+
+
+def get_attendance_count(gender, department_name, state, date, exclude_department=False):
+    """
+    إحصاء عدد الحضور بناءً على الجنس، القسم، الحالة، والتاريخ.
+    """
+    query = Attendance.objects.filter(
+        employee__gender=gender,
+        date=date
+    )
+    if isinstance(state, list):
+        query = query.filter(state__in=state)
+    else:
+        query = query.filter(state=state)
+    
+    if exclude_department:
+        return query.exclude(employee__department__name=department_name).count()
+    else:
+        return query.filter(employee__department__name=department_name).count()
+
+def numreport(request):
+    # الحصول على التاريخ المحدد من الطلب (إذا لم يتم تحديد تاريخ، استخدم تاريخ غدا)
+    selected_date_str = request.GET.get('date', (datetime.today() + timedelta(days=1)).strftime('%Y-%m-%d'))
+    selected_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
+    formatted_date = babel_format_date(selected_date, format='EEEE dd MMMM yyyy', locale='ar')
+
+    # التحقق مما إذا كان اليوم المحدد هو الخميس (weekday() == 3)
+    is_thursday = selected_date.weekday() == 3
+    friday_date = selected_date + timedelta(days=1) if is_thursday else None
+    formatted_friday_date = babel_format_date(friday_date, format='EEEE dd MMMM yyyy', locale='ar') if is_thursday else None
+
+    # دالة مساعدة لحساب البيانات لتاريخ معين
+    def calculate_counts(date):
+        count1 = Employee.objects.filter(Q(gender='ذكر') & ~Q(department__name='فريق الموسيقي') & Q(mainornot=1)).count()
+        count2 = Employee.objects.filter(Q(gender='ذكر') & Q(department__name='فريق الموسيقي') & Q(mainornot=1)).count()
+        count3 = Employee.objects.filter(Q(gender='أنثي') & ~Q(department__name='فريق الموسيقي') & Q(mainornot=1)).count()
+        count4 = Employee.objects.filter(Q(gender='أنثي') & Q(department__name='فريق الموسيقي') & Q(mainornot=1)).count()
+        count5 = Employee.objects.filter(mainornot=1).count()
+
+        m_e_tarka = get_attendance_count('ذكر', 'فريق الموسيقي', 'طارئة', date, exclude_department=True)
+        m_m_tarka = get_attendance_count('ذكر', 'فريق الموسيقي', 'طارئة', date)
+        f_e_tarka = get_attendance_count('أنثي', 'فريق الموسيقي', 'طارئة', date, exclude_department=True)
+        f_m_tarka = get_attendance_count('أنثي', 'فريق الموسيقي', 'طارئة', date)
+        mf_tarka = Attendance.objects.filter(state='طارئة', date=date).count()
+
+        m_e_dawrya = get_attendance_count('ذكر', 'فريق الموسيقي', 'دورية', date, exclude_department=True)
+        m_m_dawrya = get_attendance_count('ذكر', 'فريق الموسيقي', 'دورية', date)
+        f_e_dawrya = get_attendance_count('أنثي', 'فريق الموسيقي', 'دورية', date, exclude_department=True)
+        f_m_dawrya = get_attendance_count('أنثي', 'فريق الموسيقي', 'دورية', date)
+        mf_dawrya = Attendance.objects.filter(state='دورية', date=date).count()
+
+        m_e_sick = get_attendance_count('ذكر', 'فريق الموسيقي', ['مرضي', 'قرار66'], date, exclude_department=True)
+        m_m_sick = get_attendance_count('ذكر', 'فريق الموسيقي', ['مرضي', 'قرار66'], date)
+        f_e_sick = get_attendance_count('أنثي', 'فريق الموسيقي', ['مرضي', 'قرار66'], date, exclude_department=True)
+        f_m_sick = get_attendance_count('أنثي', 'فريق الموسيقي', ['مرضي', 'قرار66'], date)
+        mf_sick = Attendance.objects.filter(Q(state='مرضي') | Q(state='قرار66'), date=date).count()
+
+        m_e_khas = get_attendance_count('ذكر', 'فريق الموسيقي', ['خاصه', 'ج وضع'], date, exclude_department=True)
+        m_m_khas = get_attendance_count('ذكر', 'فريق الموسيقي', ['خاصه', 'ج وضع'], date)
+        f_e_khas = get_attendance_count('أنثي', 'فريق الموسيقي', ['خاصه', 'ج وضع'], date, exclude_department=True)
+        f_m_khas = get_attendance_count('أنثي', 'فريق الموسيقي', ['خاصه', 'ج وضع'], date)
+        mf_khas = Attendance.objects.filter(Q(state='خاصه') | Q(state='ج وضع'), date=date).count()
+
+        m_e_mamrya = get_attendance_count('ذكر', 'فريق الموسيقي', ['مأمورية', 'مأمورية خ'], date, exclude_department=True)
+        m_m_mamrya = get_attendance_count('ذكر', 'فريق الموسيقي', ['مأمورية', 'مأمورية خ'], date)
+        f_e_mamrya = get_attendance_count('أنثي', 'فريق الموسيقي', ['مأمورية', 'مأمورية خ'], date, exclude_department=True)
+        f_m_mamrya = get_attendance_count('أنثي', 'فريق الموسيقي', ['مأمورية', 'مأمورية خ'], date)
+        mf_mamrya = Attendance.objects.filter(Q(state='مأمورية') | Q(state='مأمورية خ'), date=date).count()
+
+        m_e_intdab = get_attendance_count('ذكر', 'فريق الموسيقي', 'انتداب', date, exclude_department=True)
+        m_m_intdab = get_attendance_count('ذكر', 'فريق الموسيقي', 'انتداب', date)
+        f_e_intdab = get_attendance_count('أنثي', 'فريق الموسيقي', 'انتداب', date, exclude_department=True)
+        f_m_intdab = get_attendance_count('أنثي', 'فريق الموسيقي', 'انتداب', date)
+        mf_intdab = Attendance.objects.filter(state='انتداب', date=date).count()
+
+        m_e_ferka = get_attendance_count('ذكر', 'فريق الموسيقي', ['فرقة', 'ت دوري', 'ت تكراري'], date, exclude_department=True)
+        m_m_ferka = get_attendance_count('ذكر', 'فريق الموسيقي', ['فرقة', 'ت دوري', 'ت تكراري'], date)
+        f_e_ferka = get_attendance_count('أنثي', 'فريق الموسيقي', ['فرقة', 'ت دوري', 'ت تكراري'], date, exclude_department=True)
+        f_m_ferka = get_attendance_count('أنثي', 'فريق الموسيقي', ['فرقة', 'ت دوري', 'ت تكراري'], date)
+        mf_ferka = Attendance.objects.filter(Q(state='فرقة') | Q(state='ت دوري') | Q(state='ت تكراري'), date=date).count()
+
+        m_e_salam = get_attendance_count('ذكر', 'فريق الموسيقي', 'حفظ سلام', date, exclude_department=True)
+        m_m_salam = get_attendance_count('ذكر', 'فريق الموسيقي', 'حفظ سلام', date)
+        f_e_salam = get_attendance_count('أنثي', 'فريق الموسيقي', 'حفظ سلام', date, exclude_department=True)
+        f_m_salam = get_attendance_count('أنثي', 'فريق الموسيقي', 'حفظ سلام', date)
+        mf_salam = Attendance.objects.filter(state='حفظ سلام', date=date).count()
+
+        m_e_wafaa = get_attendance_count('ذكر', 'فريق الموسيقي', 'وفاه', date, exclude_department=True)
+        m_m_wafaa = get_attendance_count('ذكر', 'فريق الموسيقي', 'وفاه', date)
+        f_e_wafaa = get_attendance_count('أنثي', 'فريق الموسيقي', 'وفاه', date, exclude_department=True)
+        f_m_wafaa = get_attendance_count('أنثي', 'فريق الموسيقي', 'وفاه', date)
+        mf_wafaa = Attendance.objects.filter(state='وفاه', date=date).count()
+
+        m_e_raha = get_attendance_count('ذكر', 'فريق الموسيقي', ['منحة', 'عطلة', '8 صباحاً', 'ر بديلة', 'راحة'], date, exclude_department=True)
+        m_m_raha = get_attendance_count('ذكر', 'فريق الموسيقي', ['منحة', 'عطلة', '8 صباحاً', 'ر بديلة', 'راحة'], date)
+        f_e_raha = get_attendance_count('أنثي', 'فريق الموسيقي', ['منحة', 'عطلة', '8 صباحاً', 'ر بديلة', 'راحة'], date, exclude_department=True)
+        f_m_raha = get_attendance_count('أنثي', 'فريق الموسيقي', ['منحة', 'عطلة', '8 صباحاً', 'ر بديلة', 'راحة'], date)
+        mf_raha = Attendance.objects.filter(Q(state='منحة') | Q(state='عطلة') | Q(state='8 صباحاً') | Q(state='ر بديلة') | Q(state='راحة'), date=date).count()
+
+        m_e_e3ara = get_attendance_count('ذكر', 'فريق الموسيقي', 'إعارة', date, exclude_department=True)
+        m_m_e3ara = get_attendance_count('ذكر', 'فريق الموسيقي', 'إعارة', date)
+        f_e_e3ara = get_attendance_count('أنثي', 'فريق الموسيقي', 'إعارة', date, exclude_department=True)
+        f_m_e3ara = get_attendance_count('أنثي', 'فريق الموسيقي', 'إعارة', date)
+        mf_e3ara = Attendance.objects.filter(state='إعارة', date=date).count()
+
+        m_e_ghyab = get_attendance_count('ذكر', 'فريق الموسيقي', 'غياب', date, exclude_department=True)
+        m_m_ghyab = get_attendance_count('ذكر', 'فريق الموسيقي', 'غياب', date)
+        f_e_ghyab = get_attendance_count('أنثي', 'فريق الموسيقي', 'غياب', date, exclude_department=True)
+        f_m_ghyab = get_attendance_count('أنثي', 'فريق الموسيقي', 'غياب', date)
+        mf_ghyab = Attendance.objects.filter(state='غياب', date=date).count()
+
+        m_e_out = m_e_tarka + m_e_dawrya + m_e_sick + m_e_khas + m_e_mamrya + m_e_intdab + m_e_ferka + m_e_salam + m_e_wafaa + m_e_raha + m_e_e3ara + m_e_ghyab
+        m_m_out = m_m_tarka + m_m_dawrya + m_m_sick + m_m_khas + m_m_mamrya + m_m_intdab + m_m_ferka + m_m_salam + m_m_wafaa + m_m_raha + m_m_e3ara + m_m_ghyab
+        f_e_out = f_e_tarka + f_e_dawrya + f_e_sick + f_e_khas + f_e_mamrya + f_e_intdab + f_e_ferka + f_e_salam + f_e_wafaa + f_e_raha + f_e_e3ara + f_e_ghyab
+        f_m_out = f_m_tarka + f_m_dawrya + f_m_sick + f_m_khas + f_m_mamrya + f_m_intdab + f_m_ferka + f_m_salam + f_m_wafaa + f_m_raha + f_m_e3ara + f_m_ghyab
+        mf_out = mf_tarka + mf_dawrya + mf_sick + mf_khas + mf_mamrya + mf_intdab + mf_ferka + mf_salam + mf_wafaa + mf_raha + mf_e3ara + mf_ghyab
+
+        m_e_in = count1 - m_e_out
+        m_m_in = count2 - m_m_out
+        f_e_in = count3 - f_e_out
+        f_m_in = count4 - f_m_out
+        mf_in = count5 - mf_out
+
+        return {
+            'count1': count1, 'count2': count2, 'count3': count3, 'count4': count4, 'count5': count5,
+            'm_e_tarka': m_e_tarka, 'm_m_tarka': m_m_tarka, 'f_e_tarka': f_e_tarka, 'f_m_tarka': f_m_tarka, 'mf_tarka': mf_tarka,
+            'm_e_dawrya': m_e_dawrya, 'm_m_dawrya': m_m_dawrya, 'f_e_dawrya': f_e_dawrya, 'f_m_dawrya': f_m_dawrya, 'mf_dawrya': mf_dawrya,
+            'm_e_sick': m_e_sick, 'm_m_sick': m_m_sick, 'f_e_sick': f_e_sick, 'f_m_sick': f_m_sick, 'mf_sick': mf_sick,
+            'm_e_khas': m_e_khas, 'm_m_khas': m_m_khas, 'f_e_khas': f_e_khas, 'f_m_khas': f_m_khas, 'mf_khas': mf_khas,
+            'm_e_mamrya': m_e_mamrya, 'm_m_mamrya': m_m_mamrya, 'f_e_mamrya': f_e_mamrya, 'f_m_mamrya': f_m_mamrya, 'mf_mamrya': mf_mamrya,
+            'm_e_intdab': m_e_intdab, 'm_m_intdab': m_m_intdab, 'f_e_intdab': f_e_intdab, 'f_m_intdab': f_m_intdab, 'mf_intdab': mf_intdab,
+            'm_e_ferka': m_e_ferka, 'm_m_ferka': m_m_ferka, 'f_e_ferka': f_e_ferka, 'f_m_ferka': f_m_ferka, 'mf_ferka': mf_ferka,
+            'm_e_salam': m_e_salam, 'm_m_salam': m_m_salam, 'f_e_salam': f_e_salam, 'f_m_salam': f_m_salam, 'mf_salam': mf_salam,
+            'm_e_wafaa': m_e_wafaa, 'm_m_wafaa': m_m_wafaa, 'f_e_wafaa': f_e_wafaa, 'f_m_wafaa': f_m_wafaa, 'mf_wafaa': mf_wafaa,
+            'm_e_raha': m_e_raha, 'm_m_raha': m_m_raha, 'f_e_raha': f_e_raha, 'f_m_raha': f_m_raha, 'mf_raha': mf_raha,
+            'm_e_e3ara': m_e_e3ara, 'm_m_e3ara': m_m_e3ara, 'f_e_e3ara': f_e_e3ara, 'f_m_e3ara': f_m_e3ara, 'mf_e3ara': mf_e3ara,
+            'm_e_ghyab': m_e_ghyab, 'm_m_ghyab': m_m_ghyab, 'f_e_ghyab': f_e_ghyab, 'f_m_ghyab': f_m_ghyab, 'mf_ghyab': mf_ghyab,
+            'm_e_out': m_e_out, 'm_m_out': m_m_out, 'f_e_out': f_e_out, 'f_m_out': f_m_out, 'mf_out': mf_out,
+            'm_e_in': m_e_in, 'm_m_in': m_m_in, 'f_e_in': f_e_in, 'f_m_in': f_m_in, 'mf_in': mf_in,
+        }
+
+    # حساب بيانات يوم الخميس
+    thursday_data = calculate_counts(selected_date)
+
+    # إذا كان اليوم الخميس، احسب بيانات يوم الجمعة
+    friday_data = calculate_counts(friday_date) if is_thursday else None
+
+    # إعداد السياق
+    context = {
+        'selected_date': selected_date,
+        'formatted_date': formatted_date,
+        'is_thursday': is_thursday,
+        'friday_date': friday_date,
+        'formatted_friday_date': formatted_friday_date,
+        'thursday_data': thursday_data,
+        'friday_data': friday_data,
+    }
+
+    return render(request, 'attendance/numreport.html', context)
+
+
+
+
+
+from django.shortcuts import render
+from django.utils.formats import date_format  # Ensure this is imported
+from datetime import datetime, timedelta
+from django.db.models import Q
+from django.contrib.auth.decorators import login_required
+from .models import Attendance
+
+@login_required(login_url='/login/')
+def bus_view(request):
+    # Set selected_date to today by default
+    selected_date = datetime.today().date()  # Default to current date
+    tomorrow = selected_date + timedelta(days=1)  # Tomorrow based on default
+    departing_today = []
+    attending_tomorrow = []
+
+    if request.method == 'GET' and 'date' in request.GET:
+        selected_date_input = request.GET.get('date')
+        if selected_date_input:  # Only override if a date is provided
+            try:
+                selected_date = datetime.strptime(selected_date_input, "%Y-%m-%d").date()
+                tomorrow = selected_date + timedelta(days=1)
+            except ValueError:
+                selected_date = datetime.today().date()  # Fallback to today if invalid
+                tomorrow = selected_date + timedelta(days=1)
+
+    # Calculate previous_date based on selected_date (whether default or user-provided)
+    previous_date = selected_date
+
+    # Departing today
+    departing_today = Attendance.objects.filter(
+        date=selected_date,
+        in_or_out='2',
+        employee__bus=1
+    ).values('employee__name', 'employee__sort_number').distinct().order_by('employee__sort_number')
+
+    # Employees who were '2' or '3' on previous_date
+    valid_previous_employees = Attendance.objects.filter(
+        date=previous_date,
+        in_or_out__in=['2', '3']
+    ).values_list('employee_id', flat=True).distinct()
+
+    # Attending tomorrow
+    attending_tomorrow = Attendance.objects.filter(
+        date=tomorrow,
+        in_or_out__in=['1', '2'],
+        employee__bus=1,
+        employee_id__in=valid_previous_employees
+    ).exclude(
+        employee__in=Attendance.objects.filter(
+            date=previous_date,
+            in_or_out='1'
+        ).values_list('employee_id', flat=True)
+    ).values('employee__name', 'employee__sort_number').distinct().order_by('employee__sort_number')
+
+    # Format dates
+    formatted_date = date_format(selected_date, format='dd/MM/yyyy', use_l10n=True)
+    formatted_tomorrow = date_format(tomorrow, format='dd/MM/yyyy', use_l10n=True)
+
+    context = {
+        'departing_today': departing_today,
+        'attending_tomorrow': attending_tomorrow,
+        'selected_date': selected_date,
+        'formatted_date': formatted_date,
+        'tomorrow': tomorrow,
+        'formatted_tomorrow': formatted_tomorrow,
+    }
+    return render(request, 'attendance/bus.html', context)
+
+
+
+
+
+
+from datetime import datetime, timedelta
+from django.shortcuts import render
+from .models import Employee, Attendance
+from django.contrib.auth.decorators import login_required
+
+@login_required(login_url='/login/')
+def kashftmam(request):
+    selected_date = request.GET.get('date')
+    start = request.GET.get('start', 1)  # القيمة الافتراضية 1
+    end = request.GET.get('end', 47)    # القيمة الافتراضية 47
+    padding_size = request.GET.get('padding_size', 1)  # القيمة الافتراضية 1
+
+    attendance_data = []
+    employees = Employee.objects.select_related('department').all().order_by('dep_sort')
+    date_range = []
+
+    if selected_date:
+        selected_date = datetime.strptime(selected_date, '%Y-%m-%d').date()
+        date_range = [selected_date + timedelta(days=i) for i in range(7)]
+        attendance_data = Attendance.objects.filter(date__in=date_range).order_by('date')
+
+    start = int(start) if start else 1
+    end = int(end) if end else 47
+    filtered_employees = employees[start - 1:end]
+    
+    for idx, employee in enumerate(filtered_employees, start=start):
+        employee.serial_number = idx  
+
+    return render(request, 'attendance/kashftmam.html', {
+        'attendance_data': attendance_data,
+        'selected_date': selected_date,
+        'date_range': date_range,
+        'filtered_employees': filtered_employees,
+        'first_number': start,
+        'last_number': end,
+        'padding_size': padding_size,
+    })
 
 
 
