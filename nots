@@ -3,7 +3,7 @@ git codes
 cd K:\myproject\myproject
 git status
 git add .
-git commit -m "add insert many and outs"
+git commit -m "add files share and monthly discount"
 git push origin master
 
 
@@ -11,8 +11,6 @@ git add em_data/views.py
 
 
 كود نقل الاقسام
-
-
 UPDATE yasser.employees AS y
 JOIN em.employees AS e ON y.id = e.id
 JOIN yasser.departments AS d ON e.departments = d.name

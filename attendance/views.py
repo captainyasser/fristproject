@@ -209,7 +209,7 @@ def simple_attendance(request):
         employees = employees.order_by(sort_by)
 
     # تقسيم البيانات إلى صفحات (200 موظف لكل صفحة)
-    paginator = Paginator(employees, 100)
+    paginator = Paginator(employees, 200)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
@@ -1560,8 +1560,102 @@ def insert_many_attendance(request):
     return render(request, 'attendance/insertmany.html', {'employees': employees})
 
 
+from django.shortcuts import render
+from django.db.models import Count, Q, OuterRef, Subquery
+from django.db import models
+from .models import Employee, Attendance
+from datetime import datetime, timedelta
+import calendar
+@login_required(login_url='/login/')
+def monthly_discount(request):
+    months = [
+        (1, "يناير"), (2, "فبراير"), (3, "مارس"), (4, "أبريل"),
+        (5, "مايو"), (6, "يونيو"), (7, "يوليو"), (8, "أغسطس"),
+        (9, "سبتمبر"), (10, "أكتوبر"), (11, "نوفمبر"), (12, "ديسمبر")
+    ]
+    
+    years = range(2020, datetime.now().year + 1)
+    
+    if request.method == 'POST':
+        month = int(request.POST.get('month'))
+        year = int(request.POST.get('year'))
+        
+        if month == 12:
+            next_month = 1
+            next_year = year + 1
+        else:
+            next_month = month + 1
+            next_year = year
+        
+        num_days_in_next_month = calendar.monthrange(next_year, next_month)[1]
+        
+        attendance_subquery_d_t = Attendance.objects.filter(
+            employee=OuterRef('pk'),
+            date__year=year,
+            date__month=month,
+            state__in=['دورية', 'طارئة']
+        ).values('employee').annotate(
+            total_d_t=Count('state')
+        ).values('total_d_t')
+        
+        attendance_subquery_rahat = Attendance.objects.filter(
+            employee=OuterRef('pk'),
+            date__year=year,
+            date__month=month,
+            state__in=['راحة', 'ر بديلة', '8 صباحاً', 'عطلة', 'منحة']
+        ).values('employee').annotate(
+            total_rahat=Count('state')
+        ).values('total_rahat')
+        
+        attendance_subquery_food = Attendance.objects.filter(
+            employee=OuterRef('pk'),
+            date__year=year,
+            date__month=month,
+            food=True
+        ).values('employee').annotate(
+            total_food=Count('food')
+        ).values('total_food')
+        
+        attendance_subquery_maradi = Attendance.objects.filter(
+            employee=OuterRef('pk'),
+            date__year=year,
+            date__month=month,
+            state='مرضي'
+        ).values('employee').annotate(
+            total_maradi=Count('state')
+        ).values('total_maradi')
+        
+        employees = Employee.objects.select_related('rank').annotate(
+            total_d_t=Subquery(attendance_subquery_d_t, output_field=models.IntegerField()),
+            total_rahat=Subquery(attendance_subquery_rahat, output_field=models.IntegerField()),
+            total_food=Subquery(attendance_subquery_food, output_field=models.IntegerField()),
+            total_maradi=Subquery(attendance_subquery_maradi, output_field=models.IntegerField())
+        ).order_by('sort_number').values('name', 'nots', 'rank__name', 'dep_sort', 'total_d_t', 'total_rahat', 'total_food', 'total_maradi')
 
-
+        for employee in employees:
+            total_d_t = employee['total_d_t'] or 0
+            total_rahat = employee['total_rahat'] or 0
+            total_food = employee['total_food'] or 0
+            total_maradi = employee['total_maradi'] or 0
+            
+            employee['total_discount'] = total_d_t + total_rahat + total_food + total_maradi
+            employee['total_eligible'] = num_days_in_next_month - employee['total_discount']
+        
+        context = {
+            'employees': employees,
+            'month': month,
+            'year': year,
+            'months': months,
+            'years': years,
+        }
+        
+        return render(request, 'attendance/monthlyDiscount.html', context)
+    
+    context = {
+        'months': months,
+        'years': years,
+    }
+    return render(request, 'attendance/monthlyDiscount.html', context)
 
 
 

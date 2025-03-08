@@ -24,6 +24,7 @@ urlpatterns = [
     path('numreport/', views.numreport, name='numreport'),
     path('outs/', views.outs, name='outs'),
     path('insertmany/', views.insert_many_attendance, name='insert_many_attendance'),
+    path('monthly_discount/', views.monthly_discount, name='monthly_discount'),
 
 
     # path('one_employee/', views.one_employee, name='one_employee'),
