@@ -3,7 +3,7 @@ git codes
 cd K:\myproject\myproject
 git status
 git add .
-git commit -m "add files share and monthly discount"
+git commit -m "add db backup and tasks manager"
 git push origin master
 
 

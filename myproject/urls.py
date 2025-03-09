@@ -27,7 +27,7 @@ urlpatterns = [
     path('departments/', include('departments.urls')),
     path('attendance/', include('attendance.urls')),
     path('files/', include('file_sharing.urls')),
-    
-    
+    path('backups/', include('backup_manager.urls')),
+    path('tasks/', include('tasks.urls')),
     
 ]

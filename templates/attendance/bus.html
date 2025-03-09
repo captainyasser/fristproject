@@ -1,9 +1,9 @@
-
-{% extends "base.html" %}
-{% load static attendance_filters %}
 <title>
     يومية الاتوبيس
 </title>
+
+{% extends "base.html" %}
+{% load static attendance_filters %}
 <!DOCTYPE html>
 {% load static %}
 <html lang="en">
@@ -16,8 +16,6 @@
         
                 <!-- Main content block (this is where child templates will inject content) -->
                 {% block content %}
-                <div class="content-wrapper">
-                    <section class="content">
                         <div class="container-fluid">
                             <div class="row">
                                 <div class="col-md-12">
@@ -163,8 +161,6 @@
                                 </div>
                             </div>
                         </div>
-                    </section>
-                </div>
                 {% endblock %}
             </div>
         </div>

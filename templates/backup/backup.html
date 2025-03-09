@@ -1,0 +1,83 @@
+<title>
+    إدارة النسخ الاحتياطية
+</title>
+{% extends 'base.html' %}
+
+{% load static %}
+
+        
+        <!-- Main content container -->
+        <div class="container">
+            <div class="content">
+        
+                <!-- Main content block (this is where child templates will inject content) -->
+                {% block content %}
+                        <div class="container-fluid">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <!-- Your content will be inserted here -->
+
+
+
+
+                                            
+                                                <h2 style="background-color: #373A40; color: white; padding: 15px; text-align: center; border-radius: 8px;">
+                                                    إدارة النسخ الاحتياطية لقاعدة البيانات
+                                                </h2>
+                                            
+                                                <div style="background: white; padding: 20px; border-radius: 20px; width: 100%; margin: auto; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);">
+                                                    
+                                                    <h3>رفع نسخة احتياطية</h3>
+                                                    <form action="{% url 'upload_backup' %}" method="post" enctype="multipart/form-data">
+                                                        {% csrf_token %}
+                                                        <input type="file" name="backup_file" required>
+                                                        <button type="submit" style="background-color: #DC5F00; color: white; padding: 10px 20px; border-radius: 5px;">
+                                                            رفع
+                                                        </button>
+                                                    </form>
+                                            
+                                                    <hr>
+                                            
+                                                    <form action="{% url 'backup_database' %}" method="post">
+                                                        {% csrf_token %}
+                                                        <button type="submit" style="background-color: #DC5F00; color: white; padding: 10px 20px; border-radius: 5px;">
+                                                            إنشاء نسخة احتياطية
+                                                        </button>
+                                                    </form>
+                                            
+                                                    <h3>النسخ الاحتياطية المتوفرة</h3>
+                                                    <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                                                        <tr style="background-color: #686D76; color: white;">
+                                                            <th style="padding: 10px;">اسم الملف</th>
+                                                            <th style="padding: 10px;">الإجراءات</th>
+                                                        </tr>
+                                                        {% for file in backups %}
+                                                        <tr style="background-color: #EEEEEE;">
+                                                            <td style="padding: 10px;">{{ file }}</td>
+                                                            <td style="padding: 10px;">
+                                                                <a href="{% url 'download_backup' file %}" style="background-color: #DC5F00; color: white; padding: 5px 10px; border-radius: 5px;">تحميل</a>
+                                                                <a href="{% url 'restore_database' file %}" style="background-color: #686D76; color: white; padding: 5px 10px; border-radius: 5px;">استعادة</a>
+                                                                <a href="{% url 'delete_backup' file %}" style="background-color: #373A40; color: white; padding: 5px 10px; border-radius: 5px;">حذف</a>
+                                                            </td>
+                                                        </tr>
+                                                        {% empty %}
+                                                        <tr>
+                                                            <td colspan="2" style="padding: 10px; text-align: center;">لا توجد نسخ احتياطية متاحة.</td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </table>
+                                                </div>
+                                            
+
+
+
+                                          
+                                </div>
+                            </div>
+                        </div>
+                {% endblock %}
+            </div>
+        </div>
+        
+
+

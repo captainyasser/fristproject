@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'backup_manager.apps.BackupManagerConfig',
     'myapp',
     'em_data',
     'institutes',
@@ -48,7 +49,7 @@ INSTALLED_APPS = [
     'promotions',
     'attendance',
     'file_sharing',
-
+    'tasks',
 ]
 
 

@@ -225,9 +225,21 @@
               </a>
               <ul class="nav nav-treeview">
                 <li class="nav-item">
+                  <a href="{% url 'backup_database' %}" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>النسخ الإحتياطية</p>
+                  </a>
+                </li>
+                <li class="nav-item">
                   <a href="{% url 'file_share' %}" class="nav-link">
                     <i class="far fa-circle nav-icon"></i>
                     <p>سيرفر مشاركة الملفات</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="{% url 'task_list' %}" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>تذكيرات ومهام</p>
                   </a>
                 </li>
 

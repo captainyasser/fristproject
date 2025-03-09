@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}قائمة المهام{% endblock %}
+
+{% block content %}
+    <h1>قائمة المهام</h1>
+
+    <!-- نموذج إضافة مهمة -->
+    <form method="POST">
+        {% csrf_token %}
+        <input type="text" name="title" placeholder="عنوان المهمة" required>
+        <input type="date" name="due_date" required> <!-- تغيير إلى date -->
+        <select name="repeat">
+            <option value="none">غير متكررة</option>
+            <option value="daily">يومي</option>
+            <option value="monthly">شهري</option>
+            <option value="quarterly">كل 3 أشهر</option>
+        </select>
+        <button type="submit">إضافة</button>
+    </form>
+
+    <!-- جدول المهام -->
+    <table border="1" style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+        <thead>
+            <tr style="background-color: #f2f2f2;">
+                <th style="padding: 10px;">العنوان</th>
+                <th style="padding: 10px;">تاريخ الاستحقاق</th>
+                <th style="padding: 10px;">التكرار</th>
+                <th style="padding: 10px;">الإجراء</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for task in tasks %}
+                <tr>
+                    <td style="padding: 10px;">{{ task.title }}</td>
+                    <td style="padding: 10px;">{{ task.due_date }}</td>
+                    <td style="padding: 10px;">{{ task.get_repeat_display }}</td>
+                    <td style="padding: 10px;">
+                        <a href="{% url 'complete_task' task.id %}">مكتملة</a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="4" style="padding: 10px; text-align: center;">لا توجد مهام</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- JavaScript للإشعارات -->
+    <script>
+        const tasks = {{ tasks_json | safe }};
+        const notification = document.getElementById('notification');
+
+        function checkReminders() {
+            const now = new Date();
+            const today = now.toISOString().split('T')[0]; // الحصول على التاريخ فقط
+            tasks.forEach(task => {
+                if (task.reminder_date) {
+                    if (today === task.reminder_date && !task.notified) {
+                        notification.textContent = `تذكير: ${task.title} بعد يومين!`;
+                        notification.style.display = 'block';
+                        setTimeout(() => {
+                            notification.style.display = 'none';
+                        }, 5000);
+                        task.notified = true;
+                    }
+                }
+            });
+        }
+
+        setInterval(checkReminders, 1000);
+    </script>
+{% endblock %}
