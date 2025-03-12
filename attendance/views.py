@@ -902,7 +902,7 @@ def foodlist(request):
                 names = Attendance.objects.filter(
                     date=selected_date,
                     food=1,
-                    state__in=['نوبتجي', 'يومي'],
+                    state__in=['نوبتجي', 'يومي', 'ت دوري', 'ت تكراري'],
                     employee__food=1
                 ).annotate(dep_sort=F('employee__dep_sort')) \
                 .order_by('dep_sort') \
@@ -1358,106 +1358,43 @@ def split_into_chunks(lst, chunk_size):
     for i in range(0, len(lst), chunk_size):
         yield lst[i:i + chunk_size]
 
-@login_required(login_url='/login/')
+from django.shortcuts import render
+from .models import Attendance
+from django.db.models import Count
+from datetime import datetime
+
 def outs(request):
-    # Calculate tomorrow's date
-    tomorrow = datetime.now() + timedelta(days=1)
-    tomorrow_str = tomorrow.strftime('%Y-%m-%d')
+    # Get the date from request.GET, default to today's date if not provided
+    date_str = request.GET.get('date', datetime.today().strftime('%Y-%m-%d'))
+    try:
+        selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+    except ValueError:
+        selected_date = datetime.today().date()
 
-    # Initialize the forms with default values
-    selected_date = request.GET.get('date', tomorrow_str)
-    chunk_size = int(request.GET.get('chunk_size', 40))  # Default to 40
+    # Get all attendance records for the selected date
+    attendance_records = Attendance.objects.filter(date=selected_date)
 
-    # Process the form submissions
-    date_form = DateForm(request.GET or {'date': tomorrow_str})
-    chunk_size_form = ChunkSizeForm(request.GET or {'chunk_size': chunk_size})
+    # Count occurrences of each state
+    state_counts = attendance_records.values('state').annotate(
+        count=Count('state')
+    ).order_by('state')
 
-    if date_form.is_valid():
-        selected_date = date_form.cleaned_data['date']
-    if chunk_size_form.is_valid():
-        chunk_size = chunk_size_form.cleaned_data['chunk_size']
+    # Create a dictionary with states and their employee names
+    state_employees = {}
+    for record in attendance_records:
+        if record.state not in state_employees:
+            state_employees[record.state] = []
+        state_employees[record.state].append(record.employee.name)
 
-    # Ensure selected_date is a date object
-    if not isinstance(selected_date, date):
-        selected_date_obj = datetime.strptime(selected_date, '%Y-%m-%d').date()
-    else:
-        selected_date_obj = selected_date
-
-    # Format the selected date in Arabic
-    formatted_date = format_date(selected_date_obj, format='EEEE dd/MM/yyyy', locale='ar')
-
-    # Fetch records for the selected date
-    records = Attendance.objects.filter(date=selected_date_obj, in_or_out='3').select_related('employee')
-
-    # Organize data by state
-    data = {}
-    for record in records:
-        # Merge specific states into broader categories
-        state_mappings = {
-            'منحة': 'راحات', 'عطلة': 'راحات', '8 صباحاً': 'راحات', 'ر بديلة': 'راحات', 'راحة': 'راحات',
-            'فرقة': 'فرق', 'ت دوري': 'فرق', 'ت تكراري': 'فرق',
-            'مأمورية': 'مأمورية', 'مأمورية خ': 'مأمورية',
-            'مرضي': 'مرضي', 'قرار66': 'مرضي',
-            'خاصه': 'خاصه', 'ج وضع': 'خاصه'
-        }
-        state = state_mappings.get(record.state, record.state)
-        if state not in data:
-            data[state] = []
-        data[state].append(record.employee.nickname)
-
-    # Add serial numbers and 5 empty rows
-    serialized_data = {}
-    for state, nicknames in data.items():
-        entries = [(i + 1, nickname) for i, nickname in enumerate(nicknames)]
-        last_serial = entries[-1][0] if entries else 0
-        entries.extend((last_serial + i, '') for i in range(1, 6))  # Add 5 empty rows
-        serialized_data[state] = entries
-
-    # Calculate totals
-    out_states = [
-        'راحة', 'دورية', 'ر بديلة', 'طارئة', 'مأمورية', 'مأمورية خ', 'فرقة', 'انتداب', 
-        'مرضي', 'ج وضع', 'خاصه', '8 صباحاً', 'ت دوري', 'ت تكراري', 'منحة', 'عطلة', 'غياب', 'قرار66'
-    ]
-    total_out_states_records = Attendance.objects.filter(
-        date=selected_date_obj, state__in=out_states
-    ).count()
-
-    in_states = ['نوبتجي', 'يومي']
-    total_in_states_records = Attendance.objects.filter(
-        date=selected_date_obj, state__in=in_states
-    ).count()
-
-    not_states = ['_']
-    total_not_states_records = Attendance.objects.filter(
-        date=selected_date_obj, state__in=not_states
-    ).count()
-
-    total_all_states = total_in_states_records + total_out_states_records + total_not_states_records
-
-    # Order data for display
-    STATE_ORDER = ['دورية', '_', 'طارئة', 'مرضي', 'خاصه', 'فرق', 'انتداب', 'مأمورية', 'راحات', 'غياب']
-    ordered_data = []
-    for state in STATE_ORDER:
-        if state in serialized_data:
-            ordered_data.extend((state, serial, nickname) for serial, nickname in serialized_data[state])
-
-    # Split into chunks
-    grouped_data = list(split_into_chunks(ordered_data, chunk_size))
-
+    # Prepare context for the template
     context = {
-        'date_form': date_form,
-        'chunk_size_form': chunk_size_form,
-        'selected_date': selected_date_obj,
-        'formatted_date': formatted_date,
-        'grouped_data': grouped_data,
-        'serialized_data': serialized_data,
-        'total_in_states_records': total_in_states_records,
-        'total_out_states_records': total_out_states_records,
-        'total_all_states': total_all_states,
+        'selected_date': selected_date,
+        'state_counts': state_counts,
+        'state_employees': state_employees,
+        'total_records': attendance_records.count(),
     }
-    return render(request, 'attendance/outs.html', context)
-    
-    
+
+    return render(request, 'attendance/outs.html', context)   
     
     
     

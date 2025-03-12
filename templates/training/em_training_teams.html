@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<title>دفتر الفرق بإسم الفرد</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+    body { background-color: #EEEEEE; color: #373A40; font-family: Arial, sans-serif; }
+    h1 { color: #DC5F00; text-align: center; margin-bottom: 20px; }
+    .table th { background-color: #373A40; color: #EEEEEE; text-align: center; }
+    .table-striped tbody tr:nth-of-type(odd) { background-color: #f9f9f9; }
+    .btn-export { background-color: #DC5F00; color: #EEEEEE; border: none; padding: 10px 20px; font-size: 16px; border-radius: 5px; margin-bottom: 15px; transition: background-color 0.3s ease; }
+    .btn-export:hover { background-color: #373A40; }
+    .alert-warning { background-color: #DC5F00; color: #EEEEEE; border: none; }
+    .employee-table, .training-table { background-color: #EEEEEE; color: #373A40; border: 1px solid #686D76; margin-bottom: 20px; }
+    .employee-table th, .training-table th { background-color: #373A40; color: #EEEEEE; }
+    .training-table td { border: 1px solid #686D76; }
+    .text-success { color: green; }
+    .text-danger { color: red; }
+</style>
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="container mt-5">
+                        <h1>دفتر الفرق التدريبية</h1>
+                        <button class="btn btn-export" onclick="exportToExcel()">📥 تصدير إلى Excel</button>
+                        {% for employee, teams in employee_teams.items %}
+                            <table class="table table-bordered mt-3 employee-table" data-employee-name="{{ employee.name }}" dir="rtl">
+                                <tbody>
+                                    <tr><th style="width: 20%;">الدرجة</th><td>{{ employee.rank }}</td></tr>
+                                    <tr><th>رقم الشرطة</th><td>{{ employee.police_number }}</td></tr>
+                                    <tr><th>الإسم</th><td>{{ employee.name }}</td></tr>
+                                </tbody>
+                            </table>
+                            <table class="table table-bordered table-striped mt-2 training-table" dir="rtl">
+                                <thead>
+                                    <tr>
+                                        <th>#</th><th>إسم الفرقة</th><th>مكان الإنعقاد</th><th>تاريخ البداية</th><th>تاريخ النهاية</th><th>رقم الدورة</th><th>النتيجة</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for team in teams %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        {% if team %}
+                                            <td>{{ team.training_team.name }}</td>
+                                            <td>{{ team.place.name }}</td>
+                                            <td>{{ team.start_date|date:"d/m/Y" }}</td>
+                                            <td>{{ team.end_date|date:"d/m/Y" }}</td>
+                                            <td>{% if team.round_num %}{{ team.round_num }}{% endif %}</td>
+                                            <td>{% if team.result == "ناجح" %}<span class="text-success fw-bold">ناجح</span>{% elif team.result == "راسب" %}<span class="text-danger fw-bold">راسب</span>{% else %}{{ team.result }}{% endif %}</td>
+                                        {% else %}
+                                            <td colspan="6"></td>
+                                        {% endif %}
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% empty %}
+                            <div class="alert alert-warning text-center">لا توجد بيانات متاحة.</div>
+                        {% endfor %}
+                    </div>
+                    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+                    <script>
+                        function exportToExcel() {
+                            let wb = XLSX.utils.book_new();
+                            let tables = document.querySelectorAll('.training-table');
+                            tables.forEach((table, index) => {
+                                let employeeTable = table.previousElementSibling;
+                                let employeeName = employeeTable.dataset.employeeName || `الموظف_${index + 1}`;
+                                employeeName = employeeName.replace(/[\\\/\*\[\]:\?]/g, "_");
+                                let ws = XLSX.utils.table_to_sheet(table);
+                                XLSX.utils.book_append_sheet(wb, ws, employeeName.substring(0, 31));
+                            });
+                            XLSX.writeFile(wb, "الفرق_التدريبية.xlsx");
+                        }
+                    </script>
+                </div>
+            </div>
+        </div>
+{% endblock %}

@@ -50,6 +50,9 @@ INSTALLED_APPS = [
     'attendance',
     'file_sharing',
     'tasks',
+    'training_teams',
+
+
 ]
 
 

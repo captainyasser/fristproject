@@ -103,3 +103,11 @@ def format_state(state):
 def subtract(value, arg):
     """Subtracts the arg from the value, ensuring the result is not negative."""
     return max(value - arg, 0)
+
+
+
+
+
+@register.filter
+def get_item(dictionary, key):
+    return dictionary.get(key, [])

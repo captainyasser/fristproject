@@ -3,7 +3,7 @@ git codes
 cd K:\myproject\myproject
 git status
 git add .
-git commit -m "add db backup and tasks manager"
+git commit -m "add training teams"
 git push origin master
 
 
@@ -71,3 +71,28 @@ ON DUPLICATE KEY UPDATE
     state = VALUES(state),
     food = VALUES(food),
     in_or_out = VALUES(in_or_out);
+
+
+
+
+
+نقل الفرق
+
+INSERT INTO training_teams_places (id, name, description, address)
+SELECT id, name, description, '' AS address
+FROM em_db.emdata_places;
+
+INSERT INTO training_teams_trainingteam (name, description)
+SELECT name, description
+FROM em.emdata_trainingteam;
+
+عرض المكرر
+SELECT employee_id, training_team_id, start_date, end_date, COUNT(*)
+FROM em.emdata_emtrainingteams
+GROUP BY employee_id, training_team_id, start_date, end_date
+HAVING COUNT(*) > 1;
+
+
+INSERT INTO training_teams_emtrainingteams (employee_id, name, training_team_id, place_id, start_date, end_date, result, round_num)
+SELECT employee_id, name, training_team_id, place_id, start_date, end_date, result, round_num
+FROM em.emdata_emtrainingteams;

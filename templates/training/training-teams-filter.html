@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<title>فلتر الفرق التدريبية</title>
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12">
+                    <h2 style="text-align: center; margin-bottom: 20px; color: #DC5F00;">تصفية الفرق التدريبية</h2>
+                    <br>
+                    <form method="GET" style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center;">
+                        <select id="training_team" name="training_team" style="padding: 5px; border: 1px solid #686D76; border-radius: 5px; background-color: #EEEEEE; color: #373A40;">
+                            <option value="">كل الفرق</option>
+                            {% for team in training_teams %}
+                                <option value="{{ team.id }}" {% if team.id|stringformat:"s" == training_team_query %}selected{% endif %}>{{ team.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <select id="employee" name="employee" style="padding: 5px; border: 1px solid #686D76; border-radius: 5px; background-color: #EEEEEE; color: #373A40;">
+                            <option value="">كل الأفراد</option>
+                            {% for emp in employees %}
+                                <option value="{{ emp.id }}" {% if emp.id|stringformat:"s" == employee_query %}selected{% endif %}>{{ emp.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <br>
+                        <button type="submit" style="background-color: #DC5F00; color: #EEEEEE; padding: 5px 15px; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s ease;">تصفية</button>
+                    </form>
+                    <h3 style="margin-top: 20px; color: #DC5F00;">النتائج</h3>
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 10px; direction: rtl; text-align: right;">
+                        <thead>
+                            <tr style="background-color: #373A40; color: #EEEEEE;">
+                                <th style="padding: 10px;">#</th>
+                                <th style="padding: 10px;">الفرد</th>
+                                <th style="padding: 10px;">الفريق التدريبي</th>
+                                <th style="padding: 10px;">المكان</th>
+                                <th style="padding: 10px;">تاريخ البدء</th>
+                                <th style="padding: 10px;">تاريخ الانتهاء</th>
+                                <th style="padding: 10px;">النتيجة</th>
+                                <th style="padding: 10px;">رقم الجولة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for team in teams %}
+                            <tr style="border-bottom: 1px solid #686D76; background-color: {% cycle '#EEEEEE' '#FFFFFF' %};">
+                                <td style="padding: 8px;">{{ forloop.counter }}</td>
+                                <td style="padding: 8px;">{{ team.employee.name }}</td>
+                                <td style="padding: 8px;">{{ team.training_team.name }}</td>
+                                <td style="padding: 8px;">{{ team.place.name }}</td>
+                                <td style="padding: 8px;">{{ team.start_date|date:"j/n/Y" }}</td>
+                                <td style="padding: 8px;">{{ team.end_date|date:"j/n/Y" }}</td>
+                                <td style="padding: 8px; font-weight: bold; {% if team.result == 'Pass' %}color: green;{% else %}color: red;{% endif %}">
+                                    {% if team.result == "Pass" %} ناجح {% else %} راسب {% endif %}
+                                </td>
+                                <td style="padding: 8px;">{% if team.round_num is not None %}{{ team.round_num }}{% endif %}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" style="text-align: center; padding: 15px; color: #DC5F00;">لا توجد نتائج.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+{% endblock %}

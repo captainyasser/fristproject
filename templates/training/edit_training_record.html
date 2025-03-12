@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<title>تعديل الفرق التدريبية</title>
+<style>
+    body { font-family: Arial, sans-serif; background-color: #EEEEEE; color: #373A40; margin: 20px; }
+    #employeeSelect { padding: 8px; font-size: 16px; border: 2px solid #DC5F00; background-color: #EEEEEE; color: #373A40; border-radius: 5px; cursor: pointer; margin-bottom: 15px; }
+    #trainingTable { width: 100%; border-collapse: collapse; background: white; margin-top: 20px; border-radius: 10px; overflow: hidden; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); }
+    #trainingTable thead { background-color: #DC5F00; color: white; }
+    #trainingTable th, #trainingTable td { padding: 12px; text-align: left; border-bottom: 1px solid #686D76; }
+    #trainingTable tbody tr:nth-child(odd) { background-color: #EEEEEE; }
+    #trainingTable tbody tr:hover { background-color: #DC5F00; color: white; }
+    #trainingTable input, #trainingTable select { width: 100%; padding: 8px; border: 1px solid #686D76; border-radius: 5px; font-size: 14px; color: #373A40; }
+    .save-btn { background-color: #DC5F00; color: white; padding: 8px 12px; border: none; border-radius: 5px; cursor: pointer; transition: 0.3s; }
+    .save-btn:hover { background-color: #373A40; }
+    .btn-container { display: flex; justify-content: center; gap: 20px; margin-top: 30px; }
+    .btn-container a { text-decoration: none; }
+    .btn-container button { background-color: #DC5F00; color: rgb(0, 0, 0); border: none; padding: 5px 3px; font-size: 20px; border-radius: 15px; cursor: pointer; transition: background-color 0.3s ease; }
+    .btn-container button:hover { background-color: #373A40; }
+</style>
+
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="btn-container">
+                        <a href="{% url 'insert_training' %}"><button>اضافة فرقة جديدة</button></a>
+                    </div>
+                    <h1 for="employeeSelect">اختر الفرد:</h1>
+                    <select id="employeeSelect">
+                        <option value="">-- اختر الفرد --</option>
+                        {% for employee in employees %}
+                        <option value="{{ employee.id }}">{{ employee.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <h3>الفرق التدريبية</h3>
+                    <table id="trainingTable">
+                        <thead>
+                            <tr>
+                                <th>أسم الفرقة</th><th>المكان</th><th>تاريخ البداية</th><th>تاريخ النهاية</th><th>رقم الدورة</th><th>النتيجة</th><th>الحفظ</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    <script>
+                        document.getElementById("employeeSelect").addEventListener("change", function() {
+                            var employeeId = this.value;
+                            if (employeeId) {
+                                fetch("/training/get-employee-training-data/" + employeeId + "/")
+                                .then(response => response.json())
+                                .then(data => {
+                                    var tableBody = document.querySelector("#trainingTable tbody");
+                                    tableBody.innerHTML = "";
+                                    if (data.training_data.length === 0) {
+                                        tableBody.innerHTML = "<tr><td colspan='8'>No training records found.</td></tr>";
+                                    } else {
+                                        data.training_data.forEach(training => {
+                                            var row = document.createElement("tr");
+                                            row.innerHTML = `
+                                                <td><select data-id="${training.id}" class="editable" name="training_team_id">${data.training_teams.map(team => `<option value="${team.id}" ${team.id == training.training_team_id ? "selected" : ""}>${team.name}</option>`).join('')}</select></td>
+                                                <td><select data-id="${training.id}" class="editable" name="place_id">${data.places.map(place => `<option value="${place.id}" ${place.id == training.place_id ? "selected" : ""}>${place.name}</option>`).join('')}</select></td>
+                                                <td><input type="date" value="${training.start_date}" data-id="${training.id}" class="editable" name="start_date"></td>
+                                                <td><input type="date" value="${training.end_date}" data-id="${training.id}" class="editable" name="end_date"></td>
+                                                <td><input type="number" value="${training.round_num || ''}" data-id="${training.id}" class="editable" name="round_num"></td>
+                                                <td><select data-id="${training.id}" class="editable" name="result"><option value="ناجح" ${training.result === "ناجح" ? "selected" : ""}>ناجح</option><option value="راسب" ${training.result === "راسب" ? "selected" : ""}>راسب</option></select></td>
+                                                <td><button class="save-btn" data-id="${training.id}">حفظ</button></td>
+                                            `;
+                                            tableBody.appendChild(row);
+                                        });
+                                        document.querySelectorAll(".save-btn").forEach(button => {
+                                            button.addEventListener("click", function() {
+                                                var trainingId = this.getAttribute("data-id");
+                                                var updatedData = {
+                                                    id: trainingId,
+                                                    start_date: document.querySelector(`[name='start_date'][data-id='${trainingId}']`).value,
+                                                    end_date: document.querySelector(`[name='end_date'][data-id='${trainingId}']`).value,
+                                                    result: document.querySelector(`[name='result'][data-id='${trainingId}']`).value,
+                                                    round_num: document.querySelector(`[name='round_num'][data-id='${trainingId}']`).value || null,
+                                                    place_id: document.querySelector(`[name='place_id'][data-id='${trainingId}']`).value,
+                                                    training_team_id: document.querySelector(`[name='training_team_id'][data-id='${trainingId}']`).value
+                                                };
+                                                fetch("/training/update-training-record/", {
+                                                    method: "POST",
+                                                    headers: {
+                                                        "Content-Type": "application/json",
+                                                        "X-CSRFToken": getCSRFToken()
+                                                    },
+                                                    body: JSON.stringify(updatedData)
+                                                })
+                                                .then(response => response.json())
+                                                .then(result => {
+                                                    if (result.success) {
+                                                        alert("تم الحفظ بنجاح");
+                                                    } else {
+                                                        alert("Error: " + result.error);
+                                                    }
+                                                })
+                                                .catch(error => console.error("Error updating record:", error));
+                                            });
+                                        });
+                                    }
+                                })
+                                .catch(error => console.error("Error fetching data:", error));
+                            }
+                        });
+                        function getCSRFToken() {
+                            return document.querySelector("[name=csrfmiddlewaretoken]") ? document.querySelector("[name=csrfmiddlewaretoken]").value : "";
+                        }
+                    </script>
+                </div>
+            </div>
+        </div>
+
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<title>إضافة فرقة تدريبية</title>
+<style>
+    body { background-color: #EEEEEE; color: #373A40; }
+    .form-container { background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); }
+    label { font-weight: bold; }
+    select, input { border-radius: 5px; border: 1px solid #686D76; padding: 8px; }
+    .btn-submit { background-color: #DC5F00; color: white; padding: 10px 20px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; transition: 0.3s; }
+    .btn-submit:hover { background-color: #a84c00; }
+    .checkbox-group { background: #F9F9F9; padding: 10px; border-radius: 5px; max-height: 200px; overflow-y: auto; }
+</style>
+        <div class="container-fluid">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="form-container">
+                        <h2 class="text-center mb-4">إضافة فرقة تدريبية</h2>
+                        <form method="POST" action="{% url 'insert_training' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="name" value="employee_name">
+                            <div class="mb-3">
+                                <label for="training_team">اختر فرقة تدريبية:</label>
+                                <select class="form-control" name="training_team" id="training_team" required>
+                                    {% for team in training_teams %}
+                                    <option value="{{ team.id }}">{{ team.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="place">اختر المكان:</label>
+                                <select class="form-control" name="place" id="place" required>
+                                    {% for place in places %}
+                                    <option value="{{ place.id }}">{{ place.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="start_date">تاريخ البدء:</label>
+                                <input class="form-control" type="date" name="start_date" id="start_date" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="end_date">تاريخ الانتهاء:</label>
+                                <input class="form-control" type="date" name="end_date" id="end_date" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="result">النتيجة:</label>
+                                <select class="form-control" name="result" id="result">
+                                    <option value="ناجح">ناجح</option>
+                                    <option value="راسب">راسب</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="round_num">رقم الدورة:</label>
+                                <input class="form-control" type="number" name="round_num" id="round_num">
+                            </div>
+                            <div class="mb-3">
+                                <label>اختر الأفراد:</label>
+                                <div class="checkbox-group">
+                                    {% for employee in employees %}
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="employees" value="{{ employee.id }}" id="emp{{ employee.id }}">
+                                        <label class="form-check-label" for="emp{{ employee.id }}">{{ employee.name }}</label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <button type="submit" class="btn-submit">إضافة فرقة تدريبية</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+{% endblock %}

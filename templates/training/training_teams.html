@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% load training_filters %}
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>دفتر الفرق بإسم الفرقة</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+
+<body class="hold-transition sidebar-mini layout-fixed">
+    <div class="container">
+        <div class="content">
+            {% block content %}
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-md-12">
+                            {% block inner_content %}
+                                <style>
+
+                                    h1, h3 {
+                                        color: #DC5F00;
+                                    }
+                                    .table th {
+                                        background-color: #373A40;
+                                        color: #EEEEEE;
+                                        text-align: center;
+                                    }
+                                    .table-striped tbody tr:nth-of-type(odd) {
+                                        background-color: #f9f9f9;
+                                    }
+                                    .btn-export {
+                                        background-color: #DC5F00;
+                                        color: #EEEEEE;
+                                        border: none;
+                                        padding: 10px 20px;
+                                        font-size: 16px;
+                                        border-radius: 5px;
+                                        margin-bottom: 15px;
+                                        transition: background-color 0.3s ease;
+                                    }
+                                    .btn-export:hover {
+                                        background-color: #373A40;
+                                    }
+                                    .page {
+                                        page-break-after: always;
+                                        margin-bottom: 50px;
+                                    }
+                                    .index-table {
+                                        width: 100%;
+                                        margin-bottom: 20px;
+                                        border-collapse: collapse;
+                                    }
+                                    .index-table td {
+                                        text-align: right;
+                                        padding: 8px;
+                                        border: 1px solid rgb(0, 0, 0);
+                                        background-color: #EEEEEE;
+                                    }
+                                    .index-table a {
+                                        color: rgb(0, 0, 0);
+                                        text-decoration: none;
+                                    }
+                                    .index-table a:hover {
+                                        text-decoration: underline;
+                                    }
+                                    .alert-warning {
+                                        background-color: #DC5F00;
+                                        color: #EEEEEE;
+                                        border: none;
+                                    }
+                                </style>
+
+                                <div class="container mt-5" dir="rtl">
+                                    <h1 class="text-center mb-4">دفتر الفرق التدريبية باسم الفرقة</h1>
+
+                                    <!-- فهرس الفرق -->
+                                    <div class="mb-4">
+                                        <h3>فهرس الفرق</h3>
+                                        <table class="index-table">
+                                            <tbody>
+                                                {% for training_name, employees in training_teams.items %}
+                                                    {% if forloop.counter0|divisibleby:4 %}<tr>{% endif %}
+                                                        <td>{{ forloop.counter }}. {{ training_name }}</td>
+                                                    {% if forloop.counter|divisibleby:4 or forloop.last %}</tr>{% endif %}
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <button class="btn btn-export" onclick="exportToExcel()">📥 تصدير إلى اكسل</button>
+
+                                    {% for training_name, employees in training_teams.items %}
+                                        <div class="page" id="{{ training_name|slugify }}">
+                                            <table class="table table-bordered mt-3 training-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th colspan="8">{{ forloop.counter }} {{ training_name }}</th>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>م</th>
+                                                        <th>الاسم</th>
+                                                        <th>م</th>
+                                                        <th>الاسم</th>
+                                                        <th>م</th>
+                                                        <th>الاسم</th>
+                                                        <th>م</th>
+                                                        <th>الاسم</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for row in employees|chunk_vertical:4 %}
+                                                        <tr>
+                                                            {% for index, employee in row %}
+                                                                <td>{{ index }}</td>
+                                                                <td>{{ employee }}</td>
+                                                            {% endfor %}
+                                                        </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    {% empty %}
+                                        <div class="alert alert-warning text-center">لا توجد بيانات متاحة.</div>
+                                    {% endfor %}
+                                </div>
+
+                                <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+                                <script>
+                                    function exportToExcel() {
+                                        let wb = XLSX.utils.book_new();
+                                        let tables = document.querySelectorAll('.training-table');
+
+                                        tables.forEach((table, index) => {
+                                            let trainingName = table.previousElementSibling.textContent || `فرقة_${index + 1}`;
+                                            trainingName = trainingName.replace(/[\\\/\*\[\]:\?]/g, "_");
+                                            let ws = XLSX.utils.table_to_sheet(table);
+                                            XLSX.utils.book_append_sheet(wb, ws, trainingName.substring(0, 31));
+                                        });
+
+                                        XLSX.writeFile(wb, "بيانات_الفرق.xlsx");
+                                    }
+                                </script>
+                            {% endblock %}
+                        </div>
+                    </div>
+                </div>
+            {% endblock %}
+        </div>
+    </div>
+</body>
+</html>

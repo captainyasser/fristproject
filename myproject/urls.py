@@ -29,5 +29,6 @@ urlpatterns = [
     path('files/', include('file_sharing.urls')),
     path('backups/', include('backup_manager.urls')),
     path('tasks/', include('tasks.urls')),
+    path('training/', include('training_teams.urls')), 
     
 ]

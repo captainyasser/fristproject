@@ -1,11 +1,7 @@
-<title>
-يومية خوارج
-
-</title>
+<title>يومية خوارج</title>
 
 {% extends "base.html" %}
 {% load static attendance_filters %}
-
 
 {% block styles %}
 <style>
@@ -17,7 +13,7 @@
     .content-wrapper .custom-table th,
     .content-wrapper .custom-table td {
         border: .5px solid #000;
-        padding: 0; /* مفروض بدون حشوة */
+        padding: 0;
         margin: 0;
         text-align: center;
         font-size: 15px;
@@ -35,7 +31,7 @@
     .content-wrapper .summary-table th,
     .content-wrapper .summary-table td {
         border: 1px solid #000;
-        padding: 0; /* مفروض بدون حشوة */
+        padding: 0;
         text-align: center;
     }
     
@@ -69,15 +65,15 @@
             font-size: 20px;
         }
         .content-wrapper .custom-table td.name {
-            padding: 0; /* مفروض بدون حشوة */
+            padding: 0;
         }
         .content-wrapper .custom-table td.state {
-            padding: 0; /* مفروض بدون حشوة */
+            padding: 0;
             font-size: 20px;
             width: 10px;
         }
         .content-wrapper .summary-table th {
-            padding: 0; /* مفروض بدون حشوة */
+            padding: 0;
             background-color: rgb(144, 184, 243);
             font-size: 15px;
         }
@@ -90,138 +86,90 @@
 {% endblock styles %}
 
 {% block content %}
-        <div class="container-fluid">
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <h3>يومية الخوارج عن يوم {{ formatted_date }}</h3>
+
+            <!-- النموذج -->
+            <form id="combinedForm" method="get" action="" class="mb-4">
+                <div class="form-group">
+                    <label for="date">التاريخ</label>
+                    <input type="date" name="date" id="date" value="{{ formatted_date }}" class="form-control">
+                </div>
+                <button type="submit" class="btn btn-primary">عرض</button>
+            </form>
+
+            <button id="printBtn" class="btn btn-secondary mb-3">طباعة</button>
+
+            <!-- Horizontal Summary Table -->
+            <table class="summary-table">
+                <thead>
+                    <tr>
+                        <th>دورية</th>
+                        <th>طارئة</th>
+                        <th>مرضي</th>
+                        <th>خاصه</th>
+                        <th>فرقة</th>
+                        <th>انتداب</th>
+                        <th>مأمورية</th>
+                        <th>راحة</th>
+                        <th>غياب</th>
+                        <th>غ محدد</th>
+                        <th>خوارج</th>
+                        <th>موجود</th>
+                        <th>القوة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="tds">{% with count=state_employees|get_item:'دورية'|length|default:0 %}{% if count != 0 %}{{ count }}{% endif %}{% endwith %}</td>
+                        <td class="tds">{% with count=state_employees|get_item:'طارئة'|length|default:0 %}{% if count != 0 %}{{ count }}{% endif %}{% endwith %}</td>
+                        <td class="tds">{% with count=state_employees|get_item:'مرضي'|length|default:0 %}{% if count != 0 %}{{ count }}{% endif %}{% endwith %}</td>
+                        <td class="tds">{% with count=state_employees|get_item:'خاصه'|length|default:0 %}{% if count != 0 %}{{ count }}{% endif %}{% endwith %}</td>
+                        <td class="tds">{% with count=state_employees|get_item:'فرقة'|length|default:0 %}{% if count != 0 %}{{ count }}{% endif %}{% endwith %}</td>
+                        <td class="tds">{% with count=state_employees|get_item:'انتداب'|length|default:0 %}{% if count != 0 %}{{ count }}{% endif %}{% endwith %}</td>
+                        <td class="tds">{% with count=state_employees|get_item:'مأمورية'|length|default:0 %}{% if count != 0 %}{{ count }}{% endif %}{% endwith %}</td>
+                        <td class="tds">{% with count=state_employees|get_item:'راحة'|length|default:0 %}{% if count != 0 %}{{ count }}{% endif %}{% endwith %}</td>
+                        <td class="tds">{% with count=state_employees|get_item:'غياب'|length|default:0 %}{% if count != 0 %}{{ count }}{% endif %}{% endwith %}</td>
+                        <td class="tds">{% with count=state_employees|get_item:'_'|length|default:0 %}{% if count != 0 %}{{ count }}{% endif %}{% endwith %}</td>
+                        <td class="tds">{% if total_out_states_records != 0 %}{{ total_out_states_records }}{% endif %}</td>
+                        <td class="tds">{% if total_in_states_records != 0 %}{{ total_in_states_records }}{% endif %}</td>
+                        <td class="tds">{% if total_all_states != 0 %}{{ total_all_states }}{% endif %}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Vertical Names Table -->
             <div class="row">
                 <div class="col-md-12">
-                    <h3>يومية الخوارج عن يوم {{ formatted_date }}</h3>
-
-                    <!-- النموذج -->
-                    <form id="combinedForm" method="get" action="" class="mb-4">
-                        <div class="form-group">
-                            {{ date_form.date.label_tag }}
-                            {{ date_form.date }}
-                        </div>
-                        <div class="form-group">
-                            {{ chunk_size_form.chunk_size.label_tag }}
-                            {{ chunk_size_form.chunk_size }}
-                        </div>
-                        <button type="submit" class="btn btn-primary">عرض</button>
-                    </form>
-
-                    <button id="printBtn" class="btn btn-secondary mb-3">طباعة</button>
-
-                    <table class="summary-table">
+                    <table class="custom-table">
                         <thead>
                             <tr>
-                                <th>دورية</th>
-                                <th>طارئة</th>
-                                <th>مرضي</th>
-                                <th>خاصه</th>
-                                <th>فرق</th>
-                                <th>انتداب</th>
-                                <th>مأمورية</th>
-                                <th>راحات</th>
-                                <th>غياب</th>
-                                <th>غ محدد</th>
-                                <th>خوارج</th>
-                                <th>موجود</th>
-                                <th>القوة</th>
+                                <th>م</th>
+                                <th class="state">الحالة</th>
+                                <th class="name">الاسم</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td class="tds">
-                                    {% with count=serialized_data|get_item:'دورية'|length|default:0|subtract:5 %}
-                                        {% if count != 0 %}{{ count }}{% endif %}
-                                    {% endwith %}
-                                </td>
-                                <td class="tds">
-                                    {% with count=serialized_data|get_item:'طارئة'|length|default:0|subtract:5 %}
-                                        {% if count != 0 %}{{ count }}{% endif %}
-                                    {% endwith %}
-                                </td>
-                                <td class="tds">
-                                    {% with count=serialized_data|get_item:'مرضي'|length|default:0|subtract:5 %}
-                                        {% if count != 0 %}{{ count }}{% endif %}
-                                    {% endwith %}
-                                </td>
-                                <td class="tds">
-                                    {% with count=serialized_data|get_item:'خاصه'|length|default:0|subtract:5 %}
-                                        {% if count != 0 %}{{ count }}{% endif %}
-                                    {% endwith %}
-                                </td>
-                                <td class="tds">
-                                    {% with count=serialized_data|get_item:'فرق'|length|default:0|subtract:5 %}
-                                        {% if count != 0 %}{{ count }}{% endif %}
-                                    {% endwith %}
-                                </td>
-                                <td class="tds">
-                                    {% with count=serialized_data|get_item:'انتداب'|length|default:0|subtract:5 %}
-                                        {% if count != 0 %}{{ count }}{% endif %}
-                                    {% endwith %}
-                                </td>
-                                <td class="tds">
-                                    {% with count=serialized_data|get_item:'مأمورية'|length|default:0|subtract:5 %}
-                                        {% if count != 0 %}{{ count }}{% endif %}
-                                    {% endwith %}
-                                </td>
-                                <td class="tds">
-                                    {% with count=serialized_data|get_item:'راحات'|length|default:0|subtract:5 %}
-                                        {% if count != 0 %}{{ count }}{% endif %}
-                                    {% endwith %}
-                                </td>
-                                <td class="tds">
-                                    {% with count=serialized_data|get_item:'غياب'|length|default:0|subtract:5 %}
-                                        {% if count != 0 %}{{ count }}{% endif %}
-                                    {% endwith %}
-                                </td>
-                                <td class="tds">
-                                    {% with count=serialized_data|get_item:'_'|length|default:0|subtract:5 %}
-                                        {% if count != 0 %}{{ count }}{% endif %}
-                                    {% endwith %}
-                                </td>
-                                <td class="tds">
-                                    {% if total_out_states_records != 0 %}{{ total_out_states_records }}{% endif %}
-                                </td>
-                                <td class="tds">
-                                    {% if total_in_states_records != 0 %}{{ total_in_states_records }}{% endif %}
-                                </td>
-                                <td class="tds">
-                                    {% if total_all_states != 0 %}{{ total_all_states }}{% endif %}
-                                </td>
-                            </tr>
+                            {% for state in state_counts %}
+                                {% with employees=state_employees|get_item:state.state %}
+                                    {% for employee in employees %}
+                                        <tr>
+                                            <td>{{ forloop.parentloop.counter0|add:forloop.counter }}</td>
+                                            <td class="state state-{{ state.state|slugify }}">{{ state.state }}</td>
+                                            <td class="name"><strong>{{ employee }}</strong></td>
+                                        </tr>
+                                    {% endfor %}
+                                {% endwith %}
+                            {% endfor %}
                         </tbody>
                     </table>
-                    
-                    <div class="row">
-                        {% for chunk in grouped_data %}
-                            <div class="col-md-3 print-column">
-                                <div class="table-wrapper">
-                                    <table class="custom-table">
-                                        <thead>
-                                            <tr>
-                                                <th>م</th>
-                                                <th class="state">الحاله</th>
-                                                <th class="name">الاسم</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for state, serial, nickname in chunk %}
-                                                <tr>
-                                                    <td>{{ serial }}</td>
-                                                    <td class="state state-{{ state|slugify }}">{{ state }}</td>
-                                                    <td class="name"><strong>{{ nickname }}</strong></td>
-                                                </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
                 </div>
             </div>
         </div>
+    </div>
+</div>
 {% endblock content %}
 
 {% block scripts %}
