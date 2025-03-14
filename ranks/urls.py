@@ -1,9 +1,9 @@
 from django.urls import path
-from .views import rank_list, add_rank, edit_rank, delete_rank
+from . import views
 
 urlpatterns = [
-    path('', rank_list, name='rank_list'),  # عرض جميع الدرجات
-    path('add/', add_rank, name='add_rank'),  # إضافة درجة جديدة
-    path('edit/<int:rank_id>/', edit_rank, name='edit_rank'),  # تعديل درجة
-    path('delete/<int:rank_id>/', delete_rank, name='delete_rank'),  # حذف درجة
+    path('', views.rank_list, name='rank_list'),
+    path('add/', views.add_rank, name='add_rank'),
+    path('edit/<int:rank_id>/', views.edit_rank, name='edit_rank'),
+    path('delete/<int:rank_id>/', views.delete_rank, name='delete_rank'),
 ]

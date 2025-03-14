@@ -1,9 +1,6 @@
-<title>
-الدرجات
-</title>
+<title>الدرجات</title>
 {% extends 'base.html' %}
 {% load static %}
-
 
 {% block content %}
     <h2 class="text-center mb-4">إدارة الدرجات</h2>
@@ -11,9 +8,19 @@
     <!-- نموذج إضافة درجة جديدة -->
     <form method="POST" action="{% url 'add_rank' %}" class="mb-4">
         {% csrf_token %}
-        <div class="input-group">
-            <input type="text" name="name" class="form-control" placeholder="اسم الدرجة" required>
-            <button type="submit" class="btn btn-success">إضافة درجة</button>
+        <div class="row">
+            {% for field in form %}
+                <div class="col-md-{% if field.name == 'name' %}3{% else %}2{% endif %}">
+                    {{ field.label_tag }}
+                    {{ field }}
+                    {% if field.errors %}
+                        <div class="text-danger">{{ field.errors }}</div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            <div class="col-md-1 align-self-end">
+                <button type="submit" class="btn btn-success w-100">إضافة</button>
+            </div>
         </div>
     </form>
 
@@ -23,6 +30,9 @@
             <tr>
                 <th>#</th>
                 <th>اسم الدرجة</th>
+                <th>نوع الدرجة</th>
+                <th>الترتيب</th>
+                <th>الحالة</th>
                 <th>الإجراءات</th>
             </tr>
         </thead>
@@ -32,60 +42,95 @@
                 <td>{{ forloop.counter }}</td>
                 <td>{{ rank.name }}</td>
                 <td>
+                    {% if rank.rank_type == 'primary' %}درجة أولى
+                    {% elif rank.rank_type == 'police_officer' %}أمين شرطة
+                    {% elif rank.rank_type == 'security_assistant' %}معاون أمن
+                    {% endif %}
+                </td>
+                <td>{{ rank.order }}</td>
+                <td>{{ rank.is_active|yesno:"نشط,غير نشط" }}</td>
+                <td>
                     <!-- زر تعديل -->
                     <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#editModal{{ rank.id }}">تعديل</button>
                     
                     <!-- زر حذف -->
-<!-- زر حذف مع تشغيل نافذة التأكيد -->
-<button class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteModal{{ rank.id }}">حذف</button>
+                    <button class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteModal{{ rank.id }}">حذف</button>
 
-<!-- نافذة التأكيد قبل الحذف -->
-<div class="modal fade" id="deleteModal{{ rank.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ rank.id }}" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title">تأكيد الحذف</h4>
-                <button type="button" class="close" data-dismiss="modal" aria-label="إغلاق">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <p>هل أنت متأكد أنك تريد حذف الدرجة "<strong>{{ rank.name }}</strong>"؟</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">إلغاء</button>
-                <a href="{% url 'delete_rank' rank.id %}" class="btn btn-danger">تأكيد الحذف</a>
-            </div>
-        </div>
-    </div>
-</div>
-                </td>
-            </tr>
-
-            <!-- نافذة تعديل -->
-            <div class="modal fade" id="editModal{{ rank.id }}" tabindex="-1" aria-labelledby="editModalLabel{{ rank.id }}" aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h4 class="modal-title">تعديل الدرجة</h4>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="إغلاق">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                        <div class="modal-body">
-                            <form method="POST" action="{% url 'edit_rank' rank.id %}">
-                                {% csrf_token %}
-                                <div class="mb-3">
-                                    <label for="rankName{{ rank.id }}" class="form-label">اسم الدرجة</label>
-                                    <input type="text" name="name" class="form-control" id="rankName{{ rank.id }}" value="{{ rank.name }}" required>
+                    <!-- نافذة التأكيد قبل الحذف -->
+                    <div class="modal fade" id="deleteModal{{ rank.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ rank.id }}" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h4 class="modal-title">تأكيد الحذف</h4>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="إغلاق">
+                                        <span aria-hidden="true">×</span>
+                                    </button>
                                 </div>
-                                <button type="submit" class="btn btn-primary">حفظ التعديلات</button>
-                            </form>
+                                <div class="modal-body">
+                                    <p>هل أنت متأكد أنك تريد حذف الدرجة "<strong>{{ rank.name }}</strong>"؟</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <form method="POST" action="{% url 'delete_rank' rank.id %}">
+                                        {% csrf_token %}
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">إلغاء</button>
+                                        <button type="submit" class="btn btn-danger">تأكيد الحذف</button>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
+
+                    <!-- نافذة تعديل -->
+                    <div class="modal fade" id="editModal{{ rank.id }}" tabindex="-1" aria-labelledby="editModalLabel{{ rank.id }}" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h4 class="modal-title">تعديل الدرجة</h4>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="إغلاق">
+                                        <span aria-hidden="true">×</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    <form method="POST" action="{% url 'edit_rank' rank.id %}">
+                                        {% csrf_token %}
+                                        <div class="mb-3">
+                                            <label for="name{{ rank.id }}" class="form-label">اسم الدرجة</label>
+                                            <input type="text" name="name" class="form-control" id="name{{ rank.id }}" value="{{ rank.name }}" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="rank_type{{ rank.id }}" class="form-label">نوع الدرجة</label>
+                                            <select name="rank_type" class="form-control" id="rank_type{{ rank.id }}" required>
+                                                <option value="primary" {% if rank.rank_type == 'primary' %}selected{% endif %}>درجة أولى</option>
+                                                <option value="police_officer" {% if rank.rank_type == 'police_officer' %}selected{% endif %}>أمين شرطة</option>
+                                                <option value="security_assistant" {% if rank.rank_type == 'security_assistant' %}selected{% endif %}>معاون أمن</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="order{{ rank.id }}" class="form-label">الترتيب</label>
+                                            <input type="number" name="order" class="form-control" id="order{{ rank.id }}" value="{{ rank.order }}" min="1" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="is_active{{ rank.id }}" class="form-label">الحالة</label>
+                                            <select name="is_active" class="form-control" id="is_active{{ rank.id }}" required>
+                                                <option value="True" {% if rank.is_active %}selected{% endif %}>نشط</option>
+                                                <option value="False" {% if not rank.is_active %}selected{% endif %}>غير نشط</option>
+                                            </select>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">حفظ التعديلات</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
             {% endfor %}
         </tbody>
     </table>
+{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .form-control { margin-bottom: 10px; }
+    </style>
 {% endblock %}

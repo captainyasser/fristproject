@@ -7,11 +7,11 @@ class Promotion(models.Model):
     from_rank = models.ForeignKey(Rank, on_delete=models.SET_NULL, null=True, blank=True, related_name='promotions_from', verbose_name="الدرجة السابقة")
     to_rank = models.ForeignKey(Rank, on_delete=models.CASCADE, related_name='promotions_to', verbose_name="الدرجة الجديدة")
     promotion_date = models.DateField(verbose_name="تاريخ الترقية")
-    promotion_course_number = models.CharField(max_length=50, verbose_name="رقم دورة الترقية")
-    training_start_date = models.DateField(verbose_name="تاريخ بداية الدورة")
-    training_end_date = models.DateField(verbose_name="تاريخ نهاية الدورة")
-    training_course_number = models.CharField(max_length=50, verbose_name="رقم الدورة التأهيلية")
-    training_location = models.CharField(max_length=255, verbose_name="مكان انعقاد الدورة")
+    promotion_course_number = models.CharField(max_length=50,null=True, blank=True, verbose_name="رقم دورة الترقية")
+    training_start_date = models.DateField(null=True, blank=True, verbose_name="تاريخ بداية الدورة")
+    training_end_date = models.DateField(null=True, blank=True, verbose_name="تاريخ نهاية الدورة")
+    training_course_number = models.CharField(null=True, blank=True, max_length=50, verbose_name="رقم الدورة التأهيلية")
+    training_location = models.CharField(null=True, blank=True, max_length=255, verbose_name="مكان انعقاد الدورة")
     notes = models.TextField(null=True, blank=True, verbose_name="ملاحظات")
 
     class Meta:

@@ -3,7 +3,7 @@ git codes
 cd K:\myproject\myproject
 git status
 git add .
-git commit -m "add tarkyat insert"
+git commit -m "add tarkyat edit delet "
 git push origin master
 
 
@@ -96,3 +96,62 @@ HAVING COUNT(*) > 1;
 INSERT INTO training_teams_emtrainingteams (employee_id, name, training_team_id, place_id, start_date, end_date, result, round_num)
 SELECT employee_id, name, training_team_id, place_id, start_date, end_date, result, round_num
 FROM em.emdata_emtrainingteams;
+
+
+INSERT INTO yasser.tarkyat_promotion (employee_id, promotion_date, to_rank_id, promotion_course_number)
+SELECT employee_id, gnd_date, 22, gnd_num FROM em.emdata_trkyat WHERE gnd_date IS NOT NULL
+UNION ALL
+SELECT employee_id, arf_date, 21, arf_num FROM em.emdata_trkyat WHERE arf_date IS NOT NULL
+UNION ALL
+SELECT employee_id, rqb_date, 20, rqb_num FROM em.emdata_trkyat WHERE rqb_date IS NOT NULL
+UNION ALL
+SELECT employee_id, rqb_awl_date, 19, rqb_awl_num FROM em.emdata_trkyat WHERE rqb_awl_date IS NOT NULL
+UNION ALL
+SELECT employee_id, mand_3_date, 18, mand_3_num FROM em.emdata_trkyat WHERE mand_3_date IS NOT NULL
+UNION ALL
+SELECT employee_id, mand_2_date, 17, mand_2_num FROM em.emdata_trkyat WHERE mand_2_date IS NOT NULL
+UNION ALL
+SELECT employee_id, mand_1_date, 16, mand_1_num FROM em.emdata_trkyat WHERE mand_1_date IS NOT NULL
+UNION ALL
+SELECT employee_id, mand_mom_date, 15, mand_mom_num FROM em.emdata_trkyat WHERE mand_mom_date IS NOT NULL
+UNION ALL
+SELECT employee_id, muraq_3_date, 14, muraq_3_num FROM em.emdata_trkyat WHERE muraq_3_date IS NOT NULL
+UNION ALL
+SELECT employee_id, muraq_2_date, 13, muraq_2_num FROM em.emdata_trkyat WHERE muraq_2_date IS NOT NULL
+UNION ALL
+SELECT employee_id, muraq_1_date, 12, muraq_1_num FROM em.emdata_trkyat WHERE muraq_1_date IS NOT NULL
+UNION ALL
+SELECT employee_id, muraq_mom_date, 11, muraq_mom_num FROM em.emdata_trkyat WHERE muraq_mom_date IS NOT NULL
+UNION ALL
+SELECT employee_id, musa_3_date, 10, musa_3_num FROM em.emdata_trkyat WHERE musa_3_date IS NOT NULL
+UNION ALL
+SELECT employee_id, musa_2_date, 9, musa_2_num FROM em.emdata_trkyat WHERE musa_2_date IS NOT NULL
+UNION ALL
+SELECT employee_id, musa_1_date, 8, musa_1_num FROM em.emdata_trkyat WHERE musa_1_date IS NOT NULL
+UNION ALL
+SELECT employee_id, musa_mom_date, 7, musa_mom_num FROM em.emdata_trkyat WHERE musa_mom_date IS NOT NULL
+UNION ALL
+SELECT employee_id, ameen_3_date, 6, ameen_3_num FROM em.emdata_trkyat WHERE ameen_3_date IS NOT NULL
+UNION ALL
+SELECT employee_id, ameen_2_date, 5, ameen_2_num FROM em.emdata_trkyat WHERE ameen_2_date IS NOT NULL
+UNION ALL
+SELECT employee_id, ameen_1_date, 4, ameen_1_num FROM em.emdata_trkyat WHERE ameen_1_date IS NOT NULL
+UNION ALL
+SELECT employee_id, ameen_mom_date, 3, ameen_mom_num FROM em.emdata_trkyat WHERE ameen_mom_date IS NOT NULL
+UNION ALL
+SELECT employee_id, ameen_mom_2_date, 2, ameen_mom_2_num FROM em.emdata_trkyat WHERE ameen_mom_2_date IS NOT NULL
+UNION ALL
+SELECT employee_id, ameen_mom_1_date, 1, ameen_mom_1_num FROM em.emdata_trkyat WHERE ameen_mom_1_date IS NOT NULL
+UNION ALL
+SELECT employee_id, moawan_3_date, 28, moawan_3_num FROM em.emdata_trkyat WHERE moawan_3_date IS NOT NULL
+UNION ALL
+SELECT employee_id, moawan_2_date, 27, moawan_2_num FROM em.emdata_trkyat WHERE moawan_2_date IS NOT NULL
+UNION ALL
+SELECT employee_id, moawan_1_date, 26, moawan_1_num FROM em.emdata_trkyat WHERE moawan_1_date IS NOT NULL
+UNION ALL
+SELECT employee_id, moawan_mom_date, 25, moawan_mom_num FROM em.emdata_trkyat WHERE moawan_mom_date IS NOT NULL
+UNION ALL
+SELECT employee_id, moawan_mom_2_date, 24, moawan_mom_2_num FROM em.emdata_trkyat WHERE moawan_mom_2_date IS NOT NULL
+UNION ALL
+SELECT employee_id, moawan_mom_1_date, 23, moawan_mom_1_num FROM em.emdata_trkyat WHERE moawan_mom_1_date IS NOT NULL;
+
