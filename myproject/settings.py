@@ -46,7 +46,6 @@ INSTALLED_APPS = [
     'users',
     'departments',
     'ranks',
-    'promotions',
     'attendance',
     'file_sharing',
     'tasks',

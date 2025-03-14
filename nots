@@ -3,7 +3,7 @@ git codes
 cd K:\myproject\myproject
 git status
 git add .
-git commit -m "add tarkyat edit delet "
+git commit -m "add tarkyat perfect "
 git push origin master
 
 
@@ -155,3 +155,58 @@ SELECT employee_id, moawan_mom_2_date, 24, moawan_mom_2_num FROM em.emdata_trkya
 UNION ALL
 SELECT employee_id, moawan_mom_1_date, 23, moawan_mom_1_num FROM em.emdata_trkyat WHERE moawan_mom_1_date IS NOT NULL;
 
+
+
+
+
+INSERT INTO ranks_rank (name, rank_type, `order`, is_active)
+VALUES
+    ('جندي', 'primary', 1, 1),
+    ('عريف', 'primary', 2, 1),
+    ('رقيب', 'primary', 3, 1),
+    ('رقيب أول', 'primary', 4, 1),
+    ('مندوب شرطة ثالث', 'primary', 5, 1),
+    ('مندوب شرطة ثان', 'primary', 6, 1),
+    ('مندوب شرطة أول', 'primary', 7, 1),
+    ('مندوب شرطة ممتاز', 'primary', 8, 1),
+    ('مراقب شرطة ثالث', 'primary', 9, 1),
+    ('مراقب شرطة ثان', 'primary', 10, 1),
+    ('مراقب شرطة أول', 'primary', 11, 1),
+    ('مراقب شرطة ممتاز', 'primary', 12, 1),
+    ('مساعد شرطة ثالث', 'primary', 13, 1),
+    ('مساعد شرطة ثان', 'primary', 14, 1),
+    ('مساعد شرطة أول', 'primary', 15, 1),
+    ('مساعد شرطة ممتاز', 'primary', 16, 1)
+ON DUPLICATE KEY UPDATE
+    rank_type = VALUES(rank_type),
+    `order` = VALUES(`order`),
+    is_active = VALUES(is_active);
+
+
+    INSERT INTO ranks_rank (name, rank_type, `order`, is_active)
+VALUES
+    ('أمين شرطة ثالث', 'police_officer', 1, 1),
+    ('أمين شرطة ثان', 'police_officer', 2, 1),
+    ('أمين شرطة أول', 'police_officer', 3, 1),
+    ('أمين شرطة ممتاز', 'police_officer', 4, 1),
+    ('أمين شرطة ممتاز ثان', 'police_officer', 5, 1),
+    ('أمين شرطة ممتاز أول', 'police_officer', 6, 1)
+ON DUPLICATE KEY UPDATE
+    rank_type = VALUES(rank_type),
+    `order` = VALUES(`order`),
+    is_active = VALUES(is_active);
+
+
+
+    INSERT INTO ranks_rank (name, rank_type, `order`, is_active)
+VALUES
+    ('معاون أمن ثالث', 'security_assistant', 1, 1),
+    ('معاون أمن ثان', 'security_assistant', 2, 1),
+    ('معاون أمن أول', 'security_assistant', 3, 1),
+    ('معاون أمن ممتاز', 'security_assistant', 4, 1),
+    ('معاون أمن ممتاز ثان', 'security_assistant', 5, 1),
+    ('معاون أمن ممتاز أول', 'security_assistant', 6, 1)
+ON DUPLICATE KEY UPDATE
+    rank_type = VALUES(rank_type),
+    `order` = VALUES(`order`),
+    is_active = VALUES(is_active);

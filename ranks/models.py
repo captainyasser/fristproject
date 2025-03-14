@@ -32,7 +32,6 @@ class Rank(models.Model):
         verbose_name = "الدرجة"
         verbose_name_plural = "الدرجات"
         ordering = ["order"]
-        unique_together = [('rank_type', 'order')]
 
     def get_next_rank(self):
         """دالة للحصول على الدرجة التالية في نفس النوع"""

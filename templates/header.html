@@ -2,14 +2,34 @@
   <div class="container-fluid">
     <div class="row mb-2">
       <div class="col-sm-6">
-        <h1 class="m-0 text-dark">{% block page_title %}Dashboard{% endblock %}</h1>
+        <h1 class="m-0 text-dark">{% block page_title %}سيستم شئون الأفراد{% endblock %}</h1>
       </div>
       <div class="col-sm-6">
         <ol class="breadcrumb float-sm-right">
-          <li class="breadcrumb-item"><a href="#">الرئيسية</a></li>
-          <li class="breadcrumb-item active">{% block breadcrumb %}Dashboard{% endblock %}</li>
+          {% comment %} <li class="breadcrumb-item"><a href="#">الرئيسية</a></li> {% endcomment %}
+          <li class="breadcrumb-item active" id="dynamic-color">
+            {% block breadcrumb %}برمجة وتصميم م / ياسر أبو دراع - 01063985786{% endblock %}
+          </li>
         </ol>
       </div>
     </div>
   </div>
 </div>
+
+<script>
+  const colors = [
+  "#FF6347", // Tomato Red
+  "#1E90FF", // Dodger Blue
+  "#32CD32", // Lime Green
+  "#8A2BE2", // Blue Violet
+  "#FF8C00",  // Dark Orange
+  "#FF1493", // Deep Pink
+  "#00FA9A" // Medium Spring Green
+];
+  let index = 0;
+
+  setInterval(() => {
+    document.getElementById("dynamic-color").style.color = colors[index];
+    index = (index + 1) % colors.length; // الدوران بين الألوان
+  }, 500);
+</script>
