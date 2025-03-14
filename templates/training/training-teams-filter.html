@@ -34,7 +34,7 @@
                                 <th style="padding: 10px;">تاريخ البدء</th>
                                 <th style="padding: 10px;">تاريخ الانتهاء</th>
                                 <th style="padding: 10px;">النتيجة</th>
-                                <th style="padding: 10px;">رقم الجولة</th>
+                                <th style="padding: 10px;">رقم الدورة</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -46,8 +46,8 @@
                                 <td style="padding: 8px;">{{ team.place.name }}</td>
                                 <td style="padding: 8px;">{{ team.start_date|date:"j/n/Y" }}</td>
                                 <td style="padding: 8px;">{{ team.end_date|date:"j/n/Y" }}</td>
-                                <td style="padding: 8px; font-weight: bold; {% if team.result == 'Pass' %}color: green;{% else %}color: red;{% endif %}">
-                                    {% if team.result == "Pass" %} ناجح {% else %} راسب {% endif %}
+                                <td style="padding: 8px; font-weight: bold; {% if team.result == 'ناجح' %}color: green;{% else %}color: red;{% endif %}">
+                                    {% if team.result == "ناجح" %} ناجح {% else %} راسب {% endif %}
                                 </td>
                                 <td style="padding: 8px;">{% if team.round_num is not None %}{{ team.round_num }}{% endif %}</td>
                             </tr>

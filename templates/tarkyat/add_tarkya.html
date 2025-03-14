@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إضافة ترقية</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            direction: rtl;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        form {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        .employee-checkboxes {
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        .employee-checkboxes label {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            font-weight: normal;
+        }
+        .employee-checkboxes input[type="checkbox"] {
+            width: auto;
+            margin-left: 10px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>إضافة ترقية جديدة</h1>
+    <form method="post" action="">
+        {% csrf_token %}
+
+        <!-- حقل الموظفين (مربعات اختيار) -->
+        <label>الموظفون:</label>
+        <div class="employee-checkboxes" id="employee-checkboxes">
+            {% for emp in employees %}
+                <label>
+                    <input type="checkbox" name="employee" value="{{ emp.id }}" data-rank="{{ emp.rank.id|default:'' }}">
+                    {{ emp.name }}
+                </label>
+            {% endfor %}
+        </div>
+
+        <!-- حقل الدرجة السابقة -->
+        <label for="from_rank">الدرجة السابقة:</label>
+        <select name="from_rank" id="from_rank">
+            <option value="">اختر الدرجة (اختياري)</option>
+            {% for rank in ranks %}
+                <option value="{{ rank.id }}">{{ rank.name }}</option>
+            {% endfor %}
+        </select>
+
+        <!-- حقل الدرجة الجديدة -->
+        <label for="to_rank">الدرجة الجديدة:</label>
+        <select name="to_rank" id="to_rank" required>
+            <option value="">اختر الدرجة</option>
+            {% for rank in ranks %}
+                <option value="{{ rank.id }}">{{ rank.name }}</option>
+            {% endfor %}
+        </select>
+
+        <!-- حقل تاريخ الترقية -->
+        <label for="promotion_date">تاريخ الترقية:</label>
+        <input type="date" name="promotion_date" id="promotion_date" required>
+
+        <!-- حقل رقم دورة الترقية -->
+        <label for="promotion_course_number">رقم دورة الترقية:</label>
+        <input type="text" name="promotion_course_number" id="promotion_course_number" required>
+
+        <!-- حقل تاريخ بداية الدورة -->
+        <label for="training_start_date">تاريخ بداية الدورة:</label>
+        <input type="date" name="training_start_date" id="training_start_date" required>
+
+        <!-- حقل تاريخ نهاية الدورة -->
+        <label for="training_end_date">تاريخ نهاية الدورة:</label>
+        <input type="date" name="training_end_date" id="training_end_date" required>
+
+        <!-- حقل رقم الدورة التأهيلية -->
+        <label for="training_course_number">رقم الدورة التأهيلية:</label>
+        <input type="text" name="training_course_number" id="training_course_number" required>
+
+        <!-- حقل مكان انعقاد الدورة -->
+        <label for="training_location">مكان انعقاد الدورة:</label>
+        <input type="text" name="training_location" id="training_location" required>
+
+        <!-- حقل الملاحظات -->
+        <label for="notes">ملاحظات:</label>
+        <textarea name="notes" id="notes" rows="4"></textarea>
+
+        <!-- زر الإرسال -->
+        <button type="submit">إضافة الترقية</button>
+    </form>
+
+    <script>
+        // JavaScript لملء الدرجة السابقة تلقائيًا عند اختيار موظف واحد
+        const checkboxes = document.querySelectorAll('input[name="employee"]');
+        const fromRankSelect = document.getElementById('from_rank');
+
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const checkedBoxes = Array.from(checkboxes).filter(cb => cb.checked);
+                if (checkedBoxes.length === 1) {
+                    // إذا تم اختيار موظف واحد فقط
+                    const rankId = checkedBoxes[0].getAttribute('data-rank');
+                    if (rankId) {
+                        fromRankSelect.value = rankId;
+                    } else {
+                        fromRankSelect.value = ''; // إذا لم يكن للموظف درجة حالية
+                    }
+                } else {
+                    // إذا تم اختيار أكثر من موظف أو لم يتم اختيار أي موظف
+                    fromRankSelect.value = '';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

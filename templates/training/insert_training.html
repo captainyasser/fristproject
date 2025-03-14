@@ -11,66 +11,83 @@
     .btn-submit:hover { background-color: #a84c00; }
     .checkbox-group { background: #F9F9F9; padding: 10px; border-radius: 5px; max-height: 200px; overflow-y: auto; }
 </style>
-        <div class="container-fluid">
-            <div class="row justify-content-center">
-                <div class="col-md-8">
-                    <div class="form-container">
-                        <h2 class="text-center mb-4">إضافة فرقة تدريبية</h2>
-                        <form method="POST" action="{% url 'insert_training' %}">
-                            {% csrf_token %}
-                            <input type="hidden" name="name" value="employee_name">
-                            <div class="mb-3">
-                                <label for="training_team">اختر فرقة تدريبية:</label>
-                                <select class="form-control" name="training_team" id="training_team" required>
-                                    {% for team in training_teams %}
-                                    <option value="{{ team.id }}">{{ team.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="place">اختر المكان:</label>
-                                <select class="form-control" name="place" id="place" required>
-                                    {% for place in places %}
-                                    <option value="{{ place.id }}">{{ place.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="start_date">تاريخ البدء:</label>
-                                <input class="form-control" type="date" name="start_date" id="start_date" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="end_date">تاريخ الانتهاء:</label>
-                                <input class="form-control" type="date" name="end_date" id="end_date" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="result">النتيجة:</label>
-                                <select class="form-control" name="result" id="result">
-                                    <option value="ناجح">ناجح</option>
-                                    <option value="راسب">راسب</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="round_num">رقم الدورة:</label>
-                                <input class="form-control" type="number" name="round_num" id="round_num">
-                            </div>
-                            <div class="mb-3">
-                                <label>اختر الأفراد:</label>
-                                <div class="checkbox-group">
-                                    {% for employee in employees %}
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="employees" value="{{ employee.id }}" id="emp{{ employee.id }}">
-                                        <label class="form-check-label" for="emp{{ employee.id }}">{{ employee.name }}</label>
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                            <div class="text-center">
-                                <button type="submit" class="btn-submit">إضافة فرقة تدريبية</button>
-                            </div>
-                        </form>
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="form-container">
+                <h2 class="text-center mb-4">إضافة فرقة تدريبية</h2>
+                <form method="POST" action="{% url 'insert_training' %}" onsubmit="return validateDates()">
+                    {% csrf_token %}
+                    <input type="hidden" name="name" value="employee_name">
+                    <div class="mb-3">
+                        <label for="training_team">اختر فرقة تدريبية:</label>
+                        <select class="form-control" name="training_team" id="training_team" required>
+                            <option value="" selected disabled>برجاء التحديد</option>
+                            {% for team in training_teams %}
+                            <option value="{{ team.id }}">{{ team.name }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
-                </div>
+                    <div class="mb-3">
+                        <label for="place">اختر المكان:</label>
+                        <select class="form-control" name="place" id="place" required>
+                            <option value="" selected disabled>برجاء التحديد</option>
+                            {% for place in places %}
+                            <option value="{{ place.id }}">{{ place.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="start_date">تاريخ البدء:</label>
+                        <input class="form-control" type="date" name="start_date" id="start_date" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="end_date">تاريخ الانتهاء:</label>
+                        <input class="form-control" type="date" name="end_date" id="end_date" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="result">النتيجة:</label>
+                        <select class="form-control" name="result" id="result">
+                            <option value="ناجح">ناجح</option>
+                            <option value="راسب">راسب</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="round_num">رقم الدورة:</label>
+                        <input class="form-control" type="number" name="round_num" id="round_num">
+                    </div>
+                    <div class="mb-3">
+                        <label>اختر الأفراد : (يمكنك تحديد أكثر من فرد في حال حصولهم جميعا علي نفس الفرقة في نفس الدورة)</label>
+                        <div class="checkbox-group">
+                            {% for employee in employees %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="employees" value="{{ employee.id }}" id="emp{{ employee.id }}">
+                                <label class="form-check-label" for="emp{{ employee.id }}">{{ employee.name }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <button type="submit" class="btn-submit">إضافة فرقة تدريبية</button>
+                    </div>
+                </form>
             </div>
         </div>
+    </div>
+</div>
+
+<script>
+function validateDates() {
+    var startDate = document.getElementById("start_date").value;
+    var endDate = document.getElementById("end_date").value;
+
+    if (startDate && endDate) {
+        if (new Date(endDate) <= new Date(startDate)) {
+            alert("تاريخ الانتهاء يجب أن يكون بعد تاريخ البداية!");
+            return false; // منع إرسال النموذج
+        }
+    }
+    return true; // السماح بإرسال النموذج
+}
+</script>
 {% endblock %}

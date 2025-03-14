@@ -2,52 +2,19 @@
 {% load static %}
 {% block content %}
 <title>الفرق التدريبية</title>
-<style>
-    body {
-        background-color: #EEEEEE;
-        color: #373A40;
-        font-family: Arial, sans-serif;
-    }
-    h1 {
-        color: #DC5F00;
-        text-align: center;
-        margin-bottom: 20px;
-    }
-    .btn-container {
-        display: flex;
-        justify-content: center;
-        gap: 20px;
-        margin-top: 30px;
-    }
-    .btn-container a {
-        text-decoration: none;
-    }
-    .btn-container button {
-        background-color: #DC5F00;
-        color: rgb(0, 0, 0);
-        border: none;
-        padding: 15px 30px;
-        font-size: 26px;
-        border-radius: 15px;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-    }
-    .btn-container button:hover {
-        background-color: #373A40;
-    }
-</style>
         <div class="container-fluid">
             <div class="row">
                 <div class="col-md-12">
-                    <h1>الفرق التدريبية</h1>
-                    <div class="btn-container">
-                        <a href="{% url 'em_training_teams' %}"><button>دفتر الفرق باسم الفرد</button></a>
-                        <a href="{% url 'training_teams_filter' %}"><button>فلتر الفرق</button></a>
-                        <a href="{% url 'training_teams' %}"><button>دفتر الفرق باسم الفرقة</button></a>
+                    <div style="display: flex; justify-content: center;">
+                        <h1>الفرق التدريبية</h1>
                     </div>
+                    <br>
                     <div class="btn-container">
-                        <a href="{% url 'edit-training-record' %}"><button>تعديل الفرق للافراد</button></a>
-                        <a href="{% url 'insert_training' %}"><button>ادخال فرقة جديدة</button></a>
+                        <button class="btn btn-block btn-outline-secondary btn-lg" onclick="window.open('{% url 'em_training_teams' %}', '_blank')">دفتر الفرق باسم الفرد</button>
+                        <button class="btn btn-block btn-outline-secondary btn-lg" onclick="window.open('{% url 'training_teams' %}', '_blank')">دفتر الفرق باسم الفرقة</button>
+                        <button class="btn btn-block btn-outline-secondary btn-lg" onclick="window.open('{% url 'training_teams_filter' %}', '_blank')">فلتر الفرق</button>
+                        <button class="btn btn-block btn-outline-secondary btn-lg" onclick="window.open('{% url 'insert_training' %}', '_blank')">ادخال فرقة جديدة</button>
+                        <button class="btn btn-block btn-outline-secondary btn-lg" onclick="window.open('{% url 'edit-training-record' %}', '_blank')">تعديل الفرق للافراد</button>
                     </div>
                 </div>
             </div>

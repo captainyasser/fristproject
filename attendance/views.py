@@ -112,9 +112,9 @@ def attendance_3w(request):
                             "food": food_value == "1",
                             "comfort_adjustment": comfort_value,
                             "in_or_out": (
-                                "1"
+                                "in"
                                 if state == "نوبتجي"
-                                else ("2" if state == "يومي" else "3")
+                                else ("going" if state == "يومي" else "out")
                             ),
                         },
                     )
@@ -245,9 +245,9 @@ def simple_attendance(request):
                             "food": food_value == "1",
                             "comfort_adjustment": comfort_value,
                             "in_or_out": (
-                                "1"
+                                "in"
                                 if state == "نوبتجي"
-                                else ("2" if state == "يومي" else "3")
+                                else ("going" if state == "يومي" else "out")
                             ),
                         },
                     )
@@ -469,7 +469,7 @@ def insert_attendance_for_date(request):
         for employee in Employee.objects.all():
             operation = employee.operation
             state_value = "_"
-            in_or_out_value = "3"
+            in_or_out_value = "out"
             food_value = "0"
 
             if operation == "السبت":
@@ -530,7 +530,7 @@ def insert_attendance_for_date(request):
                     state_value = "راحة"
 
             in_or_out_value = (
-                "1"
+                "in"
                 if state_value == "نوبتجي"
                 else ("2" if state_value == "يومي" else "3")
             )
@@ -887,7 +887,7 @@ ARABIC_DAYS = {
     6: 'الأحد',
 }
 
-@login_required(login_url='/login/')
+@login_required
 def foodlist(request):
     names_with_serials = []
     selected_date = None
@@ -973,7 +973,7 @@ ARABIC_DAYS = {
     6: 'الأحد',
 }
 
-@login_required(login_url='/login/')
+@login_required
 def amtmam_view(request):
     # Get the selected date from the request (default to tomorrow)
     default_date = datetime.now().date() + timedelta(days=1)  # Tomorrow as default
@@ -993,7 +993,7 @@ def amtmam_view(request):
     next_day = selected_date + timedelta(days=1)
 
     # Fetch records for the selected date where in_or_out is 1 or 2
-    records = Attendance.objects.filter(date=selected_date, in_or_out__in=[1, 2]).select_related('employee__department')
+    records = Attendance.objects.filter(date=selected_date, in_or_out__in=['in', 'going']).select_related('employee__department')
 
     # Fetch records for the next day where food = 1
     tomorrow_food_count = Attendance.objects.filter(date=next_day, food=1).count()
@@ -1241,7 +1241,7 @@ from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from .models import Attendance
 
-@login_required(login_url='/login/')
+@login_required
 def bus_view(request):
     # Set selected_date to today by default
     selected_date = datetime.today().date()  # Default to current date
@@ -1265,26 +1265,26 @@ def bus_view(request):
     # Departing today
     departing_today = Attendance.objects.filter(
         date=selected_date,
-        in_or_out='2',
+        in_or_out='going',
         employee__bus=1
     ).values('employee__name', 'employee__sort_number').distinct().order_by('employee__sort_number')
 
     # Employees who were '2' or '3' on previous_date
     valid_previous_employees = Attendance.objects.filter(
         date=previous_date,
-        in_or_out__in=['2', '3']
+        in_or_out__in=['going', 'out']
     ).values_list('employee_id', flat=True).distinct()
 
     # Attending tomorrow
     attending_tomorrow = Attendance.objects.filter(
         date=tomorrow,
-        in_or_out__in=['1', '2'],
+        in_or_out__in=['in', 'going'],
         employee__bus=1,
         employee_id__in=valid_previous_employees
     ).exclude(
         employee__in=Attendance.objects.filter(
             date=previous_date,
-            in_or_out='1'
+            in_or_out='in'
         ).values_list('employee_id', flat=True)
     ).values('employee__name', 'employee__sort_number').distinct().order_by('employee__sort_number')
 
@@ -1312,7 +1312,7 @@ from django.shortcuts import render
 from .models import Employee, Attendance
 from django.contrib.auth.decorators import login_required
 
-@login_required(login_url='/login/')
+@login_required
 def kashftmam(request):
     selected_date = request.GET.get('date')
     start = request.GET.get('start', 1)  # القيمة الافتراضية 1
@@ -1404,7 +1404,7 @@ from datetime import datetime, timedelta
 from .models import Attendance
 from em_data.models import Employee
 
-@login_required(login_url='/login/')
+@login_required
 def insert_many_attendance(request):
     employees = Employee.objects.all().order_by('sort_number')
     if request.method == 'POST':
@@ -1503,7 +1503,7 @@ from django.db import models
 from .models import Employee, Attendance
 from datetime import datetime, timedelta
 import calendar
-@login_required(login_url='/login/')
+@login_required
 def monthly_discount(request):
     months = [
         (1, "يناير"), (2, "فبراير"), (3, "مارس"), (4, "أبريل"),

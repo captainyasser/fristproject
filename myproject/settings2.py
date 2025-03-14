@@ -51,7 +51,7 @@ INSTALLED_APPS = [
     'file_sharing',
     'tasks',
     'training_teams',
-    'tarkyat.apps.TarkyatConfig',  # تطبيق الترقيات مع تفعيل الإشارات
+
 
 ]
 
@@ -138,6 +138,8 @@ DATABASES = {
 
 
 LOGIN_URL = '/users/login/'
+
+# LOGIN_URL = '/'
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = '/users/login/'
 

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 {% block content %}
-<title>دفتر الفرق بإسم الفرد</title>
+<title>دفتر الفرق بالإسم</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
@@ -18,9 +18,7 @@
     .text-success { color: green; }
     .text-danger { color: red; }
 </style>
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-md-12">
+
                     <div class="container mt-5">
                         <h1>دفتر الفرق التدريبية</h1>
                         <button class="btn btn-export" onclick="exportToExcel()">📥 تصدير إلى Excel</button>
@@ -35,7 +33,7 @@
                             <table class="table table-bordered table-striped mt-2 training-table" dir="rtl">
                                 <thead>
                                     <tr>
-                                        <th>#</th><th>إسم الفرقة</th><th>مكان الإنعقاد</th><th>تاريخ البداية</th><th>تاريخ النهاية</th><th>رقم الدورة</th><th>النتيجة</th>
+                                        <th>م</th><th>إسم الفرقة</th><th>مكان الإنعقاد</th><th>تاريخ البداية</th><th>تاريخ النهاية</th><th>رقم الدورة</th><th>النتيجة</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -75,7 +73,5 @@
                             XLSX.writeFile(wb, "الفرق_التدريبية.xlsx");
                         }
                     </script>
-                </div>
-            </div>
-        </div>
+
 {% endblock %}

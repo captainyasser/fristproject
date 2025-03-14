@@ -48,8 +48,15 @@
         width: 5px;
     }
 
+    /* الصفوف العادية */
     .content-wrapper .table-container .styled-table tbody tr {
-        height: 5px;
+        height: 5px; /* الارتفاع الافتراضي للصفوف */
+    }
+
+    /* الصفوف الفارغة */
+    .content-wrapper .table-container .styled-table tbody tr:empty,
+    .content-wrapper .table-container .styled-table tbody tr td:empty {
+        height: 30px; /* ارتفاع الصف الفارغ */
     }
 
     .content-wrapper .table-container .styled-table tbody tr:nth-child(even) {
@@ -104,6 +111,12 @@
 
         .content-wrapper .table-container .styled-table tbody tr:nth-child(even) {
             background-color: #fff;
+        }
+        
+        /* التأكد من تطبيق الارتفاع في الطباعة */
+        .content-wrapper .table-container .styled-table tbody tr:empty,
+        .content-wrapper .table-container .styled-table tbody tr td:empty {
+            height: 30px;
         }
     }
 </style>
