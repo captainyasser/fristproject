@@ -19,45 +19,16 @@ def home(request):
         "departments": departments,
     })
 
-# @login_required
-# def age_update(request):
-#     employees = Employee.objects.all()
-#     employees_to_update = []
-
-#     for employee in employees:
-#         updated = False
-#         if employee.id_number:
-#             new_date_of_birth = employee.extract_birth_date()
-#             if new_date_of_birth and new_date_of_birth != employee.date_of_birth:
-#                 employee.date_of_birth = new_date_of_birth
-#                 updated = True
-
-#         if employee.date_of_birth:
-#             today = datetime.today().date()
-#             age_delta = relativedelta(today, employee.date_of_birth)
-#             if employee.age != age_delta.years:
-#                 employee.age = age_delta.years
-#                 updated = True
-#             new_retirement = employee.date_of_birth + relativedelta(years=60)
-#             if employee.date_of_retirement != new_retirement:
-#                 employee.date_of_retirement = new_retirement
-#                 updated = True
-
-#         if updated:
-#             employees_to_update.append(employee)
-
-#     # تحديث جماعي
-#     if employees_to_update:
-#         Employee.objects.bulk_update(employees_to_update, ['date_of_birth', 'age', 'date_of_retirement'])
-
-#     context = {
-#         "updated_count": len(employees_to_update),
-#         "total_employees": employees.count(),
-#     }
-#     return render(request, "em_data/age_update.html", context)
 
 
-
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
+from django.db.models import Max
+from .models import Employee, Rank, Department
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
+from django.db.models import Max
+from .models import Employee, Rank, Department
 
 @login_required(login_url='/login/')
 def add_employee(request):
@@ -71,22 +42,30 @@ def add_employee(request):
 
     if request.method == "POST":
         name = request.POST['name']
+        nickname = request.POST['nickname']  # إضافة حقل الاسم المختصر
         sort_number = request.POST['sort_number']
         rank_id = request.POST['rank']
         department_id = request.POST.get('department', None)
+        gender = request.POST['gender']
         date_of_appointment = request.POST.get('date_of_appointment', None)
 
         # إنشاء الموظف الجديد وربطه بمعهد المستخدم
         Employee.objects.create(
             name=name,
-            sort_number=sort_number,
+            nickname=nickname,  # تعيين قيمة الاسم المختصر
+            sort_number=int(sort_number),
             rank_id=rank_id,
             department_id=department_id,
-            institute=user_institute,  # تعيين معهد المستخدم افتراضيًا
+            gender=gender,
+            institute=user_institute,
             date_of_appointment=date_of_appointment
         )
 
         return redirect('home')
+
+    # الحصول على أكبر قيمة لـ sort_number وإضافة 1
+    max_sort_number = Employee.objects.aggregate(Max('sort_number'))['sort_number__max']
+    next_sort_number = max_sort_number + 1 if max_sort_number is not None else 1
 
     ranks = Rank.objects.all()
     departments = Department.objects.all()
@@ -94,10 +73,12 @@ def add_employee(request):
     return render(request, 'em_data/add_employee.html', {
         'ranks': ranks,
         'departments': departments,
-        'user_institute': user_institute  # تمرير المعهد إلى القالب
+        'user_institute': user_institute,
+        'next_sort_number': next_sort_number
     })
-
-
+    
+    
+    
 @login_required
 def edit_employee(request, employee_id):
     employee = get_object_or_404(Employee, id=employee_id)
@@ -263,22 +244,25 @@ def filterdata(request):
 
 
 
-from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
 from django.contrib import messages
-from .models import Employee, Rank, Department
+from .models import Employee, Department, Rank
 from datetime import datetime
 
 @login_required
 def edit_multi(request):
     selected_field = None
     sort_by = request.GET.get('sort_by', 'id')
-    items = Employee.objects.all().order_by(sort_by)  # نموذج Employee فقط
+    items = Employee.objects.all().order_by(sort_by)
     allowed_fields = [
-        'nickname', 'police_number', 'insurance_number', 'phone_number',
-        'alt_phone_number', 'governorate', 'district', 'address',
-        'operation','marital_status','health_status', 'date_of_edara', 'date_of_appointment', 'tmamam',
-        'food', 'rahatcounter', 'department', 'bus', 'nots', 'rank'
+        'id_number', 'date_of_birth', 'date_of_retirement', 'age', 'name', 'mainornot', 
+        'sort_number', 'dep_sort', 'image', 'amen_or_ola', 'rank', 
+        'rank_kind', 'nickname', 'operation', 'police_number', 'insurance_number', 
+        'date_of_edara', 'date_of_appointment', 'phone_number', 'alt_phone_number', 
+        'marital_status', 'gender', 'governorate', 'district', 'address', 
+        'health_status', 'tmamam', 'food', 'rahatcounter', 'department', 
+        'total_leave', 'bus', 'nots'
     ]
 
     if request.method == 'GET' and 'field' in request.GET:
@@ -296,7 +280,7 @@ def edit_multi(request):
         try:
             updated_items = []
             for item in items:
-                if field in ['date_of_edara', 'date_of_appointment']:
+                if field in ['date_of_edara', 'date_of_appointment', 'date_of_birth', 'date_of_retirement']:
                     day = request.POST.get(f'day_{item.id}')
                     month = request.POST.get(f'month_{item.id}')
                     year = request.POST.get(f'year_{item.id}')
@@ -305,33 +289,38 @@ def edit_multi(request):
                         if new_value != getattr(item, field):
                             setattr(item, field, new_value)
                             updated_items.append(item)
+                elif field == 'image':
+                    new_image = request.FILES.get(f'values_{item.id}')
+                    if new_image and new_image != getattr(item, field):
+                        setattr(item, field, new_image)
+                        updated_items.append(item)
                 else:
-                    new_value = request.POST.get(f'values_{item.id}')
-                    if new_value is not None:
-                        if field in ['tmamam', 'food', 'bus']:
-                            new_value = 1 if new_value == 'on' else 0
-                            if new_value != getattr(item, field):
-                                setattr(item, field, new_value)
-                                updated_items.append(item)
-                        elif field == 'department':
-                            new_value = Department.objects.get(id=int(new_value)) if new_value else None
-                            if new_value != getattr(item, field):
-                                setattr(item, field, new_value)
-                                updated_items.append(item)
-                        elif field == 'rank':
-                            new_value = Rank.objects.get(id=int(new_value)) if new_value else None
-                            if new_value != getattr(item, field):
-                                setattr(item, field, new_value)
-                                updated_items.append(item)
-                        elif field == 'rahatcounter':
-                            new_value = int(new_value) if new_value else None
-                            if new_value != getattr(item, field):
-                                setattr(item, field, new_value)
-                                updated_items.append(item)
-                        else:
-                            if new_value != getattr(item, field):
-                                setattr(item, field, new_value)
-                                updated_items.append(item)
+                    new_value = request.POST.get(f'values_{item.id}', '')  # القيمة الافتراضية فارغة إذا لم تُرسل
+                    if field in ['tmamam', 'food', 'bus', 'amen_or_ola']:
+                        new_value = 1 if new_value == 'on' else 0  # تحويل "on" إلى 1، وغيره إلى 0
+                        current_value = getattr(item, field)
+                        if current_value != new_value:  # مقارنة القيمة الجديدة بالحالية
+                            setattr(item, field, new_value)
+                            updated_items.append(item)
+                    elif field == 'department':
+                        new_value = Department.objects.get(id=int(new_value)) if new_value else None
+                        if new_value != getattr(item, field):
+                            setattr(item, field, new_value)
+                            updated_items.append(item)
+                    elif field == 'rank':
+                        new_value = Rank.objects.get(id=int(new_value)) if new_value else None
+                        if new_value != getattr(item, field):
+                            setattr(item, field, new_value)
+                            updated_items.append(item)
+                    elif field in ['rahatcounter', 'age', 'sort_number', 'dep_sort', 'total_leave', 'rank_kind', 'mainornot']:
+                        new_value = int(new_value) if new_value else None
+                        if new_value != getattr(item, field):
+                            setattr(item, field, new_value)
+                            updated_items.append(item)
+                    else:
+                        if new_value != getattr(item, field):
+                            setattr(item, field, new_value)
+                            updated_items.append(item)
 
             if updated_items:
                 Employee.objects.bulk_update(updated_items, [field])
@@ -352,8 +341,8 @@ def edit_multi(request):
     departments = Department.objects.all()
     ranks = Rank.objects.all()
     operation_choices = Employee.OPERATION_CHOICES
-    MARITAL_STATUS_CHOICES = Employee.MARITAL_STATUS_CHOICES
-    HEALTH_STATUS_CHOICES = Employee.HEALTH_STATUS_CHOICES
+    marital_status_choices = Employee.MARITAL_STATUS_CHOICES
+    health_status_choices = Employee.HEALTH_STATUS_CHOICES
     return render(request, 'em_data/edit_multi.html', {
         'items': items,
         'selected_field': selected_field,
@@ -361,11 +350,84 @@ def edit_multi(request):
         'ranks': ranks,
         'sort_by': sort_by,
         'operation_choices': operation_choices,
-        'marital_status_choices': MARITAL_STATUS_CHOICES,
-        'health_status_choices': HEALTH_STATUS_CHOICES,
+        'marital_status_choices': marital_status_choices,
+        'health_status_choices': health_status_choices,
         'allowed_fields': allowed_fields,
     })
     
     
     
+    
+    
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
+
+@login_required
+def delete_employee(request, employee_id):
+    employee = get_object_or_404(Employee, id=employee_id)
+    if request.method == "POST":
+        try:
+            employee.delete()
+            messages.success(request, f"تم حذف الموظف {employee.name} بنجاح!")
+            return redirect('home')
+        except Exception as e:
+            messages.error(request, f"حدث خطأ أثناء الحذف: {str(e)}")
+            return redirect('home')
+    
+    # إذا لم يكن الطلب POST، أعد التوجيه إلى الصفحة الرئيسية
+    return redirect('home')
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+# @login_required
+# def age_update(request):
+#     employees = Employee.objects.all()
+#     employees_to_update = []
+
+#     for employee in employees:
+#         updated = False
+#         if employee.id_number:
+#             new_date_of_birth = employee.extract_birth_date()
+#             if new_date_of_birth and new_date_of_birth != employee.date_of_birth:
+#                 employee.date_of_birth = new_date_of_birth
+#                 updated = True
+
+#         if employee.date_of_birth:
+#             today = datetime.today().date()
+#             age_delta = relativedelta(today, employee.date_of_birth)
+#             if employee.age != age_delta.years:
+#                 employee.age = age_delta.years
+#                 updated = True
+#             new_retirement = employee.date_of_birth + relativedelta(years=60)
+#             if employee.date_of_retirement != new_retirement:
+#                 employee.date_of_retirement = new_retirement
+#                 updated = True
+
+#         if updated:
+#             employees_to_update.append(employee)
+
+#     # تحديث جماعي
+#     if employees_to_update:
+#         Employee.objects.bulk_update(employees_to_update, ['date_of_birth', 'age', 'date_of_retirement'])
+
+#     context = {
+#         "updated_count": len(employees_to_update),
+#         "total_employees": employees.count(),
+#     }
+#     return render(request, "em_data/age_update.html", context)
+
+
     

@@ -21,12 +21,12 @@
         <div class="container-fluid">
             <div class="row">
                 <div class="col-md-12">
-                    <h1>تعديل بيانات الأفراد</h1> <!-- افتراض أننا نعمل على الأفراد فقط -->
+                    <h1>تعديل بيانات الأفراد</h1>
                     <form method="GET" action="{% url 'edit_multi' %}">
                         <div class="form-group">
                             <label for="sort_by">ترتيب حسب:</label>
                             <select id="sort_by" name="sort_by" class="form-control" onchange="this.form.submit()">
-                                <option value="id" {% if sort_by == "id" %}selected{% endif %}>المعرف</option>
+                                {% comment %} <option value="id" {% if sort_by == "id" %}selected{% endif %}>المعرف</option> {% endcomment %}
                                 <option value="sort_number" {% if sort_by == "sort_number" %}selected{% endif %}>رقم الترتيب</option>
                                 <option value="dep_sort" {% if sort_by == "dep_sort" %}selected{% endif %}>ترتيب القسم</option>
                             </select>
@@ -37,27 +37,39 @@
                                 <option value="">-- اختر حقلًا --</option>
                                 {% for field in allowed_fields %}
                                     <option value="{{ field }}" {% if selected_field == field %}selected{% endif %}>
-                                        {% if field == "name" %}الاسم
+                                        {% if field == "id_number" %}الرقم القومي
+                                        {% elif field == "date_of_birth" %}تاريخ الميلاد
+                                        {% elif field == "date_of_retirement" %}تاريخ التقاعد
+                                        {% elif field == "age" %}العمر
+                                        {% elif field == "name" %}الاسم
+                                        {% elif field == "mainornot" %}رئيسي أم لا
+                                        {% elif field == "sort_number" %}رقم الترتيب
+                                        {% elif field == "dep_sort" %}ترتيب القسم
+                                        {% elif field == "image" %}الصورة
+                                        {% elif field == "amen_or_ola" %}أمن أو علا
+                                        {% elif field == "rank" %}الدرجة
+                                        {% elif field == "rank_kind" %}نوع الرتبة
                                         {% elif field == "nickname" %}اللقب
                                         {% elif field == "police_number" %}رقم الشرطة
                                         {% elif field == "insurance_number" %}رقم التأمين
+                                        {% elif field == "date_of_edara" %}تاريخ دخول الإدارة
+                                        {% elif field == "date_of_appointment" %}تاريخ التعيين
                                         {% elif field == "phone_number" %}رقم الهاتف
                                         {% elif field == "alt_phone_number" %}رقم الهاتف البديل
+                                        {% elif field == "marital_status" %}الحالة الاجتماعية
+                                        {% elif field == "gender" %}الجنس
                                         {% elif field == "governorate" %}المحافظة
                                         {% elif field == "district" %}المنطقة
                                         {% elif field == "address" %}العنوان
-                                        {% elif field == "operation" %}التشغيل
-                                        {% elif field == "marital_status" %}الحاله الاجتماعية
-                                        {% elif field == "health_status" %}الحاله الصحية
-                                        {% elif field == "date_of_edara" %}تاريخ دخول الإدارة
-                                        {% elif field == "date_of_appointment" %}تاريخ التعيين
+                                        {% elif field == "health_status" %}الحالة الصحية
                                         {% elif field == "tmamam" %}يحضر التمام
                                         {% elif field == "food" %}الحصول على تعيين
                                         {% elif field == "rahatcounter" %}عداد الراحة
                                         {% elif field == "department" %}القسم
-                                        {% elif field == "rank" %}الدرجة
+                                        {% elif field == "total_leave" %}إجمالي الإجازات
                                         {% elif field == "bus" %}يستقل الأتوبيس
                                         {% elif field == "nots" %}ملاحظات
+                                        {% elif field == "operation" %}التشغيل
                                         {% endif %}
                                     </option>
                                 {% endfor %}
@@ -66,7 +78,7 @@
                     </form>
 
                     {% if selected_field and items %}
-                        <form method="POST" action="{% url 'edit_multi' %}" id="editForm">
+                        <form method="POST" action="{% url 'edit_multi' %}" id="editForm" enctype="multipart/form-data">
                             {% csrf_token %}
                             <input type="hidden" name="field" value="{{ selected_field }}">
                             <table class="table mt-3">
@@ -86,16 +98,18 @@
                                                     {{ item.department.name|default:"-" }}
                                                 {% elif selected_field == "rank" %}
                                                     {{ item.rank.name|default:"-" }}
-                                                {% elif selected_field in "tmamam food bus" %}
+                                                {% elif selected_field in "tmamam food bus amen_or_ola" %}
                                                     {{ item|get_field_value:selected_field|yesno:"نعم,لا" }}
-                                                {% elif selected_field in "date_of_edara date_of_appointment" %}
+                                                {% elif selected_field in "date_of_edara date_of_appointment date_of_birth date_of_retirement" %}
                                                     {{ item|get_field_value:selected_field|date:"d/m/Y"|default:"-" }}
+                                                {% elif selected_field == "image" %}
+                                                    {% if item.image %}<img src="{{ item.image.url }}" width="50">{% else %}-{% endif %}
                                                 {% else %}
                                                     {{ item|get_field_value:selected_field|default:"-" }}
                                                 {% endif %}
                                             </td>
                                             <td>
-                                                {% if selected_field == "name" %}
+                                                {% if selected_field in "name id_number nickname police_number insurance_number phone_number alt_phone_number governorate district address gender" %}
                                                     <input type="text" name="values_{{ item.id }}" class="form-control" value="{{ item|get_field_value:selected_field|default:'' }}">
                                                 {% elif selected_field == "department" %}
                                                     <select name="values_{{ item.id }}" class="form-control">
@@ -111,9 +125,9 @@
                                                             <option value="{{ rank.id }}" {% if item.rank.id == rank.id %}selected{% endif %}>{{ rank.name }}</option>
                                                         {% endfor %}
                                                     </select>
-                                                {% elif selected_field in "tmamam food bus" %}
-                                                    <input type="checkbox" name="values_{{ item.id }}" class="form-check-input" {% if item|get_field_value:selected_field == 1 %}checked{% endif %}>
-                                                {% elif selected_field in "date_of_edara date_of_appointment" %}
+                                                {% elif selected_field in "tmamam food bus amen_or_ola" %}
+                                                    <input type="checkbox" name="values_{{ item.id }}" class="form-check-input" {% if item|get_field_value:selected_field %}checked{% endif %}>
+                                                {% elif selected_field in "date_of_edara date_of_appointment date_of_birth date_of_retirement" %}
                                                     {% with current_date=item|get_field_value:selected_field %}
                                                         <select name="day_{{ item.id }}" class="form-control d-inline-block" style="width: 30%;">
                                                             <option value="">-- يوم --</option>
@@ -147,18 +161,22 @@
                                                     </select>
                                                 {% elif selected_field == "marital_status" %}
                                                     <select name="values_{{ item.id }}" class="form-control">
-                                                        <option value="">-- اختر حاله --</option>
+                                                        <option value="">-- اختر حالة --</option>
                                                         {% for choice_value, choice_label in marital_status_choices %}
                                                             <option value="{{ choice_value }}" {% if item.marital_status == choice_value %}selected{% endif %}>{{ choice_label }}</option>
                                                         {% endfor %}
                                                     </select>
                                                 {% elif selected_field == "health_status" %}
                                                     <select name="values_{{ item.id }}" class="form-control">
-                                                        <option value="">-- اختر حاله --</option>
+                                                        <option value="">-- اختر حالة --</option>
                                                         {% for choice_value, choice_label in health_status_choices %}
                                                             <option value="{{ choice_value }}" {% if item.health_status == choice_value %}selected{% endif %}>{{ choice_label }}</option>
                                                         {% endfor %}
                                                     </select>
+                                                {% elif selected_field == "image" %}
+                                                    <input type="file" name="values_{{ item.id }}" class="form-control">
+                                                {% elif selected_field in "age sort_number dep_sort total_leave rank_kind mainornot rahatcounter" %}
+                                                    <input type="number" name="values_{{ item.id }}" class="form-control sort-number-input" value="{{ item|get_field_value:selected_field|default:'' }}">
                                                 {% elif selected_field == "nots" %}
                                                     <textarea name="values_{{ item.id }}" class="form-control">{{ item|get_field_value:selected_field|default:'' }}</textarea>
                                                 {% else %}
@@ -169,6 +187,9 @@
                                     {% endfor %}
                                 </tbody>
                             </table>
+                            {% if selected_field == "sort_number" %}
+                                <button type="button" class="btn btn-secondary mt-3" onclick="autoFillSortNumbers()">تعبئة أرقام تصاعدية</button>
+                            {% endif %}
                             <button type="submit" class="btn btn-primary mt-3" onclick="this.disabled=true; this.innerHTML='جارٍ الحفظ...'; document.getElementById('editForm').submit();">حفظ التغييرات</button>
                         </form>
                     {% elif selected_field and not items %}
@@ -187,6 +208,16 @@
         </div>
     </div>
     <br><br><br><br><br>
+
+    <!-- إضافة JavaScript لتعبئة الأرقام التصاعدية -->
+    <script>
+        function autoFillSortNumbers() {
+            const inputs = document.querySelectorAll('.sort-number-input');
+            inputs.forEach((input, index) => {
+                input.value = index + 1; // تعبئة الأرقام من 1 تصاعديًا
+            });
+        }
+    </script>
 {% endblock %}
 
 {% block extra_css %}

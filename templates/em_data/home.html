@@ -175,6 +175,10 @@
                                             <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editModal{{ employee.id }}">
                                                 <i class="fas fa-pencil-alt"></i> تعديل
                                             </button>
+                                            <!-- زر الحذف الجديد -->
+                                            <button type="button" class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteModal{{ employee.id }}">
+                                                <i class="fas fa-trash"></i> حذف
+                                            </button>
                                         </td>
                                     </tr>
                                 {% endfor %}
@@ -466,7 +470,38 @@
                     </div>
                 </div>
             </div>
-        {% endfor %}
+        <!-- نافذة تأكيد الحذف (Modal) -->
+        <div class="modal fade" id="deleteModal{{ employee.id }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">تأكيد الحذف</h4>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">×</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>هل أنت متأكد من حذف بيانات الموظف: <strong>{{ employee.name }}</strong>؟</p>
+                        <p>هذا الإجراء لا يمكن التراجع عنه.</p>
+                        {% if employee.attendances.exists %}
+                            <p class="text-danger">تحذير 1: سيتم حذف جميع سجلات الحضور المرتبطة بهذا الموظف!</p>
+                            <p class="text-danger">تحذير 2: كافة البيانات المحذوفة لن يمكن استرجاعها لاحقًا.</p>
+                        {% else %}
+                            <p class="text-danger">تحذير 1: سيتم حذف بيانات الموظف بالكامل من النظام!</p>
+                            <p class="text-danger">تحذير 2: لا توجد سجلات حضور، لكن الحذف نهائي وغير قابل للاسترجاع.</p>
+                        {% endif %}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">إلغاء</button>
+                        <form method="POST" action="{% url 'delete_employee' employee.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">حذف</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+            {% endfor %}
 
             {% else %}
                 <div class="alert alert-info text-center" role="alert">
