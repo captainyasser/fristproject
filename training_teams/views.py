@@ -179,3 +179,36 @@ def update_training_record(request):
             return JsonResponse({"success": False, "error": str(e)})
 
     return JsonResponse({"success": False, "error": "Invalid request"})
+
+
+
+
+
+
+
+from django.shortcuts import render, get_object_or_404, redirect
+from django.http import JsonResponse
+from .models import Places
+from .forms import PlacesForm
+
+def places_page(request):
+    places = Places.objects.all()
+    form = PlacesForm()
+
+    if request.method == "POST":
+        if "delete" in request.POST:  # Handle Delete
+            place = get_object_or_404(Places, pk=request.POST.get("place_id"))
+            place.delete()
+        else:  # Handle Add/Edit
+            if request.POST.get("place_id"):  # Edit
+                place = get_object_or_404(Places, pk=request.POST.get("place_id"))
+                form = PlacesForm(request.POST, instance=place)
+            else:  # Add
+                form = PlacesForm(request.POST)
+            
+            if form.is_valid():
+                form.save()
+    
+        return redirect("places_page")
+
+    return render(request, "training/places.html", {"places": places, "form": form})

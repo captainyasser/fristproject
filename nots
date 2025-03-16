@@ -3,7 +3,7 @@ git codes
 cd K:\myproject\myproject
 git status
 git add .
-git commit -m "fix add and edit employees "
+git commit -m "ADD tarkyat dfater "
 git push origin master
 
 

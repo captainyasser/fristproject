@@ -135,3 +135,95 @@ def edit_promotions(request):
         'promotions': promotions,
         'ranks': ranks,
     })
+    
+    
+    
+
+
+
+def ameen_tarkyat(request):
+    # تصفية الموظفين الذين لهم درجة من نوع 'police_officer' وفرزهم حسب sort_number
+    employees = Employee.objects.filter(rank__rank_type='police_officer').order_by('sort_number').prefetch_related('promotions')
+    
+    # إعداد البيانات لكل موظف
+    employee_data = []
+    ameen_ranks = {
+        5: 'ameen_2',  # أمين شرطة ثان
+        4: 'ameen_1',  # أمين شرطة أول
+        3: 'ameen_mom',  # أمين شرطة ممتاز
+        2: 'ameen_mom_2',  # أمين شرطة ممتاز ثان
+        1: 'ameen_mom_1',  # أمين شرطة ممتاز أول
+    }
+
+    for employee in employees:
+        promotions_dict = {
+            'ameen_2_date': None, 'ameen_2_num': None,
+            'ameen_1_date': None, 'ameen_1_num': None,
+            'ameen_mom_date': None, 'ameen_mom_num': None,
+            'ameen_mom_2_date': None, 'ameen_mom_2_num': None,
+            'ameen_mom_1_date': None, 'ameen_mom_1_num': None,
+        }
+        
+        # جلب الترقيات للموظف
+        for promotion in employee.promotions.all():
+            if promotion.to_rank_id in ameen_ranks:
+                key = ameen_ranks[promotion.to_rank_id]
+                promotions_dict[f'{key}_date'] = promotion.promotion_date
+                promotions_dict[f'{key}_num'] = promotion.promotion_course_number
+
+        employee_data.append({
+            'employee': employee,
+            'promotions': promotions_dict
+        })
+
+    return render(request, 'tarkyat/ameen_tarkyat.html', {'employee_data': employee_data})
+
+
+
+
+
+from django.shortcuts import render
+from .models import Employee, Promotion, Rank
+
+def daragaola_tarkya(request):
+    # تصفية الموظفين الذين لهم درجة من نوع 'primary' وفرزهم حسب sort_number
+    employees = Employee.objects.filter(rank__rank_type='primary').order_by('sort_number').prefetch_related('promotions')
+    
+    # إعداد قاموس الرتب بناءً على معرفات الرتب (يجب تعديل المعرفات حسب قاعدة البيانات الخاصة بك)
+    daraga_ranks = {
+        8: 'areef',         # عريف
+        9: 'raqeeb',        # رقيب
+        10: 'raqeeb_awwal',  # رقيب أول
+        19: 'mosaed_thaleth',# مساعد ثالث
+        20: 'mosaed_thani',  # مساعد ثان
+        21: 'mosaed_awwal',  # مساعد أول
+        22: 'mosaed_momtaz', # مساعد ممتاز
+    }
+
+    # إعداد البيانات لكل موظف
+    employee_data = []
+    for employee in employees:
+        promotions_dict = {
+            'areef_date': None, 'areef_num': None,
+            'raqeeb_date': None, 'raqeeb_num': None,
+            'raqeeb_awwal_date': None, 'raqeeb_awwal_num': None,
+            'mosaed_thaleth_date': None, 'mosaed_thaleth_num': None,
+            'mosaed_thani_date': None, 'mosaed_thani_num': None,
+            'mosaed_awwal_date': None, 'mosaed_awwal_num': None,
+            'mosaed_momtaz_date': None, 'mosaed_momtaz_num': None,
+        }
+        
+        # جلب الترقيات للموظف
+        for promotion in employee.promotions.all():
+            if promotion.to_rank_id in daraga_ranks:
+                key = daraga_ranks[promotion.to_rank_id]
+                promotions_dict[f'{key}_date'] = promotion.promotion_date
+                promotions_dict[f'{key}_num'] = promotion.promotion_course_number
+
+        employee_data.append({
+            'employee': employee,
+            'promotions': promotions_dict
+        })
+
+    context = {'employee_data': employee_data}
+    return render(request, 'tarkyat/daragaola-tarkya.html', context)

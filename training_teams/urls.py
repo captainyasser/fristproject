@@ -20,4 +20,18 @@ urlpatterns = [
     path('edit-training-record/', views.edit_training_record, name='edit-training-record'),
     path('get-employee-training-data/<int:employee_id>/', views.get_employee_training_data, name='get_employee_training_data'),
     path('update-training-record/', views.update_training_record, name='update-training-record'),
+    
+    
+    
+    
+
+    path("places/", views.places_page, name="places_page"),
+
+
+
+    
+    
+    
+    
+    
 ]
