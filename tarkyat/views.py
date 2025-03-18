@@ -109,27 +109,49 @@ def promotion_list(request):
     })
 
 
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import Promotion, Employee
+from .forms import PromotionForm
+import logging
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import Promotion, Employee
+from .forms import PromotionForm
+import logging
+
+logger = logging.getLogger(__name__)
+
 def edit_promotion(request, pk=None):
     promotion = get_object_or_404(Promotion, pk=pk) if pk else None
     selected_employee_id = request.GET.get('employee')
 
     if request.method == 'POST':
+        logger.info("POST data: %s", request.POST)
         form = PromotionForm(request.POST, instance=promotion, selected_employee_id=selected_employee_id)
+        update_rank = request.POST.get('update_rank')
+        logger.info("update_rank: %s", update_rank)
+
         if form.is_valid():
             promotion_instance = form.save(commit=False)
 
-            # تعيين الموظف يدويًا إذا لم يكن ممررًا في الطلب
             if not promotion_instance.employee and selected_employee_id:
                 try:
                     promotion_instance.employee = Employee.objects.get(id=selected_employee_id)
                 except Employee.DoesNotExist:
                     pass
 
+            # حفظ الترقية بدون تمرير update_rank
             promotion_instance.save()
+
+            # تحديث rank مباشرة إذا اختير "نعم"
+            if update_rank == 'yes' and not promotion:  # تحديث فقط عند الإضافة (لا التحرير)
+                logger.info("Updating rank for employee %s to %s", promotion_instance.employee.id, promotion_instance.to_rank.id)
+                promotion_instance.employee.rank = promotion_instance.to_rank
+                promotion_instance.employee.save(update_fields=['rank'])
+
             employee_id = promotion_instance.employee.id
             return redirect(f'/tarkyat/promotions/?employee={employee_id}')
         else:
-            print("Form errors:", form.errors)
+            logger.error("Form errors: %s", form.errors)
     else:
         form = PromotionForm(instance=promotion, selected_employee_id=selected_employee_id)
 
@@ -137,8 +159,6 @@ def edit_promotion(request, pk=None):
         'form': form,
         'selected_employee_id': selected_employee_id,
     })
-
-
 
 
 def delete_promotion(request, pk):

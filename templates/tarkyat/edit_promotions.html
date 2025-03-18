@@ -25,7 +25,6 @@
                 <form method="POST">
                     {% csrf_token %}
                     <div class="row g-3">
-                        <!-- اختيار الفرد -->
                         <div class="col-md-12">
                             <label class="form-label fw-bold"><i class="bi bi-person me-2"></i>الفرد:</label>
                             {% if form.instance.id %}
@@ -50,7 +49,6 @@
 <br>
 <br>
 <br>
-                        <!-- الدرجة السابقة -->
                         <div class="col-md-6">
                             <label class="form-label fw-bold"><i class="bi bi-arrow-down-circle me-2"></i>الدرجة السابقة:</label>
                             {{ form.from_rank }}
@@ -58,8 +56,6 @@
                                 <div class="text-danger">{{ form.from_rank.errors }}</div>
                             {% endif %}
                         </div>
-
-                        <!-- الدرجة الجديدة -->
                         <div class="col-md-6">
                             <label class="form-label fw-bold"><i class="bi bi-arrow-up-circle me-2"></i>الدرجة الجديدة:</label>
                             {{ form.to_rank }}
@@ -67,8 +63,6 @@
                                 <div class="text-danger">{{ form.to_rank.errors }}</div>
                             {% endif %}
                         </div>
-
-                        <!-- تاريخ الترقية -->
                         <div class="col-md-6">
                             <label class="form-label fw-bold"><i class="bi bi-calendar-date me-2"></i>تاريخ الترقية:</label>
                             {{ form.promotion_date }}
@@ -76,8 +70,6 @@
                                 <div class="text-danger">{{ form.promotion_date.errors }}</div>
                             {% endif %}
                         </div>
-
-                        <!-- رقم دورة الترقية -->
                         <div class="col-md-6">
                             <label class="form-label fw-bold"><i class="bi bi-hash me-2"></i>رقم دورة الترقية:</label>
                             {{ form.promotion_course_number }}
@@ -85,8 +77,6 @@
                                 <div class="text-danger">{{ form.promotion_course_number.errors }}</div>
                             {% endif %}
                         </div>
-
-                        <!-- تاريخ بداية الدورة -->
                         <div class="col-md-6">
                             <label class="form-label fw-bold"><i class="bi bi-calendar-plus me-2"></i>تاريخ بداية الدورة:</label>
                             {{ form.training_start_date }}
@@ -94,8 +84,6 @@
                                 <div class="text-danger">{{ form.training_start_date.errors }}</div>
                             {% endif %}
                         </div>
-
-                        <!-- تاريخ نهاية الدورة -->
                         <div class="col-md-6">
                             <label class="form-label fw-bold"><i class="bi bi-calendar-minus me-2"></i>تاريخ نهاية الدورة:</label>
                             {{ form.training_end_date }}
@@ -103,8 +91,6 @@
                                 <div class="text-danger">{{ form.training_end_date.errors }}</div>
                             {% endif %}
                         </div>
-
-                        <!-- رقم الدورة التأهيلية -->
                         <div class="col-md-6">
                             <label class="form-label fw-bold"><i class="bi bi-123 me-2"></i>رقم الدورة التأهيلية:</label>
                             {{ form.training_course_number }}
@@ -112,8 +98,6 @@
                                 <div class="text-danger">{{ form.training_course_number.errors }}</div>
                             {% endif %}
                         </div>
-
-                        <!-- مكان انعقاد الدورة -->
                         <div class="col-md-6">
                             <label class="form-label fw-bold"><i class="bi bi-geo-alt me-2"></i>مكان انعقاد الدورة:</label>
                             {{ form.training_location }}
@@ -121,8 +105,14 @@
                                 <div class="text-danger">{{ form.training_location.errors }}</div>
                             {% endif %}
                         </div>
-
-                        <!-- ملاحظات -->
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold"><i class="bi bi-arrow-up-circle-fill me-2"></i>تحديث رتبة الموظف:</label>
+                            <select name="update_rank" class="form-control" required>
+                                <option value="">-- اختر خيارًا --</option>
+                                <option value="yes">نعم، قم بتحديث رتبة الموظف إلى الدرجة الجديدة</option>
+                                <option value="no">لا، احتفظ برتبة الموظف الحالية</option>
+                            </select>
+                        </div>
                         <div class="col-12">
                             <label class="form-label fw-bold"><i class="bi bi-chat-left-text me-2"></i>ملاحظات:</label>
                             {{ form.notes }}
@@ -131,7 +121,6 @@
                             {% endif %}
                         </div>
                     </div>
-
                     <div class="card-footer text-end mt-3">
                         <button type="submit" class="btn btn-success me-2">
                             <i class="bi bi-save"></i> حفظ

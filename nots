@@ -3,7 +3,7 @@ git codes
 cd K:\myproject\myproject
 git status
 git add .
-git commit -m "ADD tarkyat EDIT UPDATE IN PERFECT "
+git commit -m "ADD tarkyat UPDATE RANK AUTO "
 git push origin master
 
 
