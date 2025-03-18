@@ -1,188 +1,156 @@
-<title>تعديل ترقيات الفرد</title>
 {% extends 'base.html' %}
 {% load static %}
 
+{% block title %}
+    {% if form.instance.id %}تعديل ترقية{% else %}إضافة ترقية جديدة{% endif %}
+{% endblock %}
 
 {% block content %}
-        <h2 class="text-center mb-4">تعديل ترقيات الفرد</h2>
-
-        <!-- قائمة منسدلة لاختيار الفرد -->
-        <form method="GET" action="{% url 'edit_promotions' %}" class="mb-4">
-            <div class="row">
-                <div class="col-md-8">
-                    <label for="employee_select" class="form-label">اختر الفرد:</label>
-                    <select name="employee_id" id="employee_select" class="form-control" onchange="this.form.submit()">
-                        <option value="">-- اختر موظف --</option>
-                        {% for employee in employees %}
-                            <option value="{{ employee.id }}" {% if employee.id == selected_employee.id %}selected{% endif %}>
-                                {{ employee.name }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="text-center mb-4">
+            {% if form.instance.id %}تعديل ترقية{% else %}إضافة ترقية جديدة{% endif %}
+        </h1>
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    {% if form.instance.id %}
+                        ترقية: {{ form.instance }}
+                    {% else %}
+                        إضافة ترقية جديدة
+                    {% endif %}
+                </h5>
             </div>
-        </form>
-
-        <!-- نموذج تعديل الترقيات -->
-        {% if selected_employee %}
-            <h3>ترقيات {{ selected_employee.rank }}: {{ selected_employee.name }}</h3>
-            <form method="POST" action="{% url 'edit_promotions' %}" class="mb-4">
-                {% csrf_token %}
-                <input type="hidden" name="employee_id" value="{{ selected_employee.id }}">
-
-                <!-- قائمة الترقيات الحالية -->
-                <div id="promotions-list">
-                    {% for promotion in promotions %}
-                        <div class="promotion-entry mb-3 p-3 border rounded">
-                            <div class="row">
-                                <div class="col-md-3">
-                                    <label class="form-label">تاريخ الترقية:</label>
-                                    <input type="date" name="promotion_date_{{ promotion.id }}" class="form-control" 
-                                           value="{{ promotion.promotion_date|date:'Y-m-d' }}" required>
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label">من الدرجة:</label>
-                                    <select name="from_rank_id_{{ promotion.id }}" class="form-control">
-                                        <option value="">-- اختر درجة --</option>
-                                        {% for rank in ranks %}
-                                            <option value="{{ rank.id }}" {% if rank.id == promotion.from_rank_id %}selected{% endif %}>
-                                                {{ rank.name }}
-                                            </option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label">إلى الدرجة:</label>
-                                    <select name="to_rank_id_{{ promotion.id }}" class="form-control" required>
-                                        <option value="">-- اختر درجة --</option>
-                                        {% for rank in ranks %}
-                                            <option value="{{ rank.id }}" {% if rank.id == promotion.to_rank_id %}selected{% endif %}>
-                                                {{ rank.name }}
-                                            </option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label">رقم دورة الترقية:</label>
-                                    <input type="text" name="promotion_course_number_{{ promotion.id }}" class="form-control" 
-                                           value="{{ promotion.promotion_course_number }}" maxlength="255">
-                                </div>
-                            </div>
-                            <div class="row mt-2">
-                                <div class="col-md-3">
-                                    <label class="form-label">تاريخ بدء الفرقة التأهيلية:</label>
-                                    <input type="date" name="training_start_date_{{ promotion.id }}" class="form-control" 
-                                           value="{{ promotion.training_start_date|date:'Y-m-d' }}">
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label">تاريخ انتهاء الفرقة التأهيلية:</label>
-                                    <input type="date" name="training_end_date_{{ promotion.id }}" class="form-control" 
-                                           value="{{ promotion.training_end_date|date:'Y-m-d' }}">
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label">رقم دورة الفرقة التأهيلية:</label>
-                                    <input type="text" name="training_course_number_{{ promotion.id }}" class="form-control" 
-                                           value="{{ promotion.training_course_number }}" maxlength="255">
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label">مكان انعقاد الفرقة التأهيلية:</label>
-                                    <input type="text" name="training_location_{{ promotion.id }}" class="form-control" 
-                                           value="{{ promotion.training_location }}" maxlength="255">
-                                </div>
-                            </div>
-                            <div class="row mt-2">
-                                <div class="col-md-12">
-                                    <label class="form-label">ملاحظات:</label>
-                                    <textarea name="notes_{{ promotion.id }}" class="form-control" rows="2">{{ promotion.notes }}</textarea>
-                                </div>
-                            </div>
-                            <button type="button" class="btn btn-danger btn-sm mt-2" onclick="this.parentElement.remove()">حذف</button>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <!-- اختيار الفرد -->
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold"><i class="bi bi-person me-2"></i>الفرد:</label>
+                            {% if form.instance.id %}
+                                <input type="text" class="form-control" value="{{ form.instance.employee.name }}" readonly>
+                                <input type="hidden" name="employee" value="{{ form.instance.employee.id }}">
+                            {% else %}
+                                <select name="employee" class="form-control">
+                                    <option value="">-- اختر فردًا --</option>
+                                    {% for emp in form.employee.field.queryset %}
+                                        <option value="{{ emp.id }}" {% if form.employee.value == emp.id %}selected{% endif %}>
+                                            {{ emp.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            {% endif %}
+                            {% if form.employee.errors %}
+                                <div class="text-danger">{{ form.employee.errors }}</div>
+                            {% endif %}
                         </div>
-                    {% empty %}
-                        <p class="text-muted">لا توجد ترقيات مسجلة لهذا الفرد.</p>
-                    {% endfor %}
-                </div>
+<br>
+<br>
+<br>
+<br>
+<br>
+                        <!-- الدرجة السابقة -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold"><i class="bi bi-arrow-down-circle me-2"></i>الدرجة السابقة:</label>
+                            {{ form.from_rank }}
+                            {% if form.from_rank.errors %}
+                                <div class="text-danger">{{ form.from_rank.errors }}</div>
+                            {% endif %}
+                        </div>
 
-                <!-- زر إضافة ترقية جديدة -->
-                <button type="button" class="btn btn-success mt-3" id="add-promotion">إضافة ترقية جديدة</button>
+                        <!-- الدرجة الجديدة -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold"><i class="bi bi-arrow-up-circle me-2"></i>الدرجة الجديدة:</label>
+                            {{ form.to_rank }}
+                            {% if form.to_rank.errors %}
+                                <div class="text-danger">{{ form.to_rank.errors }}</div>
+                            {% endif %}
+                        </div>
 
-                <!-- زر حفظ التغييرات -->
-                <div class="mt-4">
-                    <button type="submit" class="btn btn-primary">حفظ التغييرات</button>
-                </div>
-            </form>
-        {% endif %}
-{% endblock %}
+                        <!-- تاريخ الترقية -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold"><i class="bi bi-calendar-date me-2"></i>تاريخ الترقية:</label>
+                            {{ form.promotion_date }}
+                            {% if form.promotion_date.errors %}
+                                <div class="text-danger">{{ form.promotion_date.errors }}</div>
+                            {% endif %}
+                        </div>
 
-{% block extra_js %}
-    <script>
-        // دالة لإضافة ترقية جديدة
-        document.getElementById('add-promotion').addEventListener('click', function() {
-            const promotionsList = document.getElementById('promotions-list');
-            const newEntry = document.createElement('div');
-            newEntry.className = 'promotion-entry mb-3 p-3 border rounded';
-            newEntry.innerHTML = `
-                <div class="row">
-                    <div class="col-md-3">
-                        <label class="form-label">تاريخ الترقية:</label>
-                        <input type="date" name="promotion_date_new[]" class="form-control" required>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">من الدرجة:</label>
-                        <select name="from_rank_id_new[]" class="form-control" required>
-                            <option value="">-- اختر درجة --</option>
-                            {% for rank in ranks %}
-                                <option value="{{ rank.id }}">{{ rank.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">إلى الدرجة:</label>
-                        <select name="to_rank_id_new[]" class="form-control" required>
-                            <option value="">-- اختر درجة --</option>
-                            {% for rank in ranks %}
-                                <option value="{{ rank.id }}">{{ rank.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">رقم دورة الترقية:</label>
-                        <input type="text" name="promotion_course_number_new[]" class="form-control" maxlength="255">
-                    </div>
-                </div>
-                <div class="row mt-2">
-                    <div class="col-md-3">
-                        <label class="form-label">تاريخ بدء الفرقة التأهيلية:</label>
-                        <input type="date" name="training_start_date_new[]" class="form-control">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">تاريخ انتهاء الفرقة التأهيلية:</label>
-                        <input type="date" name="training_end_date_new[]" class="form-control">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">رقم دورة الفرقة التأهيلية:</label>
-                        <input type="text" name="training_course_number_new[]" class="form-control" maxlength="255">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">مكان انعقاد الفرقة التأهيلية:</label>
-                        <input type="text" name="training_location_new[]" class="form-control" maxlength="255">
-                    </div>
-                </div>
-                <div class="row mt-2">
-                    <div class="col-md-12">
-                        <label class="form-label">ملاحظات:</label>
-                        <textarea name="notes_new[]" class="form-control" rows="2"></textarea>
-                    </div>
-                </div>
-                <button type="button" class="btn btn-danger btn-sm mt-2" onclick="this.parentElement.remove()">حذف</button>
-            `;
-            promotionsList.appendChild(newEntry);
-        });
-    </script>
-{% endblock %}
+                        <!-- رقم دورة الترقية -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold"><i class="bi bi-hash me-2"></i>رقم دورة الترقية:</label>
+                            {{ form.promotion_course_number }}
+                            {% if form.promotion_course_number.errors %}
+                                <div class="text-danger">{{ form.promotion_course_number.errors }}</div>
+                            {% endif %}
+                        </div>
 
-{% block extra_css %}
-    <style>
-        .promotion-entry { background-color: #f9f9f9; }
-    </style>
+                        <!-- تاريخ بداية الدورة -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold"><i class="bi bi-calendar-plus me-2"></i>تاريخ بداية الدورة:</label>
+                            {{ form.training_start_date }}
+                            {% if form.training_start_date.errors %}
+                                <div class="text-danger">{{ form.training_start_date.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- تاريخ نهاية الدورة -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold"><i class="bi bi-calendar-minus me-2"></i>تاريخ نهاية الدورة:</label>
+                            {{ form.training_end_date }}
+                            {% if form.training_end_date.errors %}
+                                <div class="text-danger">{{ form.training_end_date.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- رقم الدورة التأهيلية -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold"><i class="bi bi-123 me-2"></i>رقم الدورة التأهيلية:</label>
+                            {{ form.training_course_number }}
+                            {% if form.training_course_number.errors %}
+                                <div class="text-danger">{{ form.training_course_number.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- مكان انعقاد الدورة -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold"><i class="bi bi-geo-alt me-2"></i>مكان انعقاد الدورة:</label>
+                            {{ form.training_location }}
+                            {% if form.training_location.errors %}
+                                <div class="text-danger">{{ form.training_location.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- ملاحظات -->
+                        <div class="col-12">
+                            <label class="form-label fw-bold"><i class="bi bi-chat-left-text me-2"></i>ملاحظات:</label>
+                            {{ form.notes }}
+                            {% if form.notes.errors %}
+                                <div class="text-danger">{{ form.notes.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="card-footer text-end mt-3">
+                        <button type="submit" class="btn btn-success me-2">
+                            <i class="bi bi-save"></i> حفظ
+                        </button>
+                        {% if form.instance.id %}
+                            <a href="{% url 'delete_promotion' form.instance.id %}" 
+                               onclick="return confirm('هل أنت متأكد من حذف هذه الترقية؟');" 
+                               class="btn btn-danger me-2">
+                                <i class="bi bi-trash"></i> حذف
+                            </a>
+                        {% endif %}
+                        <a href="{% url 'promotion_list' %}{% if selected_employee_id %}?employee={{ selected_employee_id }}{% endif %}" 
+                           class="btn btn-secondary">
+                            <i class="bi bi-x-lg"></i> إلغاء
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

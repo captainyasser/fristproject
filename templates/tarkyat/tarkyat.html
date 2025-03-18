@@ -1,25 +1,22 @@
 {% extends "base.html" %}
 {% load static %}
+
 {% block content %}
 <title>الترقيات</title>
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-md-12">
-                    <div style="display: flex; justify-content: center;">
-                        <h1>الترقيات</h1>
-                    </div>
-                    <br>
-                    <div class="btn-container">
-                        <button class="btn btn-block btn-outline-secondary btn-lg" onclick="window.open('{% url 'ameen_tarkyat' %}')">ترقيات الأمناء</button>
-                        <button class="btn btn-block btn-outline-secondary btn-lg" onclick="window.open('{% url 'daragaola_tarkya' %}')">ترقيات الدرجة الأولي</button>
-                        <button class="btn btn-block btn-outline-secondary btn-lg" onclick="window.open('{% url 'edit_promotions' %}')">تعديل الترقيات لفرد واحد</button>
-                        <button class="btn btn-block btn-outline-secondary btn-lg" onclick="window.open('{% url 'add_tarkya' %}')">إضافة ترقية</button>
-                        {% comment %} <button class="btn btn-block btn-outline-secondary btn-lg" onclick="window.open('{% url 'training_teams' %}', '_blank')">دفتر الفرق باسم الفرقة</button>
-                        <button class="btn btn-block btn-outline-secondary btn-lg" onclick="window.open('{% url 'training_teams_filter' %}', '_blank')">فلتر الفرق</button>
-                        <button class="btn btn-block btn-outline-secondary btn-lg" onclick="window.open('{% url 'insert_training' %}', '_blank')">ادخال فرقة جديدة</button>
-                        <button class="btn btn-block btn-outline-secondary btn-lg" onclick="window.open('{% url 'edit-training-record' %}', '_blank')">تعديل الفرق للافراد</button> {% endcomment %}
-                    </div>
-                </div>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div style="display: flex; justify-content: center;">
+                <h1>الترقيات</h1>
+            </div>
+            <br>
+            <div class="btn-container">
+                <button class="btn btn-block btn-outline-secondary btn-lg" onclick="window.open('{% url 'ameen_tarkyat' %}')">ترقيات الأمناء</button>
+                <button class="btn btn-block btn-outline-secondary btn-lg" onclick="window.open('{% url 'daragaola_tarkya' %}')">ترقيات الدرجة الأولى</button>
+                <button class="btn btn-block btn-outline-secondary btn-lg" onclick="window.open('{% url 'promotion_list' %}')">تعديل واضافة الترقيات </button>
+
             </div>
         </div>
+    </div>
+</div>
 {% endblock %}

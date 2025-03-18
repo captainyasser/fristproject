@@ -3,8 +3,14 @@ from .models import Promotion
 from em_data.models import Employee
 from ranks.models import Rank
 from django.core.exceptions import ValidationError
-def tarkyat_page_view(request):
-    return render(request, 'tarkyat/tarkyat.html')
+
+
+def tarkyat(request):
+    """
+    دالة لعرض صفحة الترقيات الرئيسية التي تحتوي على أزرار التنقل.
+    """
+    return render(request, 'tarkyat/tarkyat.html', {})
+
 def add_tarkya(request):
     if request.method == 'POST':
         employee_ids = request.POST.getlist('employee')
@@ -53,91 +59,96 @@ def add_tarkya(request):
 
 
 
-from django.shortcuts import render, redirect
-from .models import Employee, Promotion, Rank
 
-def edit_promotions(request):
-    employees = Employee.objects.all()
-    selected_employee = None
-    promotions = []
-    ranks = Rank.objects.all()
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import Promotion, Employee
+from .forms import PromotionForm
 
-    if request.method == 'GET' and 'employee_id' in request.GET:
-        employee_id = request.GET.get('employee_id')
-        if employee_id:
-            selected_employee = Employee.objects.get(id=employee_id)
-            promotions = Promotion.objects.filter(employee=selected_employee)
+def promotion_list(request):
+    employees = Employee.objects.all().order_by('sort_number')
+    selected_employee_id = request.GET.get('employee')
+    promotions = Promotion.objects.all()
+    promotion_forms = []
+
+    if selected_employee_id:
+        promotions = promotions.filter(employee__id=selected_employee_id)
+
+        if request.method == 'POST':
+            print("POST data:", request.POST)  # لتصحيح الأخطاء
+
+            any_form_valid = False
+            for promotion in promotions:
+                prefix = f"promotion-{promotion.id}"
+                form = PromotionForm(request.POST, instance=promotion, prefix=prefix)
+
+                if form.is_valid():
+                    promotion_instance = form.save(commit=False)
+                    
+                    # التأكد من تعيين `employee` يدويًا إذا لم يتم تمريره
+                    if not promotion_instance.employee:
+                        promotion_instance.employee = promotion.employee  # تعيين الموظف من السجل الأصلي
+                    
+                    promotion_instance.save()
+                    any_form_valid = True
+                else:
+                    print(f"Form errors for promotion {promotion.id}: {form.errors}")
+
+            if any_form_valid:
+                return redirect(request.path + f'?employee={selected_employee_id}')
+
+            # إعادة عرض النماذج بأخطاء الإدخال
+            promotion_forms = [PromotionForm(request.POST, instance=p, prefix=f"promotion-{p.id}") for p in promotions]
+        else:
+            promotion_forms = [PromotionForm(instance=p, prefix=f"promotion-{p.id}") for p in promotions]
+
+    return render(request, 'tarkyat/promotion_list.html', {
+        'promotions': promotions,
+        'employees': employees,
+        'selected_employee_id': selected_employee_id,
+        'promotion_forms': promotion_forms,
+    })
+
+
+def edit_promotion(request, pk=None):
+    promotion = get_object_or_404(Promotion, pk=pk) if pk else None
+    selected_employee_id = request.GET.get('employee')
 
     if request.method == 'POST':
-        employee_id = request.POST.get('employee_id')
-        employee = Employee.objects.get(id=employee_id)
+        form = PromotionForm(request.POST, instance=promotion, selected_employee_id=selected_employee_id)
+        if form.is_valid():
+            promotion_instance = form.save(commit=False)
 
-        # تحديث الترقيات الحالية
-        for promotion in Promotion.objects.filter(employee=employee):
-            promotion_date = request.POST.get(f'promotion_date_{promotion.id}')
-            from_rank_id = request.POST.get(f'from_rank_id_{promotion.id}')
-            to_rank_id = request.POST.get(f'to_rank_id_{promotion.id}')
-            promotion_course_number = request.POST.get(f'promotion_course_number_{promotion.id}')
-            training_start_date = request.POST.get(f'training_start_date_{promotion.id}')
-            training_end_date = request.POST.get(f'training_end_date_{promotion.id}')
-            training_course_number = request.POST.get(f'training_course_number_{promotion.id}')
-            training_location = request.POST.get(f'training_location_{promotion.id}')
-            notes = request.POST.get(f'notes_{promotion.id}')
+            # تعيين الموظف يدويًا إذا لم يكن ممررًا في الطلب
+            if not promotion_instance.employee and selected_employee_id:
+                try:
+                    promotion_instance.employee = Employee.objects.get(id=selected_employee_id)
+                except Employee.DoesNotExist:
+                    pass
 
-            if promotion_date and from_rank_id and to_rank_id:
-                promotion.promotion_date = promotion_date
-                promotion.from_rank_id = from_rank_id
-                promotion.to_rank_id = to_rank_id
-                promotion.promotion_course_number = promotion_course_number
-                promotion.training_start_date = training_start_date or None
-                promotion.training_end_date = training_end_date or None
-                promotion.training_course_number = training_course_number
-                promotion.training_location = training_location
-                promotion.notes = notes
-                promotion.save()
-            else:
-                promotion.delete()  # حذف إذا تم إزالته من النموذج
-
-        # إضافة ترقيات جديدة
-        new_dates = request.POST.getlist('promotion_date_new[]')
-        new_from_ranks = request.POST.getlist('from_rank_id_new[]')
-        new_to_ranks = request.POST.getlist('to_rank_id_new[]')
-        new_promotion_courses = request.POST.getlist('promotion_course_number_new[]')
-        new_training_starts = request.POST.getlist('training_start_date_new[]')
-        new_training_ends = request.POST.getlist('training_end_date_new[]')
-        new_training_courses = request.POST.getlist('training_course_number_new[]')
-        new_training_locations = request.POST.getlist('training_location_new[]')
-        new_notes = request.POST.getlist('notes_new[]')
-
-        for date, from_rank, to_rank, prom_course, train_start, train_end, train_course, train_loc, note in zip(
-            new_dates, new_from_ranks, new_to_ranks, new_promotion_courses, new_training_starts, 
-            new_training_ends, new_training_courses, new_training_locations, new_notes
-        ):
-            if date and from_rank and to_rank:
-                Promotion.objects.create(
-                    employee=employee,
-                    promotion_date=date,
-                    from_rank_id=from_rank,
-                    to_rank_id=to_rank,
-                    promotion_course_number=prom_course,
-                    training_start_date=train_start or None,
-                    training_end_date=train_end or None,
-                    training_course_number=train_course,
-                    training_location=train_loc,
-                    notes=note
-                )
-
-        return redirect('edit_promotions')  # إعادة تحميل الصفحة بعد الحفظ
+            promotion_instance.save()
+            employee_id = promotion_instance.employee.id
+            return redirect(f'/tarkyat/promotions/?employee={employee_id}')
+        else:
+            print("Form errors:", form.errors)
+    else:
+        form = PromotionForm(instance=promotion, selected_employee_id=selected_employee_id)
 
     return render(request, 'tarkyat/edit_promotions.html', {
-        'employees': employees,
-        'selected_employee': selected_employee,
-        'promotions': promotions,
-        'ranks': ranks,
+        'form': form,
+        'selected_employee_id': selected_employee_id,
     })
-    
-    
-    
+
+
+
+
+def delete_promotion(request, pk):
+    promotion = get_object_or_404(Promotion, pk=pk)
+    employee_id = promotion.employee.id
+    if request.method == 'POST':
+        promotion.delete()
+        return redirect(f'/tarkyat/promotions/?employee={employee_id}')
+    return render(request, 'tarkyat/confirm_delete.html', {'object': promotion})
+
 
 
 
@@ -182,25 +193,19 @@ def ameen_tarkyat(request):
 
 
 
-from django.shortcuts import render
-from .models import Employee, Promotion, Rank
-
 def daragaola_tarkya(request):
-    # تصفية الموظفين الذين لهم درجة من نوع 'primary' وفرزهم حسب sort_number
     employees = Employee.objects.filter(rank__rank_type='primary').order_by('sort_number').prefetch_related('promotions')
     
-    # إعداد قاموس الرتب بناءً على معرفات الرتب (يجب تعديل المعرفات حسب قاعدة البيانات الخاصة بك)
     daraga_ranks = {
-        8: 'areef',         # عريف
-        9: 'raqeeb',        # رقيب
-        10: 'raqeeb_awwal',  # رقيب أول
-        19: 'mosaed_thaleth',# مساعد ثالث
-        20: 'mosaed_thani',  # مساعد ثان
-        21: 'mosaed_awwal',  # مساعد أول
-        22: 'mosaed_momtaz', # مساعد ممتاز
+        21: 'areef',         # عريف
+        20: 'raqeeb',        # رقيب
+        19: 'raqeeb_awwal', # رقيب أول
+        10: 'mosaed_thaleth', # مساعد ثالث
+        9: 'mosaed_thani',  # مساعد ثان
+        8: 'mosaed_awwal',  # مساعد أول
+        7: 'mosaed_momtaz', # مساعد ممتاز
     }
 
-    # إعداد البيانات لكل موظف
     employee_data = []
     for employee in employees:
         promotions_dict = {
@@ -213,7 +218,6 @@ def daragaola_tarkya(request):
             'mosaed_momtaz_date': None, 'mosaed_momtaz_num': None,
         }
         
-        # جلب الترقيات للموظف
         for promotion in employee.promotions.all():
             if promotion.to_rank_id in daraga_ranks:
                 key = daraga_ranks[promotion.to_rank_id]
@@ -227,3 +231,5 @@ def daragaola_tarkya(request):
 
     context = {'employee_data': employee_data}
     return render(request, 'tarkyat/daragaola-tarkya.html', context)
+
+

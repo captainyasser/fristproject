@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+قائمة الترقيات
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="text-center mb-4">قائمة الترقيات</h1>
+        <div class="row g-3 align-items-center">
+            <div class="col-md-6">
+                <form method="GET">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-person"></i></span>
+                        <select name="employee" id="employee" class="form-select" onchange="this.form.submit()">
+                            <option value="">-- جميع الموظفين --</option>
+                            {% for employee in employees %}
+                                <option value="{{ employee.id }}" {% if selected_employee_id == employee.id|stringformat:'s' %}selected{% endif %}>
+                                    {{ employee.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="col-md-6 text-md-end">
+                {% if selected_employee_id %}
+                    <a href="{% url 'add_promotion' %}?employee={{ selected_employee_id }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> إضافة ترقية جديدة</a>
+                {% else %}
+                    <a href="{% url 'add_promotion' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> إضافة ترقية جديدة</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if selected_employee_id and promotion_forms %}
+    <form method="POST">
+        {% csrf_token %}
+        <div class="row">
+            {% for form in promotion_forms %}
+                <div class="col-12 mb-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="card-title mb-0">ترقية: {{ form.instance }}</h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- إضافة حقل employee كمخفي -->
+                            <input type="hidden" name="{{ form.prefix }}-employee" value="{{ form.instance.employee.id }}">
+                            
+                            <!-- بيانات الترقية -->
+                            <h4 class="mb-4"><i class="bi bi-graph-up me-2"></i>بيانات الترقية</h4>
+                            <div class="row g-3 mb-4">
+                                <!-- الدرجة السابقة -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold"><i class="bi bi-arrow-down-circle me-2"></i>الدرجة السابقة:</label>
+                                    {{ form.from_rank }}
+                                    {% if form.from_rank.errors %}<div class="text-danger">{{ form.from_rank.errors }}</div>{% endif %}
+                                </div>
+                                <!-- الدرجة الجديدة -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold"><i class="bi bi-arrow-up-circle me-2"></i>الدرجة الجديدة:</label>
+                                    {{ form.to_rank }}
+                                    {% if form.to_rank.errors %}<div class="text-danger">{{ form.to_rank.errors }}</div>{% endif %}
+                                </div>
+                                <!-- تاريخ الترقية -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold"><i class="bi bi-calendar-date me-2"></i>تاريخ الترقية:</label>
+                                    {{ form.promotion_date }}
+                                    {% if form.promotion_date.errors %}<div class="text-danger">{{ form.promotion_date.errors }}</div>{% endif %}
+                                </div>
+                                <!-- رقم دورة الترقية -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold"><i class="bi bi-hash me-2"></i>رقم دورة الترقية:</label>
+                                    {{ form.promotion_course_number }}
+                                    {% if form.promotion_course_number.errors %}<div class="text-danger">{{ form.promotion_course_number.errors }}</div>{% endif %}
+                                </div>
+                            </div>
+                        
+                            <!-- خط فاصل بين الأقسام -->
+                            <hr class="my-5">
+                        
+                            <!-- بيانات الفرقة التأهيلية -->
+                            <h4 class="mb-4"><i class="bi bi-book me-2"></i>بيانات الفرقة التأهيلية</h4>
+                            <div class="row g-3 mb-4">
+                                <!-- تاريخ بداية الدورة -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold"><i class="bi bi-calendar-plus me-2"></i>تاريخ بداية الدورة:</label>
+                                    {{ form.training_start_date }}
+                                    {% if form.training_start_date.errors %}<div class="text-danger">{{ form.training_start_date.errors }}</div>{% endif %}
+                                </div>
+                                <!-- تاريخ نهاية الدورة -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold"><i class="bi bi-calendar-minus me-2"></i>تاريخ نهاية الدورة:</label>
+                                    {{ form.training_end_date }}
+                                    {% if form.training_end_date.errors %}<div class="text-danger">{{ form.training_end_date.errors }}</div>{% endif %}
+                                </div>
+                                <!-- رقم الدورة التأهيلية -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold"><i class="bi bi-123 me-2"></i>رقم الدورة التأهيلية:</label>
+                                    {{ form.training_course_number }}
+                                    {% if form.training_course_number.errors %}<div class="text-danger">{{ form.training_course_number.errors }}</div>{% endif %}
+                                </div>
+                                <!-- مكان انعقاد الدورة -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold"><i class="bi bi-geo-alt me-2"></i>مكان انعقاد الدورة:</label>
+                                    {{ form.training_location }}
+                                    {% if form.training_location.errors %}<div class="text-danger">{{ form.training_location.errors }}</div>{% endif %}
+                                </div>
+                            </div>
+                        
+                            <!-- خط فاصل بين الأقسام -->
+                            <hr class="my-5">
+                        
+                            <!-- ملاحظات -->
+                            <h4 class="mb-4"><i class="bi bi-chat-left-text me-2"></i>ملاحظات</h4>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label fw-bold"><i class="bi bi-chat-left-text me-2"></i>ملاحظات:</label>
+                                    {{ form.notes }}
+                                    {% if form.notes.errors %}<div class="text-danger">{{ form.notes.errors }}</div>{% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer text-end">
+                            <button type="submit" class="btn btn-success me-2"><i class="bi bi-save"></i> حفظ التغييرات</button>
+                            <a href="{% url 'delete_promotion' form.instance.id %}" 
+                               onclick="return confirm('هل أنت متأكد من حذف هذه الترقية؟');" 
+                               class="btn btn-danger"><i class="bi bi-trash"></i> حذف</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </form>
+{% elif selected_employee_id %}
+    <div class="alert alert-info text-center">لا توجد ترقيات مسجلة لهذا الموظف.</div>
+{% else %}
+    <div class="alert alert-warning text-center">يرجى اختيار موظف لعرض الترقيات.</div>
+{% endif %}
+{% endblock %}

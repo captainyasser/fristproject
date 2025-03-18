@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+تأكيد الحذف
+{% endblock %}
+
+{% block content %}
+<h1>تأكيد حذف الترقية</h1>
+<p>هل أنت متأكد من حذف الترقية لـ "{{ object.employee.name }}" من {{ object.from_rank|default:"غير محدد" }} إلى {{ object.to_rank }} بتاريخ {{ object.promotion_date }}؟</p>
+
+<form method="POST">
+    {% csrf_token %}
+    <div style="margin-top: 20px;">
+        <button type="submit" style="padding: 10px 20px;">نعم، حذف</button>
+        <a href="{% url 'promotion_list' %}"><button type="button" style="padding: 10px 20px;">إلغاء</button></a>
+    </div>
+</form>
+{% endblock %}
