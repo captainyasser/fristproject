@@ -1,3 +1,4 @@
+{% comment %} edit_promotions.html
 {% extends 'base.html' %}
 {% load static %}
 
@@ -11,9 +12,7 @@
         <h1 class="text-center mb-4">
             {% if form.instance.id %}تعديل ترقية{% else %}إضافة ترقية جديدة{% endif %}
         </h1>
-        <div class="btn-container">
-            <button class=" btn-outline-secondary" onclick="window.open('{% url 'tarkyat' %}')">عودة الي صفحة الترقيات الرئيسية</button>
-        </div>
+        <a href="{% url 'tarkyat' %}" class="btn btn-primary">عودة إلى صفحة الترقيات الرئيسية</a>
         <br>
         <div class="card shadow-sm">
             <div class="card-header bg-primary text-white">
@@ -52,6 +51,17 @@
                         <!-- عنوان بيانات الترقية الجديدة -->
                         <div class="col-12">
                             <h4 class="mt-4 mb-3"><i class="bi bi-graph-up me-2"></i>بيانات الترقية الجديدة</h4>
+                        </div>
+                        <div class="col-md-12">
+
+                            <!-- حقل نوع الترقية -->
+                            <label for="promotion_type">نوع الترقية:</label>
+                            <select name="promotion_type" id="promotion_type">
+                                <option value="">اختر نوع الترقية (اختياري)</option>
+                                <option value="normal" {% if form.instance.promotion_type == "normal" %}selected{% endif %}>عادية</option>
+                                <option value="exceptional" {% if form.instance.promotion_type == "exceptional" %}selected{% endif %}>استثنائية</option>
+                                <option value="cadre" {% if form.instance.promotion_type == "cadre" %}selected{% endif %}>كادر أمناء</option>
+                            </select>
                         </div>
 
                         <div class="col-md-6">
@@ -156,4 +166,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
+{% endblock %} {% endcomment %}

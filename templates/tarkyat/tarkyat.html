@@ -11,11 +11,11 @@
             </div>
             <br>
             <div class="btn-container">
-                <button class="btn btn-block btn-outline-secondary btn-lg" onclick="window.open('{% url 'ameen_tarkyat' %}')">ترقيات الأمناء</button>
-                <button class="btn btn-block btn-outline-secondary btn-lg" onclick="window.open('{% url 'daragaola_tarkya' %}')">ترقيات الدرجة الأولى</button>
-                <button class="btn btn-block btn-outline-secondary btn-lg" onclick="window.open('{% url 'promotion_list' %}')">تعديل واضافة الترقيات </button>
-                <button class="btn btn-block btn-outline-secondary btn-lg" onclick="window.open('{% url 'add_tarkya_for_many' %}')">اضافة ترقية لأكثر من فرد دفعة واحده </button>
-            </div>
+                <a href="{% url 'ameen_tarkyat' %}" class="btn btn-block btn-outline-secondary btn-lg">ترقيات الأمناء</a>
+                <a href="{% url 'daragaola_tarkya' %}" class="btn btn-block btn-outline-secondary btn-lg">ترقيات الدرجة الأولى</a>
+                <a href="{% url 'promotion_list' %}" class="btn btn-block btn-outline-secondary btn-lg">تعديل وإضافة الترقيات</a>
+                <a href="{% url 'add_tarkya_for_many' %}" class="btn btn-block btn-outline-secondary btn-lg">إضافة ترقية لأكثر من فرد دفعة واحدة</a>
+            </div>            
         </div>
     </div>
 </div>

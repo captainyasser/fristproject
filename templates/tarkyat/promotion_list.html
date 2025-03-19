@@ -2,24 +2,25 @@
 {% load static %}
 
 {% block title %}
-تعديل وتحديث بيانات الترقيات
+عرض وإدارة الترقيات
 {% endblock %}
 
 {% block content %}
 <div class="row mb-4">
     <div class="col-12">
-        <h1 class="text-center mb-4">تعديل وتحديث بيانات الترقيات</h1>
-        <div class="btn-container">
-            <button class=" btn-outline-secondary" onclick="window.open('{% url 'tarkyat' %}')">عودة الي صفحة الترقيات الرئيسية</button>
-        </div>
-        <br>
-        <div class="row g-3 align-items-center">
+        <h1 class="text-center mb-4">عرض وإدارة الترقيات</h1>
+        <a href="{% url 'tarkyat' %}" class="btn btn-primary mb-3">
+            <i class="fas fa-arrow-right"></i> عودة إلى صفحة الترقيات الرئيسية
+        </a>
+
+        <!-- نموذج اختيار الموظف -->
+        <div class="row g-3 align-items-center mb-4">
             <div class="col-md-6">
                 <form method="GET">
                     <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-person"></i></span>
-                        <select name="employee" id="employee" class="form-select" onchange="this.form.submit()">
-                            <option value="">-- جميع الافراد --</option>
+                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                        <select name="employee" id="employee" class="form-control" onchange="this.form.submit()">
+                            <option value="">-- حدد الفرد --</option>
                             {% for employee in employees %}
                                 <option value="{{ employee.id }}" {% if selected_employee_id == employee.id|stringformat:'s' %}selected{% endif %}>
                                     {{ employee.name }}
@@ -29,120 +30,336 @@
                     </div>
                 </form>
             </div>
+            {% if selected_employee_id %}
+            <div class="col-md-6 text-md-end">
+                <button type="button" class="btn btn-success" data-toggle="modal" data-target="#addPromotionModal">
+                    <i class="fas fa-plus"></i> إضافة ترقية جديدة
+                </button>
+            </div>
+            {% endif %}
+        </div>
 
+        <!-- جدول الترقيات -->
+        {% if selected_employee_id %}
+            {% if promotions %}
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">ترقيات الفرد المختار</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>الدرجة السابقة</th>
+                                    <th>الدرجة الجديدة</th>
+                                    <th>تاريخ الترقية</th>
+                                    <th>نوع الترقية</th>
+                                    <th>رقم دورة الترقية</th>
+                                    <th>ملاحظات</th>
+                                    <th>إجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for promotion in promotions %}
+                                    <tr>
+                                        <td>{{ promotion.from_rank|default:"غير محدد" }}</td>
+                                        <td>{{ promotion.to_rank }}</td>
+                                        <td>{{ promotion.promotion_date|date:"Y-m-d" }}</td>
+                                        <td>
+                                            {% if promotion.promotion_type == "normal" %}عادية
+                                            {% elif promotion.promotion_type == "exceptional" %}استثنائية
+                                            {% elif promotion.promotion_type == "cadre" %}كادر أمناء
+                                            {% else %}غير محدد{% endif %}
+                                        </td>
+                                        <td>{{ promotion.promotion_course_number|default:"غير متوفر" }}</td>
+                                        <td>{{ promotion.notes|default:"لا توجد" }}</td>
+                                        <td>
+                                            <button type="button" class="btn btn-warning btn-sm me-1" 
+                                                    data-toggle="modal" data-target="#editPromotionModal{{ promotion.id }}">
+                                                <i class="fas fa-edit"></i> تعديل
+                                            </button>
+                                            <a href="{% url 'delete_promotion' promotion.id %}" 
+                                               onclick="return confirm('هل أنت متأكد من حذف هذه الترقية؟');" 
+                                               class="btn btn-danger btn-sm">
+                                                <i class="fas fa-trash"></i> حذف
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% else %}
+                <div class="alert alert-info text-center">
+                    لا توجد ترقيات مسجلة لهذا الفرد. 
+                    <button type="button" class="btn btn-link p-0" data-toggle="modal" data-target="#addPromotionModal">
+                        أضف ترقية جديدة
+                    </button>
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="alert alert-warning text-center">
+                يرجى اختيار فرد لعرض الترقيات أو إضافتها.
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal لإضافة ترقية جديدة -->
+<div class="modal fade" id="addPromotionModal" tabindex="-1" role="dialog" aria-labelledby="addPromotionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="addPromotionModalLabel">إضافة ترقية جديدة</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <form id="addPromotionForm" method="POST" action="{% url 'add_promotion' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <input type="hidden" name="employee" value="{{ selected_employee_id }}">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">الدرجة السابقة:</label>
+                            {{ form.from_rank }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">الدرجة الجديدة:</label>
+                            {{ form.to_rank }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">تاريخ الترقية:</label>
+                            {{ form.promotion_date }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">نوع الترقية:</label>
+                            <select name="promotion_type" id="add_promotion_type" class="form-control">
+                                <option value="">اختر نوع الترقية (اختياري)</option>
+                                <option value="normal">عادية</option>
+                                <option value="exceptional">استثنائية</option>
+                                <option value="cadre">كادر أمناء</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">رقم دورة الترقية:</label>
+                            {{ form.promotion_course_number }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">تحديث درجة الفرد:</label>
+                            <select name="update_rank" class="form-control" required>
+                                <option value="">-- اختر خيارًا --</option>
+                                <option value="yes">نعم</option>
+                                <option value="no">لا</option>
+                            </select>
+                        </div>
+                        <!-- بيانات الفرقة التأهيلية -->
+                        <div class="training-fields">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">تاريخ بداية الفرقة:</label>
+                                {{ form.training_start_date }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">تاريخ نهاية الفرقة:</label>
+                                {{ form.training_end_date }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">رقم الفرقة التأهيلية:</label>
+                                {{ form.training_course_number }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">مكان انعقاد الفرقة:</label>
+                                {{ form.training_location }}
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">ملاحظات:</label>
+                            {{ form.notes }}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">حفظ</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">إلغاء</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
-{% if selected_employee_id and promotion_forms %}
-<div class="col-md-6 text-md-end">
-    {% if selected_employee_id %}
-        <a href="{% url 'add_promotion' %}?employee={{ selected_employee_id }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> إضافة ترقية جديدة</a>
-    {% else %}
-        <a href="{% url 'add_promotion' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> إضافة ترقية جديدة</a>
-    {% endif %}
-</div>
-    <form method="POST">
-        {% csrf_token %}
-        <div class="row">
-            {% for form in promotion_forms %}
-                <div class="col-12 mb-4">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-primary text-white">
-                            <h5 class="card-title mb-0">ترقية: {{ form.instance }}</h5>
+<!-- Modal لتعديل الترقيات -->
+{% for promotion in promotions %}
+<div class="modal fade" id="editPromotionModal{{ promotion.id }}" tabindex="-1" role="dialog" aria-labelledby="editPromotionModalLabel{{ promotion.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title" id="editPromotionModalLabel{{ promotion.id }}">تعديل ترقية</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <form id="editPromotionForm{{ promotion.id }}" method="POST" action="{% url 'edit_promotion' promotion.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <input type="hidden" name="employee" value="{{ promotion.employee.id }}">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">الدرجة السابقة:</label>
+                            <select name="from_rank" class="form-control">
+                                <option value="">-- اختر الدرجة السابقة --</option>
+                                {% for rank in ranks %}
+                                    <option value="{{ rank.id }}" {% if promotion.from_rank.id == rank.id %}selected{% endif %}>
+                                        {{ rank.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
                         </div>
-                        <div class="card-body">
-                            <!-- إضافة حقل employee كمخفي -->
-                            <input type="hidden" name="{{ form.prefix }}-employee" value="{{ form.instance.employee.id }}">
-                            
-                            <!-- بيانات الترقية -->
-                            <h4 class="mb-4"><i class="bi bi-graph-up me-2"></i>بيانات الترقية</h4>
-                            <div class="row g-3 mb-4">
-                                <!-- الدرجة السابقة -->
-                                <div class="col-md-6">
-                                    <label class="form-label fw-bold"><i class="bi bi-arrow-down-circle me-2"></i>الدرجة السابقة:</label>
-                                    {{ form.from_rank }}
-                                    {% if form.from_rank.errors %}<div class="text-danger">{{ form.from_rank.errors }}</div>{% endif %}
-                                </div>
-                                <!-- الدرجة الجديدة -->
-                                <div class="col-md-6">
-                                    <label class="form-label fw-bold"><i class="bi bi-arrow-up-circle me-2"></i>الدرجة الجديدة:</label>
-                                    {{ form.to_rank }}
-                                    {% if form.to_rank.errors %}<div class="text-danger">{{ form.to_rank.errors }}</div>{% endif %}
-                                </div>
-                                <!-- تاريخ الترقية -->
-                                <div class="col-md-6">
-                                    <label class="form-label fw-bold"><i class="bi bi-calendar-date me-2"></i>تاريخ الترقية:</label>
-                                    {{ form.promotion_date }}
-                                    {% if form.promotion_date.errors %}<div class="text-danger">{{ form.promotion_date.errors }}</div>{% endif %}
-                                </div>
-                                <!-- رقم دورة الترقية -->
-                                <div class="col-md-6">
-                                    <label class="form-label fw-bold"><i class="bi bi-hash me-2"></i>رقم دورة الترقية:</label>
-                                    {{ form.promotion_course_number }}
-                                    {% if form.promotion_course_number.errors %}<div class="text-danger">{{ form.promotion_course_number.errors }}</div>{% endif %}
-                                </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">الدرجة الجديدة:</label>
+                            <select name="to_rank" class="form-control" required>
+                                <option value="">-- اختر الدرجة الجديدة --</option>
+                                {% for rank in ranks %}
+                                    <option value="{{ rank.id }}" {% if promotion.to_rank.id == rank.id %}selected{% endif %}>
+                                        {{ rank.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">تاريخ الترقية:</label>
+                            <input type="date" name="promotion_date" class="form-control" value="{{ promotion.promotion_date|date:'Y-m-d' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">نوع الترقية:</label>
+                            <select name="promotion_type" id="edit_promotion_type_{{ promotion.id }}" class="form-control promotion-type">
+                                <option value="" {% if not promotion.promotion_type %}selected{% endif %}>اختر نوع الترقية (اختياري)</option>
+                                <option value="normal" {% if promotion.promotion_type == "normal" %}selected{% endif %}>عادية</option>
+                                <option value="exceptional" {% if promotion.promotion_type == "exceptional" %}selected{% endif %}>استثنائية</option>
+                                <option value="cadre" {% if promotion.promotion_type == "cadre" %}selected{% endif %}>كادر أمناء</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">رقم دورة الترقية:</label>
+                            <input type="text" name="promotion_course_number" class="form-control" value="{{ promotion.promotion_course_number|default:'' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">تحديث درجة الفرد:</label>
+                            <select name="update_rank" class="form-control" required>
+                                <option value="">-- اختر خيارًا --</option>
+                                <option value="yes">نعم</option>
+                                <option value="no">لا</option>
+                            </select>
+                        </div>
+                        <!-- بيانات الفرقة التأهيلية -->
+                        <div class="training-fields">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">تاريخ بداية الفرقة:</label>
+                                <input type="date" name="training_start_date" class="form-control" value="{{ promotion.training_start_date|date:'Y-m-d' }}">
                             </div>
-                        
-                            <!-- خط فاصل بين الأقسام -->
-                            <hr class="my-5">
-                        
-                            <!-- بيانات الفرقة التأهيلية -->
-                            <h4 class="mb-4"><i class="bi bi-book me-2"></i>بيانات الفرقة التأهيلية</h4>
-                            <div class="row g-3 mb-4">
-                                <!-- تاريخ بداية الدورة -->
-                                <div class="col-md-6">
-                                    <label class="form-label fw-bold"><i class="bi bi-calendar-plus me-2"></i>تاريخ بداية الدورة:</label>
-                                    {{ form.training_start_date }}
-                                    {% if form.training_start_date.errors %}<div class="text-danger">{{ form.training_start_date.errors }}</div>{% endif %}
-                                </div>
-                                <!-- تاريخ نهاية الدورة -->
-                                <div class="col-md-6">
-                                    <label class="form-label fw-bold"><i class="bi bi-calendar-minus me-2"></i>تاريخ نهاية الدورة:</label>
-                                    {{ form.training_end_date }}
-                                    {% if form.training_end_date.errors %}<div class="text-danger">{{ form.training_end_date.errors }}</div>{% endif %}
-                                </div>
-                                <!-- رقم الدورة التأهيلية -->
-                                <div class="col-md-6">
-                                    <label class="form-label fw-bold"><i class="bi bi-123 me-2"></i>رقم الدورة التأهيلية:</label>
-                                    {{ form.training_course_number }}
-                                    {% if form.training_course_number.errors %}<div class="text-danger">{{ form.training_course_number.errors }}</div>{% endif %}
-                                </div>
-                                <!-- مكان انعقاد الدورة -->
-                                <div class="col-md-6">
-                                    <label class="form-label fw-bold"><i class="bi bi-geo-alt me-2"></i>مكان انعقاد الدورة:</label>
-                                    {{ form.training_location }}
-                                    {% if form.training_location.errors %}<div class="text-danger">{{ form.training_location.errors }}</div>{% endif %}
-                                </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">تاريخ نهاية الفرقة:</label>
+                                <input type="date" name="training_end_date" class="form-control" value="{{ promotion.training_end_date|date:'Y-m-d' }}">
                             </div>
-                        
-                            <!-- خط فاصل بين الأقسام -->
-                            <hr class="my-5">
-                        
-                            <!-- ملاحظات -->
-                            <h4 class="mb-4"><i class="bi bi-chat-left-text me-2"></i>ملاحظات</h4>
-                            <div class="row g-3">
-                                <div class="col-12">
-                                    <label class="form-label fw-bold"><i class="bi bi-chat-left-text me-2"></i>ملاحظات:</label>
-                                    {{ form.notes }}
-                                    {% if form.notes.errors %}<div class="text-danger">{{ form.notes.errors }}</div>{% endif %}
-                                </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">رقم الفرقة التأهيلية:</label>
+                                <input type="text" name="training_course_number" class="form-control" value="{{ promotion.training_course_number|default:'' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">مكان انعقاد الفرقة:</label>
+                                <input type="text" name="training_location" class="form-control" value="{{ promotion.training_location|default:'' }}">
                             </div>
                         </div>
-                        <div class="card-footer text-end">
-                            <button type="submit" class="btn btn-success me-2"><i class="bi bi-save"></i> حفظ التغييرات</button>
-                            <a href="{% url 'delete_promotion' form.instance.id %}" 
-                               onclick="return confirm('هل أنت متأكد من حذف هذه الترقية؟');" 
-                               class="btn btn-danger"><i class="bi bi-trash"></i> حذف</a>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">ملاحظات:</label>
+                            <textarea name="notes" class="form-control">{{ promotion.notes|default:'' }}</textarea>
                         </div>
                     </div>
                 </div>
-            {% endfor %}
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">حفظ التغييرات</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">إلغاء</button>
+                </div>
+            </form>
         </div>
-    </form>
-{% elif selected_employee_id %}
-    <div class="alert alert-info text-center">لا توجد ترقيات مسجلة لهذا الفرد.</div>
-{% else %}
-    <div class="alert alert-warning text-center">يرجى اختيار موظف لعرض الترقيات.</div>
-{% endif %}
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // إخفاء/إظهار حقول الفرقة التأهيلية بناءً على نوع الترقية
+    function toggleTrainingFields(selectElement, container) {
+        if ($(selectElement).val() === 'exceptional') {
+            $(container).find('.training-fields').hide();
+        } else {
+            $(container).find('.training-fields').show();
+        }
+    }
+
+    // لـ Modal الإضافة
+    $('#add_promotion_type').change(function() {
+        toggleTrainingFields(this, '#addPromotionModal');
+    });
+    // تهيئة الحالة الافتراضية عند فتح Modal الإضافة
+    toggleTrainingFields('#add_promotion_type', '#addPromotionModal');
+
+    // لـ Modals التعديل (يتم تطبيقه على كل نموذج)
+    $('.promotion-type').each(function() {
+        var modalId = '#editPromotionModal' + this.id.split('_')[3]; // استخراج معرف الـ Modal
+        toggleTrainingFields(this, modalId);
+        $(this).change(function() {
+            toggleTrainingFields(this, modalId);
+        });
+    });
+
+    // إرسال نموذج الإضافة عبر AJAX
+    $('#addPromotionForm').submit(function(e) {
+        e.preventDefault();
+        $.ajax({
+            url: $(this).attr('action'),
+            type: 'POST',
+            data: $(this).serialize(),
+            success: function(response) {
+                if (response.success) {
+                    alert('تمت إضافة الترقية بنجاح!');
+                    $('#addPromotionModal').modal('hide');
+                    location.reload(); // إعادة تحميل الصفحة لتحديث الجدول
+                } else {
+                    alert('حدث خطأ: ' + response.errors);
+                }
+            },
+            error: function(xhr) {
+                alert('حدث خطأ أثناء الإضافة: ' + xhr.statusText);
+            }
+        });
+    });
+
+    // إرسال نماذج التعديل عبر AJAX
+    $('form[id^="editPromotionForm"]').submit(function(e) {
+        e.preventDefault();
+        var form = $(this);
+        $.ajax({
+            url: form.attr('action'),
+            type: 'POST',
+            data: form.serialize(),
+            success: function(response) {
+                if (response.success) {
+                    alert('تم تعديل الترقية بنجاح!');
+                    form.closest('.modal').modal('hide');
+                    location.reload(); // إعادة تحميل الصفحة لتحديث الجدول
+                } else {
+                    alert('حدث خطأ: ' + response.errors);
+                }
+            },
+            error: function(xhr) {
+                alert('حدث خطأ أثناء التعديل: ' + xhr.statusText);
+            }
+        });
+    });
+});
+</script>
 {% endblock %}

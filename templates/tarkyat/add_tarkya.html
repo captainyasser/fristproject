@@ -75,8 +75,8 @@
         }
     </style>
 </head>
+<a href="{% url 'tarkyat' %}" class="btn btn-primary">عودة إلى صفحة الترقيات الرئيسية</a>
 <body>
-        <button class=" btn" onclick="window.open('{% url 'tarkyat' %}')">عودة الي صفحة الترقيات الرئيسية</button>
     <h1>إضافة ترقية جديدة</h1>
     <form method="post" action="">
         {% csrf_token %}
@@ -91,6 +91,14 @@
                 </label>
             {% endfor %}
         </div>
+        <!-- حقل نوع الترقية -->
+        <label for="promotion_type">نوع الترقية:</label>
+        <select name="promotion_type" id="promotion_type">
+            <option value="">اختر نوع الترقية (اختياري)</option>
+            <option value="normal">عادية</option>
+            <option value="exceptional">استثنائية</option>
+            <option value="cadre">كادر أمناء</option>
+        </select>
 
         <!-- حقل الدرجة السابقة -->
         <label for="from_rank">الدرجة السابقة:</label>

@@ -3,7 +3,7 @@ git codes
 cd K:\myproject\myproject
 git status
 git add .
-git commit -m "update tarkyat som inhanc"
+git commit -m "update tarkyat as modals"
 git push origin master
 
 
