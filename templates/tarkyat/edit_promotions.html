@@ -11,6 +11,10 @@
         <h1 class="text-center mb-4">
             {% if form.instance.id %}تعديل ترقية{% else %}إضافة ترقية جديدة{% endif %}
         </h1>
+        <div class="btn-container">
+            <button class=" btn-outline-secondary" onclick="window.open('{% url 'tarkyat' %}')">عودة الي صفحة الترقيات الرئيسية</button>
+        </div>
+        <br>
         <div class="card shadow-sm">
             <div class="card-header bg-primary text-white">
                 <h5 class="card-title mb-0">
@@ -44,11 +48,12 @@
                                 <div class="text-danger">{{ form.employee.errors }}</div>
                             {% endif %}
                         </div>
-<br>
-<br>
-<br>
-<br>
-<br>
+
+                        <!-- عنوان بيانات الترقية الجديدة -->
+                        <div class="col-12">
+                            <h4 class="mt-4 mb-3"><i class="bi bi-graph-up me-2"></i>بيانات الترقية الجديدة</h4>
+                        </div>
+
                         <div class="col-md-6">
                             <label class="form-label fw-bold"><i class="bi bi-arrow-down-circle me-2"></i>الدرجة السابقة:</label>
                             {{ form.from_rank }}
@@ -77,40 +82,49 @@
                                 <div class="text-danger">{{ form.promotion_course_number.errors }}</div>
                             {% endif %}
                         </div>
+
+                        <!-- عنوان بيانات الفرقة التأهيلية -->
+                        <div class="col-12">
+                            <h4 class="mt-4 mb-3"><i class="bi bi-book me-2"></i>بيانات الفرقة التأهيلية</h4>
+                        </div>
+
                         <div class="col-md-6">
-                            <label class="form-label fw-bold"><i class="bi bi-calendar-plus me-2"></i>تاريخ بداية الدورة:</label>
+                            <label class="form-label fw-bold"><i class="bi bi-calendar-plus me-2"></i>تاريخ بداية الفرقة التأهيلية:</label>
                             {{ form.training_start_date }}
                             {% if form.training_start_date.errors %}
                                 <div class="text-danger">{{ form.training_start_date.errors }}</div>
                             {% endif %}
                         </div>
+
+
+
                         <div class="col-md-6">
-                            <label class="form-label fw-bold"><i class="bi bi-calendar-minus me-2"></i>تاريخ نهاية الدورة:</label>
+                            <label class="form-label fw-bold"><i class="bi bi-calendar-minus me-2"></i>تاريخ نهاية الفرقة التأهيلية:</label>
                             {{ form.training_end_date }}
                             {% if form.training_end_date.errors %}
                                 <div class="text-danger">{{ form.training_end_date.errors }}</div>
                             {% endif %}
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold"><i class="bi bi-123 me-2"></i>رقم الدورة التأهيلية:</label>
+                            <label class="form-label fw-bold"><i class="bi bi-123 me-2"></i>رقم الفرقة التأهيلية:</label>
                             {{ form.training_course_number }}
                             {% if form.training_course_number.errors %}
                                 <div class="text-danger">{{ form.training_course_number.errors }}</div>
                             {% endif %}
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-bold"><i class="bi bi-geo-alt me-2"></i>مكان انعقاد الدورة:</label>
+                            <label class="form-label fw-bold"><i class="bi bi-geo-alt me-2"></i>مكان انعقاد الفرقة التأهيلية:</label>
                             {{ form.training_location }}
                             {% if form.training_location.errors %}
                                 <div class="text-danger">{{ form.training_location.errors }}</div>
                             {% endif %}
                         </div>
                         <div class="col-md-12">
-                            <label class="form-label fw-bold"><i class="bi bi-arrow-up-circle-fill me-2"></i>تحديث رتبة الموظف:</label>
+                            <label class="form-label fw-bold"><i class="bi bi-arrow-up-circle-fill me-2"></i>تحديث درجة الفرد:</label>
                             <select name="update_rank" class="form-control" required>
                                 <option value="">-- اختر خيارًا --</option>
-                                <option value="yes">نعم، قم بتحديث رتبة الموظف إلى الدرجة الجديدة</option>
-                                <option value="no">لا، احتفظ برتبة الموظف الحالية</option>
+                                <option value="yes">نعم، قم بتحديث درجة الفرد الحالية إلى الدرجة الجديدة</option>
+                                <option value="no">لا تقم بتغيير درجة الفرد الحالية</option>
                             </select>
                         </div>
                         <div class="col-12">

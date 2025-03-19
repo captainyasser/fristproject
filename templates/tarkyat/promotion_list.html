@@ -2,20 +2,24 @@
 {% load static %}
 
 {% block title %}
-قائمة الترقيات
+تعديل وتحديث بيانات الترقيات
 {% endblock %}
 
 {% block content %}
 <div class="row mb-4">
     <div class="col-12">
-        <h1 class="text-center mb-4">قائمة الترقيات</h1>
+        <h1 class="text-center mb-4">تعديل وتحديث بيانات الترقيات</h1>
+        <div class="btn-container">
+            <button class=" btn-outline-secondary" onclick="window.open('{% url 'tarkyat' %}')">عودة الي صفحة الترقيات الرئيسية</button>
+        </div>
+        <br>
         <div class="row g-3 align-items-center">
             <div class="col-md-6">
                 <form method="GET">
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-person"></i></span>
                         <select name="employee" id="employee" class="form-select" onchange="this.form.submit()">
-                            <option value="">-- جميع الموظفين --</option>
+                            <option value="">-- جميع الافراد --</option>
                             {% for employee in employees %}
                                 <option value="{{ employee.id }}" {% if selected_employee_id == employee.id|stringformat:'s' %}selected{% endif %}>
                                     {{ employee.name }}
@@ -25,18 +29,19 @@
                     </div>
                 </form>
             </div>
-            <div class="col-md-6 text-md-end">
-                {% if selected_employee_id %}
-                    <a href="{% url 'add_promotion' %}?employee={{ selected_employee_id }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> إضافة ترقية جديدة</a>
-                {% else %}
-                    <a href="{% url 'add_promotion' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> إضافة ترقية جديدة</a>
-                {% endif %}
-            </div>
+
         </div>
     </div>
 </div>
 
 {% if selected_employee_id and promotion_forms %}
+<div class="col-md-6 text-md-end">
+    {% if selected_employee_id %}
+        <a href="{% url 'add_promotion' %}?employee={{ selected_employee_id }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> إضافة ترقية جديدة</a>
+    {% else %}
+        <a href="{% url 'add_promotion' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> إضافة ترقية جديدة</a>
+    {% endif %}
+</div>
     <form method="POST">
         {% csrf_token %}
         <div class="row">
@@ -136,7 +141,7 @@
         </div>
     </form>
 {% elif selected_employee_id %}
-    <div class="alert alert-info text-center">لا توجد ترقيات مسجلة لهذا الموظف.</div>
+    <div class="alert alert-info text-center">لا توجد ترقيات مسجلة لهذا الفرد.</div>
 {% else %}
     <div class="alert alert-warning text-center">يرجى اختيار موظف لعرض الترقيات.</div>
 {% endif %}

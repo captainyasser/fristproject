@@ -11,11 +11,23 @@ def tarkyat(request):
     """
     return render(request, 'tarkyat/tarkyat.html', {})
 
-def add_tarkya(request):
+from django.shortcuts import render, redirect
+from .models import Promotion
+from em_data.models import Employee
+from ranks.models import Rank
+from django.core.exceptions import ValidationError
+import logging
+
+logger = logging.getLogger(__name__)
+
+def add_tarkya_for_many(request):
     if request.method == 'POST':
+        logger.info("POST data: %s", request.POST)
         employee_ids = request.POST.getlist('employee')
         to_rank = Rank.objects.get(id=request.POST['to_rank'])
         from_rank = Rank.objects.get(id=request.POST['from_rank']) if request.POST['from_rank'] else None
+        update_rank = request.POST.get('update_rank')
+        logger.info("update_rank: %s", update_rank)
 
         for emp_id in employee_ids:
             employee = Employee.objects.get(id=emp_id)
@@ -23,42 +35,46 @@ def add_tarkya(request):
 
             # فرض التسلسل لأمناء الشرطة ومعاوني الأمن فقط
             if effective_from_rank and to_rank.rank_type in ['police_officer', 'security_assistant']:
-                # إذا كان from_rank و to_rank من نفس النوع، تحقق من التسلسل
                 if (effective_from_rank.rank_type == to_rank.rank_type and 
                     to_rank.order <= effective_from_rank.order):
                     raise ValidationError(
                         f"لا يمكن الترقية من {effective_from_rank.name} إلى {to_rank.name} لأنها ليست ترقية صالحة في التسلسل."
                     )
-                # إذا كان الانتقال من درجة أولى إلى أمين شرطة، تحقق أن to_rank هو "أمين شرطة ثالث"
                 if (effective_from_rank.rank_type == 'primary' and 
                     to_rank.rank_type == 'police_officer' and 
-                    to_rank.order != 1):  # أمين شرطة ثالث = order 1
+                    to_rank.order != 1):
                     raise ValidationError(
                         "الانتقال من درجة أولى إلى أمين شرطة يجب أن يكون إلى 'أمين شرطة ثالث' فقط."
                     )
 
-            promotion = Promotion(
-                employee=employee,
-                from_rank=effective_from_rank,
-                to_rank=to_rank,
-                promotion_date=request.POST['promotion_date'],
-                promotion_course_number=request.POST['promotion_course_number'],
-                training_start_date=request.POST['training_start_date'],
-                training_end_date=request.POST['training_end_date'],
-                training_course_number=request.POST['training_course_number'],
-                training_location=request.POST['training_location'],
-                notes=request.POST['notes']
-            )
+            # التعامل مع الحقول الاختيارية
+            promotion_data = {
+                'employee': employee,
+                'from_rank': effective_from_rank,
+                'to_rank': to_rank,
+                'promotion_date': request.POST['promotion_date'],
+                'promotion_course_number': request.POST.get('promotion_course_number') or None,
+                'training_start_date': request.POST.get('training_start_date') or None,
+                'training_end_date': request.POST.get('training_end_date') or None,
+                'training_course_number': request.POST.get('training_course_number') or None,
+                'training_location': request.POST.get('training_location') or None,
+                'notes': request.POST.get('notes') or None
+            }
+
+            promotion = Promotion(**promotion_data)
             promotion.save()
-        return redirect('add_tarkya')
+
+            # تحديث rank إذا اختير "نعم"
+            if update_rank == 'yes':
+                logger.info("Updating rank for employee %s to %s", employee.id, to_rank.id)
+                employee.rank = to_rank
+                employee.save(update_fields=['rank'])
+
+        return redirect('add_tarkya_for_many')
 
     employees = Employee.objects.all()
     ranks = Rank.objects.all()
     return render(request, 'tarkyat/add_tarkya.html', {'employees': employees, 'ranks': ranks})
-
-
-
-
 
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Promotion, Employee
@@ -86,7 +102,7 @@ def promotion_list(request):
                     
                     # التأكد من تعيين `employee` يدويًا إذا لم يتم تمريره
                     if not promotion_instance.employee:
-                        promotion_instance.employee = promotion.employee  # تعيين الموظف من السجل الأصلي
+                        promotion_instance.employee = promotion.employee  # تعيين الفرد من السجل الأصلي
                     
                     promotion_instance.save()
                     any_form_valid = True
@@ -173,7 +189,7 @@ def delete_promotion(request, pk):
 
 
 def ameen_tarkyat(request):
-    # تصفية الموظفين الذين لهم درجة من نوع 'police_officer' وفرزهم حسب sort_number
+    # تصفية الفردين الذين لهم درجة من نوع 'police_officer' وفرزهم حسب sort_number
     employees = Employee.objects.filter(rank__rank_type='police_officer').order_by('sort_number').prefetch_related('promotions')
     
     # إعداد البيانات لكل موظف

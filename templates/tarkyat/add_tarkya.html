@@ -1,4 +1,7 @@
-{% comment %} <!DOCTYPE html>
+{% extends "base.html" %}
+
+{% block content %}
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
@@ -73,12 +76,13 @@
     </style>
 </head>
 <body>
+        <button class=" btn" onclick="window.open('{% url 'tarkyat' %}')">عودة الي صفحة الترقيات الرئيسية</button>
     <h1>إضافة ترقية جديدة</h1>
     <form method="post" action="">
         {% csrf_token %}
-
-        <!-- حقل الموظفين (مربعات اختيار) -->
-        <label>الموظفون:</label>
+        <br>
+        <!-- حقل الافراد (مربعات اختيار) -->
+        <label>الأفراد:</label>
         <div class="employee-checkboxes" id="employee-checkboxes">
             {% for emp in employees %}
                 <label>
@@ -112,23 +116,33 @@
 
         <!-- حقل رقم دورة الترقية -->
         <label for="promotion_course_number">رقم دورة الترقية:</label>
-        <input type="text" name="promotion_course_number" id="promotion_course_number" required>
+        <input type="text" name="promotion_course_number" id="promotion_course_number">
 
         <!-- حقل تاريخ بداية الدورة -->
         <label for="training_start_date">تاريخ بداية الدورة:</label>
-        <input type="date" name="training_start_date" id="training_start_date" required>
+        <input type="date" name="training_start_date" id="training_start_date">
 
         <!-- حقل تاريخ نهاية الدورة -->
         <label for="training_end_date">تاريخ نهاية الدورة:</label>
-        <input type="date" name="training_end_date" id="training_end_date" required>
+        <input type="date" name="training_end_date" id="training_end_date">
 
         <!-- حقل رقم الدورة التأهيلية -->
         <label for="training_course_number">رقم الدورة التأهيلية:</label>
-        <input type="text" name="training_course_number" id="training_course_number" required>
+        <input type="text" name="training_course_number" id="training_course_number">
 
         <!-- حقل مكان انعقاد الدورة -->
         <label for="training_location">مكان انعقاد الدورة:</label>
-        <input type="text" name="training_location" id="training_location" required>
+        <input type="text" name="training_location" id="training_location">
+
+        <!-- حقل تحديث درجة الفرد -->
+        <div class="col-md-12">
+            <label class="form-label fw-bold"><i class="bi bi-arrow-up-circle-fill me-2"></i>تحديث درجة الفرد:</label>
+            <select name="update_rank" class="form-control" required>
+                <option value="">-- اختر خيارًا --</option>
+                <option value="yes">نعم، قم بتحديث درجة الفرد الحاليه إلى الدرجة الجديدة</option>
+                <option value="no">لا تقم بتغيير درجة الفرد الحالية</option>
+            </select>
+        </div>
 
         <!-- حقل الملاحظات -->
         <label for="notes">ملاحظات:</label>
@@ -139,7 +153,7 @@
     </form>
 
     <script>
-        // JavaScript لملء الدرجة السابقة تلقائيًا عند اختيار موظف واحد
+        // JavaScript لملء الدرجة السابقة تلقائيًا عند اختيار فرد واحد
         const checkboxes = document.querySelectorAll('input[name="employee"]');
         const fromRankSelect = document.getElementById('from_rank');
 
@@ -147,19 +161,18 @@
             checkbox.addEventListener('change', function() {
                 const checkedBoxes = Array.from(checkboxes).filter(cb => cb.checked);
                 if (checkedBoxes.length === 1) {
-                    // إذا تم اختيار موظف واحد فقط
                     const rankId = checkedBoxes[0].getAttribute('data-rank');
                     if (rankId) {
                         fromRankSelect.value = rankId;
                     } else {
-                        fromRankSelect.value = ''; // إذا لم يكن للموظف درجة حالية
+                        fromRankSelect.value = '';
                     }
                 } else {
-                    // إذا تم اختيار أكثر من موظف أو لم يتم اختيار أي موظف
                     fromRankSelect.value = '';
                 }
             });
         });
     </script>
 </body>
-</html> {% endcomment %}
+</html>
+{% endblock %}

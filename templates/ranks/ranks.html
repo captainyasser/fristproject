@@ -6,7 +6,7 @@
     <h2 class="text-center mb-4">إدارة الدرجات</h2>
 
     <!-- نموذج إضافة درجة جديدة -->
-    <form method="POST" action="{% url 'add_rank' %}" class="mb-4">
+    {% comment %} <form method="POST" action="{% url 'add_rank' %}" class="mb-4">
         {% csrf_token %}
         <div class="row">
             {% for field in form %}
@@ -22,7 +22,7 @@
                 <button type="submit" class="btn btn-success w-100">إضافة</button>
             </div>
         </div>
-    </form>
+    </form> {% endcomment %}
 
     <!-- جدول عرض الدرجات -->
     <table class="table table-bordered">
@@ -50,6 +50,9 @@
                 <td>{{ rank.order }}</td>
                 <td>{{ rank.is_active|yesno:"نشط,غير نشط" }}</td>
                 <td>
+                    الحذف والتعديل قاصر علي مدير النظام فقط
+                </td>
+                {% comment %} <td>
                     <!-- زر تعديل -->
                     <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#editModal{{ rank.id }}">تعديل</button>
                     
@@ -122,7 +125,7 @@
                             </div>
                         </div>
                     </div>
-                </td>
+                </td> {% endcomment %}
             </tr>
             {% endfor %}
         </tbody>

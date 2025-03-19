@@ -1,8 +1,8 @@
+<title>الترقيات</title>
 {% extends "base.html" %}
 {% load static %}
 
 {% block content %}
-<title>الترقيات</title>
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-12">
@@ -14,7 +14,7 @@
                 <button class="btn btn-block btn-outline-secondary btn-lg" onclick="window.open('{% url 'ameen_tarkyat' %}')">ترقيات الأمناء</button>
                 <button class="btn btn-block btn-outline-secondary btn-lg" onclick="window.open('{% url 'daragaola_tarkya' %}')">ترقيات الدرجة الأولى</button>
                 <button class="btn btn-block btn-outline-secondary btn-lg" onclick="window.open('{% url 'promotion_list' %}')">تعديل واضافة الترقيات </button>
-
+                <button class="btn btn-block btn-outline-secondary btn-lg" onclick="window.open('{% url 'add_tarkya_for_many' %}')">اضافة ترقية لأكثر من فرد دفعة واحده </button>
             </div>
         </div>
     </div>
