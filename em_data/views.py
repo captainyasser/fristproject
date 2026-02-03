@@ -1489,7 +1489,7 @@ class IDCardFilterAPIView(APIView):
 @login_required
 def department_operation_report_view(request):
     check_protection()
-    departments = Department.objects.all()
+    departments = Department.objects.all().order_by('id')
     token = None
     if request.user.is_authenticated:
         token, created = Token.objects.get_or_create(user=request.user)
@@ -1507,6 +1507,7 @@ class DepartmentOperationReportAPIView(APIView):
         gender_filter = request.data.get('gender', 'all')
         sort_by = request.data.get('sort_by', 'sort_number')
         operations_filter = request.data.get('operations', [])
+        daily_work_first = request.data.get('daily_work_first', True)  # Default to True
         
         if not department_ids:
              return Response({'error': 'Please select at least one department'}, status=400)
@@ -1516,22 +1517,38 @@ class DepartmentOperationReportAPIView(APIView):
         except ValueError:
              return Response({'error': 'Invalid department IDs'}, status=400)
 
-        departments = Department.objects.filter(id__in=department_ids)
+        departments = Department.objects.filter(id__in=department_ids).order_by('id')
         report_data = []
         
         # Define logical operation ordering
-        operation_order = Case(
-            When(operation='السبت', then=Value(1)),
-            When(operation='الأحد', then=Value(2)),
-            When(operation='الاثنين', then=Value(3)),
-            When(operation='الثلاثاء', then=Value(4)),
-            When(operation='الأربعاء', then=Value(5)),
-            When(operation='الخميس', then=Value(6)),
-            When(operation='الجمعة', then=Value(7)),
-            When(operation='عمل يومي', then=Value(8)),
-            default=Value(99),
-            output_field=IntegerField(),
-        )
+        if daily_work_first:
+            # Put "عمل يومي" first (value 0), then the rest
+            operation_order = Case(
+                When(operation='عمل يومي', then=Value(0)),
+                When(operation='السبت', then=Value(1)),
+                When(operation='الأحد', then=Value(2)),
+                When(operation='الاثنين', then=Value(3)),
+                When(operation='الثلاثاء', then=Value(4)),
+                When(operation='الأربعاء', then=Value(5)),
+                When(operation='الخميس', then=Value(6)),
+                When(operation='الجمعة', then=Value(7)),
+                default=Value(99),
+                output_field=IntegerField(),
+            )
+        else:
+            # Original order: days first, then "عمل يومي"
+            operation_order = Case(
+                When(operation='السبت', then=Value(1)),
+                When(operation='الأحد', then=Value(2)),
+                When(operation='الاثنين', then=Value(3)),
+                When(operation='الثلاثاء', then=Value(4)),
+                When(operation='الأربعاء', then=Value(5)),
+                When(operation='الخميس', then=Value(6)),
+                When(operation='الجمعة', then=Value(7)),
+                When(operation='عمل يومي', then=Value(8)),
+                default=Value(99),
+                output_field=IntegerField(),
+            )
         
         for dept in departments:
             employees = Employee.objects.filter(department=dept).select_related('rank')
@@ -1569,4 +1586,5 @@ class DepartmentOperationReportAPIView(APIView):
             })
             
         return Response(report_data)
+
 

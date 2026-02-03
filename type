@@ -728,6 +728,12 @@ F:\emapi-edit\myproject\attendance\views.py
 اصلحها
 
 
+في صفحةdepartment-operation-report
+لا تطبع شريط الاعلانات
+
+
+ترتيب الاقسام ليس ابجديا بل ب ال id
+
 
 
 

@@ -1134,115 +1134,12 @@ def amtmam_page(request):
     return render(request, 'attendance/amtmam.html')
 
 
-# class AmtmamAPIView(APIView):
-#     permission_classes = [IsAuthenticated]
-
-#     def get(self, request):
-        
-#         default_date = datetime.now().date() + timedelta(days=1)  # Tomorrow as default
-#         selected_date = request.GET.get('date', default_date.strftime('%Y-%m-%d'))
-#         try:
-#             selected_date = datetime.strptime(selected_date, '%Y-%m-%d').date()
-#         except ValueError:
-#             selected_date = default_date
-#         return self._get_amtmam_data(selected_date)
-
-#     def post(self, request):
-#         selected_date = request.data.get('date')
-#         if not selected_date:
-#             return Response({"error": "يرجى تحديد تاريخ"}, status=status.HTTP_400_BAD_REQUEST)
-#         try:
-#             selected_date = datetime.strptime(selected_date, '%Y-%m-%d').date()
-#             return self._get_amtmam_data(selected_date)
-#         except ValueError:
-#             return Response({"error": "تنسيق التاريخ غير صالح، استخدم YYYY-MM-DD"}, status=status.HTTP_400_BAD_REQUEST)
-
-#     def _get_amtmam_data(self, selected_date):
-#         # Format the selected date in Arabic manually
-#         day_name = ARABIC_DAYS[selected_date.weekday()]
-#         formatted_date = f"{day_name} {selected_date.day:02d}/{selected_date.month:02d}/{selected_date.year}"
-
-#         # Calculate the next day
-#         next_day = selected_date + timedelta(days=1)
-
-#         # Fetch records for the selected date where in_or_out is 1 or 2
-#         records = Attendance.objects.filter(date=selected_date, in_or_out__in=['in', 'going']).select_related('employee__department')
-
-#         # Fetch records for the next day where food = 1
-#         tomorrow_food_count = Attendance.objects.filter(date=next_day, food=1).count()
-
-#         # Helper function to process data for a table
-#         def process_table_data(records, condition):
-#             data = []
-#             for record in records:
-#                 if condition(record):
-#                     name = record.employee.nickname
-#                     if record.state == 'نوبتجي':
-#                         name = " ★ " + name
-#                     data.append((record.employee.gender, record.employee.sort_number, name))
-#             data.sort(key=lambda x: (x[0] != 'ذكر', x[1]))  # Sort by gender, then sort_number
-#             return [name for (gender, sort_number, name) in data]
-
-#         # Filter and process data for tables
-#         table1_data = process_table_data(
-#             records,
-#             lambda record: record.employee.tmamam == 1 and (record.employee.department is None or record.employee.department.name != 'فريق الموسيقي')
-#         )
-#         table2_data = process_table_data(
-#             records,
-#             lambda record: record.employee.tmamam == 1 and record.employee.department is not None and record.employee.department.name == 'فريق الموسيقي'
-#         )
-#         table3_data = process_table_data(
-#             records,
-#             lambda record: record.employee.tmamam == 0
-#         )
-
-#         # Add serial numbers
-#         table1_with_serials = [{"serial_number": i + 1, "name": name} for i, name in enumerate(table1_data)]
-#         table2_with_serials = [{"serial_number": i + 1, "name": name} for i, name in enumerate(table2_data)]
-#         table3_with_serials = [{"serial_number": i + 1, "name": name} for i, name in enumerate(table3_data)]
-
-#         # Split data into columns
-#         total_rows = 39
-#         table1_columns = [table1_with_serials[i * total_rows: (i + 1) * total_rows] for i in range(ceil(len(table1_with_serials) / total_rows))]
-#         table2_columns = [table2_with_serials[i * total_rows: (i + 1) * total_rows] for i in range(ceil(len(table2_with_serials) / total_rows))]
-#         table3_columns = [table3_with_serials[i * total_rows: (i + 1) * total_rows] for i in range(ceil(len(table3_with_serials) / total_rows))]
-
-#         # Calculate totals
-#         intamam = len(table1_data) + len(table2_data)
-#         outtamam = len(table3_data)
-#         alltamam = intamam + outtamam
-
-#         data = {
-#             "selected_date": selected_date.strftime('%Y-%m-%d'),
-#             "formatted_date": formatted_date,
-#             "table1_columns": table1_columns,
-#             "table2_columns": table2_columns,
-#             "table3_columns": table3_columns,
-#             "num_rows": total_rows,
-#             "intamam": intamam,
-#             "outtamam": outtamam,
-#             "alltamam": alltamam,
-#             "tomorrow_food_count": tomorrow_food_count,
-#         }
-
-#         return Response(data, status=status.HTTP_200_OK)
-
-
-
-
-
-
-
-
-
-# malkab seed
-
 class AmtmamAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        default_date = datetime.now().date() + timedelta(days=1)
+        
+        default_date = datetime.now().date() + timedelta(days=1)  # Tomorrow as default
         selected_date = request.GET.get('date', default_date.strftime('%Y-%m-%d'))
         try:
             selected_date = datetime.strptime(selected_date, '%Y-%m-%d').date()
@@ -1261,55 +1158,60 @@ class AmtmamAPIView(APIView):
             return Response({"error": "تنسيق التاريخ غير صالح، استخدم YYYY-MM-DD"}, status=status.HTTP_400_BAD_REQUEST)
 
     def _get_amtmam_data(self, selected_date):
-        data_dates = [selected_date - timedelta(days=2), selected_date - timedelta(days=3)]
-        all_records = Attendance.objects.filter(date__in=data_dates, in_or_out__in=['in', 'going']).select_related('employee__department')
-        next_day = max(data_dates) + timedelta(days=1)
+        # Format the selected date in Arabic manually
+        day_name = ARABIC_DAYS[selected_date.weekday()]
+        formatted_date = f"{day_name} {selected_date.day:02d}/{selected_date.month:02d}/{selected_date.year}"
+
+        # Calculate the next day
+        next_day = selected_date + timedelta(days=1)
+
+        # Fetch records for the selected date where in_or_out is 1 or 2
+        records = Attendance.objects.filter(date=selected_date, in_or_out__in=['in', 'going']).select_related('employee__department')
+
+        # Fetch records for the next day where food = 1
         tomorrow_food_count = Attendance.objects.filter(date=next_day, food=1).count()
 
+        # Helper function to process data for a table
         def process_table_data(records, condition):
-            seen = set()
             data = []
             for record in records:
-                if condition(record) and record.employee.nickname not in seen:
+                if condition(record):
                     name = record.employee.nickname
                     if record.state == 'نوبتجي':
                         name = " ★ " + name
-                    seen.add(record.employee.nickname)
                     data.append((record.employee.gender, record.employee.sort_number, name))
-            data.sort(key=lambda x: (x[0] != 'ذكر', x[1]))
+            data.sort(key=lambda x: (x[0] != 'ذكر', x[1]))  # Sort by gender, then sort_number
             return [name for (gender, sort_number, name) in data]
 
+        # Filter and process data for tables
         table1_data = process_table_data(
-            all_records,
+            records,
             lambda record: record.employee.tmamam == 1 and (record.employee.department is None or record.employee.department.name != 'فريق الموسيقي')
         )
-
         table2_data = process_table_data(
-            all_records,
+            records,
             lambda record: record.employee.tmamam == 1 and record.employee.department is not None and record.employee.department.name == 'فريق الموسيقي'
         )
-
         table3_data = process_table_data(
-            all_records,
+            records,
             lambda record: record.employee.tmamam == 0
         )
 
-        total_rows = 39
-
+        # Add serial numbers
         table1_with_serials = [{"serial_number": i + 1, "name": name} for i, name in enumerate(table1_data)]
         table2_with_serials = [{"serial_number": i + 1, "name": name} for i, name in enumerate(table2_data)]
         table3_with_serials = [{"serial_number": i + 1, "name": name} for i, name in enumerate(table3_data)]
 
-        table1_columns = [table1_with_serials[i * total_rows:(i + 1) * total_rows] for i in range(ceil(len(table1_with_serials) / total_rows))]
-        table2_columns = [table2_with_serials[i * total_rows:(i + 1) * total_rows] for i in range(ceil(len(table2_with_serials) / total_rows))]
-        table3_columns = [table3_with_serials[i * total_rows:(i + 1) * total_rows] for i in range(ceil(len(table3_with_serials) / total_rows))]
+        # Split data into columns
+        total_rows = 39
+        table1_columns = [table1_with_serials[i * total_rows: (i + 1) * total_rows] for i in range(ceil(len(table1_with_serials) / total_rows))]
+        table2_columns = [table2_with_serials[i * total_rows: (i + 1) * total_rows] for i in range(ceil(len(table2_with_serials) / total_rows))]
+        table3_columns = [table3_with_serials[i * total_rows: (i + 1) * total_rows] for i in range(ceil(len(table3_with_serials) / total_rows))]
 
+        # Calculate totals
         intamam = len(table1_data) + len(table2_data)
         outtamam = len(table3_data)
         alltamam = intamam + outtamam
-
-        day_name = ARABIC_DAYS[selected_date.weekday()]
-        formatted_date = f"{day_name} {selected_date.day:02d}/{selected_date.month:02d}/{selected_date.year}"
 
         data = {
             "selected_date": selected_date.strftime('%Y-%m-%d'),
@@ -1325,6 +1227,104 @@ class AmtmamAPIView(APIView):
         }
 
         return Response(data, status=status.HTTP_200_OK)
+
+
+
+
+
+
+
+
+
+# malkab seed
+
+# class AmtmamAPIView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def get(self, request):
+#         default_date = datetime.now().date() + timedelta(days=1)
+#         selected_date = request.GET.get('date', default_date.strftime('%Y-%m-%d'))
+#         try:
+#             selected_date = datetime.strptime(selected_date, '%Y-%m-%d').date()
+#         except ValueError:
+#             selected_date = default_date
+#         return self._get_amtmam_data(selected_date)
+
+#     def post(self, request):
+#         selected_date = request.data.get('date')
+#         if not selected_date:
+#             return Response({"error": "يرجى تحديد تاريخ"}, status=status.HTTP_400_BAD_REQUEST)
+#         try:
+#             selected_date = datetime.strptime(selected_date, '%Y-%m-%d').date()
+#             return self._get_amtmam_data(selected_date)
+#         except ValueError:
+#             return Response({"error": "تنسيق التاريخ غير صالح، استخدم YYYY-MM-DD"}, status=status.HTTP_400_BAD_REQUEST)
+
+#     def _get_amtmam_data(self, selected_date):
+#         data_dates = [selected_date - timedelta(days=2), selected_date - timedelta(days=3)]
+#         all_records = Attendance.objects.filter(date__in=data_dates, in_or_out__in=['in', 'going']).select_related('employee__department')
+#         next_day = max(data_dates) + timedelta(days=1)
+#         tomorrow_food_count = Attendance.objects.filter(date=next_day, food=1).count()
+
+#         def process_table_data(records, condition):
+#             seen = set()
+#             data = []
+#             for record in records:
+#                 if condition(record) and record.employee.nickname not in seen:
+#                     name = record.employee.nickname
+#                     if record.state == 'نوبتجي':
+#                         name = " ★ " + name
+#                     seen.add(record.employee.nickname)
+#                     data.append((record.employee.gender, record.employee.sort_number, name))
+#             data.sort(key=lambda x: (x[0] != 'ذكر', x[1]))
+#             return [name for (gender, sort_number, name) in data]
+
+#         table1_data = process_table_data(
+#             all_records,
+#             lambda record: record.employee.tmamam == 1 and (record.employee.department is None or record.employee.department.name != 'فريق الموسيقي')
+#         )
+
+#         table2_data = process_table_data(
+#             all_records,
+#             lambda record: record.employee.tmamam == 1 and record.employee.department is not None and record.employee.department.name == 'فريق الموسيقي'
+#         )
+
+#         table3_data = process_table_data(
+#             all_records,
+#             lambda record: record.employee.tmamam == 0
+#         )
+
+#         total_rows = 39
+
+#         table1_with_serials = [{"serial_number": i + 1, "name": name} for i, name in enumerate(table1_data)]
+#         table2_with_serials = [{"serial_number": i + 1, "name": name} for i, name in enumerate(table2_data)]
+#         table3_with_serials = [{"serial_number": i + 1, "name": name} for i, name in enumerate(table3_data)]
+
+#         table1_columns = [table1_with_serials[i * total_rows:(i + 1) * total_rows] for i in range(ceil(len(table1_with_serials) / total_rows))]
+#         table2_columns = [table2_with_serials[i * total_rows:(i + 1) * total_rows] for i in range(ceil(len(table2_with_serials) / total_rows))]
+#         table3_columns = [table3_with_serials[i * total_rows:(i + 1) * total_rows] for i in range(ceil(len(table3_with_serials) / total_rows))]
+
+#         intamam = len(table1_data) + len(table2_data)
+#         outtamam = len(table3_data)
+#         alltamam = intamam + outtamam
+
+#         day_name = ARABIC_DAYS[selected_date.weekday()]
+#         formatted_date = f"{day_name} {selected_date.day:02d}/{selected_date.month:02d}/{selected_date.year}"
+
+#         data = {
+#             "selected_date": selected_date.strftime('%Y-%m-%d'),
+#             "formatted_date": formatted_date,
+#             "table1_columns": table1_columns,
+#             "table2_columns": table2_columns,
+#             "table3_columns": table3_columns,
+#             "num_rows": total_rows,
+#             "intamam": intamam,
+#             "outtamam": outtamam,
+#             "alltamam": alltamam,
+#             "tomorrow_food_count": tomorrow_food_count,
+#         }
+
+#         return Response(data, status=status.HTTP_200_OK)
 
 
 

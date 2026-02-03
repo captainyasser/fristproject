@@ -10,6 +10,12 @@
         .no-print {
             display: none !important;
         }
+        /* Hide marquee/notification bar when printing */
+        marquee,
+        [id*="marquee"],
+        .marquee-container {
+            display: none !important;
+        }
         .card {
             box-shadow: none !important;
             border: none !important;
@@ -155,6 +161,15 @@
                                 </select>
                             </div>
                         </div>
+                        <div class="col-md-2">
+                             <div class="form-group">
+                                <label>عمل يومي بالأعلى</label>
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox" class="custom-control-input" id="daily-work-first" checked>
+                                    <label class="custom-control-label" for="daily-work-first">تفعيل</label>
+                                </div>
+                            </div>
+                        </div>
                         <div class="col-md-2" style="display: flex; align-items: flex-end;">
                             <button type="button" class="btn btn-primary btn-block" onclick="generateReport()">عرض الكشف</button>
                         </div>
@@ -271,6 +286,7 @@
         const gender = $('#gender-select').val();
         const sortBy = $('#sort-select').val();
         const operations = $('#operation-select').val();
+        const dailyWorkFirst = $('#daily-work-first').is(':checked');
 
         $.ajax({
             url: '{% url "department_operation_report_api" %}', 
@@ -280,7 +296,8 @@
                 department_ids: selectedDepts,
                 gender: gender,
                 sort_by: sortBy,
-                operations: operations
+                operations: operations,
+                daily_work_first: dailyWorkFirst
             }),
             contentType: 'application/json',
             success: function(data) {
