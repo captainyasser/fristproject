@@ -1,3 +1,4 @@
+# E:\yasser\emapi2025\myproject\tarkyat\models.py
 from django.db import models
 from em_data.models import Employee
 from ranks.models import Rank

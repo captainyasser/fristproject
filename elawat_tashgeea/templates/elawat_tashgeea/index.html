@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <div class="card p-4 shadow text-center">
+        <h3>العلاوات التشجيعية</h3>
+        <a href="{% url 'elawat_tashgeea:batch_create' %}" class="btn btn-primary m-2">إضافة علاوة لمجموعة أفراد</a>
+        <a href="{% url 'elawat_tashgeea:add_multiple_elawat' %}" class="btn btn-primary m-2">إضافة أكثر من علاوة لنفس الفرد</a>
+        <a href="{% url 'elawat_tashgeea:employee_elawat_select' %}" class="btn btn-success m-2">عرض العلاوات لفرد</a>
+        <a href="{% url 'elawat_tashgeea:elawat_by_year' %}" class="btn btn-info m-2">عرض العلاوات حسب السنة</a>
+    </div>
+</div>
+{% endblock %}

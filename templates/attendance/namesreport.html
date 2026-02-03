@@ -1,0 +1,574 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+    <div class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12">
+                    <style>
+                        body {
+                            font-family: 'Tajawal', Arial, sans-serif;
+                            background-color: #f8f9fa;
+                            margin: 0;
+                            padding: 10px;
+                            direction: rtl;
+                        }
+                        h1, h3, h6 {
+                            text-align: center;
+                            color: #2c3e50;
+                            margin-bottom: 10px;
+                        }
+                        .form-container {
+                            text-align: center;
+                            margin-bottom: 20px;
+                            background-color: #fff;
+                            padding: 10px;
+                            border-radius: 6px;
+                            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                        }
+                        label {
+                            font-size: 1rem;
+                            margin-left: 8px;
+                            color: #34495e;
+                        }
+                        input[type="date"] {
+                            padding: 6px;
+                            font-size: 1rem;
+                            border: 1px solid #ced4da;
+                            border-radius: 4px;
+                            margin-left: 8px;
+                        }
+                        button {
+                            padding: 6px 15px;
+                            font-size: 1rem;
+                            background-color: #007bff;
+                            color: white;
+                            border: none;
+                            border-radius: 4px;
+                            cursor: pointer;
+                            transition: background-color 0.3s;
+                        }
+                        button:hover {
+                            background-color: #0056b3;
+                        }
+                        .print-btn {
+                            display: block;
+                            margin: 15px auto;
+                            background-color: #28a745;
+                        }
+                        .print-btn:hover {
+                            background-color: #218838;
+                        }
+                        .report-container {
+                            background-color: #fff;
+                            padding: 10px;
+                            border-radius: 6px;
+                            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                            margin-bottom: 20px;
+                        }
+                        .summary-table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-bottom: 15px;
+                        }
+                        .summary-table th, .summary-table td {
+                            border: 1px solid #ced4da;
+                            padding: 4px;
+                            font-size: 0.85rem;
+                            text-align: center;
+                        }
+                        .summary-table th {
+                            background-color: #f8f9fa;
+                            color: #16404D;
+                            font-weight: bold;
+                        }
+                        .summary-table .subcategory-header {
+                            font-size: 0.85rem;
+                            text-align: center;
+                        }
+                        .summary-table .number-cell {
+                            font-size: 20px;
+                            text-align: right;
+                        }
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                        }
+                        td {
+                            vertical-align: top;
+                            padding: 2px 5px;
+                            font-size: 0.85rem;
+                            line-height: 1.2;
+                        }
+                        .category-header {
+                            font-size: 0.95rem;
+                            color: #16404D;
+                            font-weight: bold;
+                            margin-bottom: 2px;
+                        }
+                        .subcategory-header {
+                            font-size: 0.9rem;
+                            color: #34495e;
+                            margin-bottom: 2px;
+                        }
+                        .count {
+                            font-size: 0.8rem;
+                            color: #007bff;
+                            margin-right: 3px;
+                        }
+                        .name-item {
+                            display: block;
+                            background-color: #f8f9fa;
+                            padding: 1px 4px;
+                            border-radius: 3px;
+                            margin-bottom: 2px;
+                            white-space: nowrap;
+                        }
+                        .name-item::before {
+                            content: attr(data-index)".";
+                            margin-left: 3px;
+                            color: #007bff;
+                        }
+                        .empty-row {
+                            height: 24px; /* Approx. 3 lines at 8px per line */
+                        }
+                        @media print {
+                            body {
+                                direction: rtl;
+                                background-color: #fff;
+                                padding: 0;
+                            }
+                            .form-container, .print-btn {
+                                display: none;
+                            }
+                            .report-container {
+                                box-shadow: none;
+                                padding: 0;
+                            }
+                            .summary-table th, .summary-table td {
+                                padding: 3px;
+                                font-size: 0.8rem;
+                            }
+                            .summary-table .number-cell {
+                                font-size: 16px;
+                                text-align: right;
+                            }
+                            td {
+                                padding: 1px 4px;
+                                font-size: 40px;
+                            }
+                            .category-header {
+                                font-size: 0.9rem;
+                            }
+                            .subcategory-header {
+                                font-size: 0.85rem;
+                            }
+                            .name-item {
+                                padding: 0px 3px;
+                                margin-bottom: 1px;
+                            }
+                            .empty-row {
+                                height: 24px;
+                            }
+                        }
+                        @media (max-width: 768px) {
+                            .summary-table th, .summary-table td {
+                                padding: 2px;
+                                font-size: 15px;
+                            }
+                            .summary-table .number-cell {
+                                font-size: 30px;
+                                text-align: right;
+                            }
+                            td {
+                                padding: 1px 3px;
+                                font-size: 30px;
+                            }
+                            .category-header {
+                                font-size: 20px;
+                            }
+                            .subcategory-header {
+                                font-size: 20px;
+                            }
+                            .count {
+                                font-size: 20px;
+                            }
+                            .name-item {
+                                font-size: 15px;
+                            }
+                        }
+                    </style>
+                    <div class="form-container">
+                        <label for="date-input">حدد اليوم:</label>
+                        <input type="date" id="date-input" />
+                        <button onclick="fetchNamesReport()">عرض</button>
+                    </div>
+                    <button class="print-btn" onclick="window.print()">طباعة</button>
+                    <div class="report-container" id="report-container">
+                        <h3 id="report-title">يومية: </h3>
+                        <div id="summary-table"></div>
+                        <div id="report-content"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toEasternArabicNumerals(num) {
+        const easternArabicNumerals = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+        return String(num).replace(/[0-9]/g, (digit) => easternArabicNumerals[digit]);
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const today = new Date();
+        const formattedToday = today.toISOString().split("T")[0];
+        document.getElementById("date-input").value = formattedToday;
+        fetchNamesReport();
+    });
+
+    function fetchNamesReport() {
+        const dateInput = document.getElementById("date-input").value;
+        const apiUrl = "/attendance/api/namesreport/";
+
+        fetch(apiUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCSRFToken(),
+                "Accept": "application/json",
+            },
+            body: JSON.stringify({ date: dateInput }),
+            credentials: 'include'
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    return response.text().then((text) => {
+                        throw new Error(`فشل في جلب البيانات: ${response.status} - ${text}`);
+                    });
+                }
+                return response.json();
+            })
+            .then((data) => {
+                updateReport(data);
+            })
+            .catch((error) => {
+                console.error("Error:", error);
+                alert(error.message);
+            });
+    }
+
+    function updateReport(data) {
+        const reportTitle = document.getElementById("report-title");
+        const summaryTable = document.getElementById("summary-table");
+        const reportContent = document.getElementById("report-content");
+
+        const formattedDate = data.formatted_date.replace(/[0-9]/g, (digit) => toEasternArabicNumerals(digit));
+        reportTitle.textContent = `يومية: ${formattedDate}`;
+
+        const summaryCategories = [
+            { key: 'dawrya', label: 'دورية' },
+            { key: 'tarka', label: 'طارئة' },
+            { key: 'sick', label: 'مرضي' },
+            { key: 'khas', label: 'خاصة' },
+            { key: 'mamrya', label: 'مأمورية' },
+            { key: 'intdab', label: 'إنتداب' },
+            { key: 'ferka', label: 'فرقة' },
+            { key: 'raha', label: 'راحة' },
+            { key: 'ghiyab', label: 'غياب' } // الإبقاء على فئة الغياب
+        ];
+
+        // Generate summary table
+        let summaryHtml = '<table class="summary-table">';
+        // Header row
+        summaryHtml += '<tr><th class="subcategory-header"></th><th>الإجمالي</th>';
+        summaryCategories.forEach(category => {
+            summaryHtml += `<th>${category.label}</th>`;
+        });
+        summaryHtml += '<th>الخوارج</th><th>الموجود</th></tr>';
+
+        // Data rows for subcategories
+        const subcategories = [
+            'ذكور (إداري)',
+            'ذكور (موسيقي)',
+            'إناث (إداري)',
+            'إناث (موسيقي)'
+        ];
+
+        const excludedFromKhawarij = ['nobtji', 'yawmi'];
+
+        subcategories.forEach((subcat, index) => {
+            summaryHtml += `<tr><td class="subcategory-header">${subcat}</td>`;
+            let total = 0;
+            let khawarijTotal = 0;
+
+            // حساب الإجمالي أولاً
+            summaryCategories.forEach(category => {
+                let m_e = data.day_data[`m_e_${category.key}`] || [];
+                let m_m = data.day_data[`m_m_${category.key}`] || [];
+                let f_e = data.day_data[`f_e_${category.key}`] || [];
+                let f_m = data.day_data[`f_m_${category.key}`] || [];
+                const counts = [m_e.length, m_m.length, f_e.length, f_m.length];
+                total += counts[index];
+                if (!excludedFromKhawarij.includes(category.key)) {
+                    khawarijTotal += counts[index];
+                }
+            });
+            const nobtjiCounts = [
+                data.day_data['m_e_nobtji']?.length || 0,
+                data.day_data['m_m_nobtji']?.length || 0,
+                data.day_data['f_e_nobtji']?.length || 0,
+                data.day_data['f_m_nobtji']?.length || 0
+            ];
+            const yawmiCounts = [
+                data.day_data['m_e_yawmi']?.length || 0,
+                data.day_data['m_m_yawmi']?.length || 0,
+                data.day_data['f_e_yawmi']?.length || 0,
+                data.day_data['f_m_yawmi']?.length || 0
+            ];
+            const nobtjiYawmiCount = nobtjiCounts[index] + yawmiCounts[index];
+            total += nobtjiYawmiCount;
+
+            // إضافة عمود الإجمالي أولاً
+            summaryHtml += `<td class="number-cell">${total > 0 ? toEasternArabicNumerals(total) : ''}</td>`;
+
+            // إضافة أعمدة الفئات
+            summaryCategories.forEach(category => {
+                let m_e = data.day_data[`m_e_${category.key}`] || [];
+                let m_m = data.day_data[`m_m_${category.key}`] || [];
+                let f_e = data.day_data[`f_e_${category.key}`] || [];
+                let f_m = data.day_data[`f_m_${category.key}`] || [];
+                const counts = [m_e.length, m_m.length, f_e.length, f_m.length];
+                const count = counts[index];
+                summaryHtml += `<td class="number-cell">${count > 0 ? toEasternArabicNumerals(count) : ''}</td>`;
+            });
+
+            // إضافة عمود الخوارج
+            summaryHtml += `<td class="number-cell">${khawarijTotal > 0 ? toEasternArabicNumerals(khawarijTotal) : ''}</td>`;
+
+            // إضافة عمود الموجود
+            summaryHtml += `<td class="number-cell">${nobtjiYawmiCount > 0 ? toEasternArabicNumerals(nobtjiYawmiCount) : ''}</td>`;
+            summaryHtml += '</tr>';
+        });
+
+        // صف الإجمالي العام
+        summaryHtml += '<tr><td class="subcategory-header"><strong>الإجمالي العام</strong></td>';
+
+        const columnTotals = new Array(summaryCategories.length).fill(0);
+        let totalKhawarij = 0;
+        let totalNobtjiYawmi = 0;
+        let grandTotal = 0;
+
+        subcategories.forEach((subcat, index) => {
+            summaryCategories.forEach((category, colIndex) => {
+                let m_e = data.day_data[`m_e_${category.key}`] || [];
+                let m_m = data.day_data[`m_m_${category.key}`] || [];
+                let f_e = data.day_data[`f_e_${category.key}`] || [];
+                let f_m = data.day_data[`f_m_${category.key}`] || [];
+                const counts = [m_e.length, m_m.length, f_e.length, f_m.length];
+                columnTotals[colIndex] += counts[index];
+            });
+
+            summaryCategories.forEach((category, colIndex) => {
+                if (!excludedFromKhawarij.includes(category.key)) {
+                    let m_e = data.day_data[`m_e_${category.key}`] || [];
+                    let m_m = data.day_data[`m_m_${category.key}`] || [];
+                    let f_e = data.day_data[`f_e_${category.key}`] || [];
+                    let f_m = data.day_data[`f_m_${category.key}`] || [];
+                    const counts = [m_e.length, m_m.length, f_e.length, f_m.length];
+                    totalKhawarij += counts[index];
+                }
+            });
+
+            const nobtjiCounts = [
+                data.day_data['m_e_nobtji']?.length || 0,
+                data.day_data['m_m_nobtji']?.length || 0,
+                data.day_data['f_e_nobtji']?.length || 0,
+                data.day_data['f_m_nobtji']?.length || 0
+            ];
+            const yawmiCounts = [
+                data.day_data['m_e_yawmi']?.length || 0,
+                data.day_data['m_m_yawmi']?.length || 0,
+                data.day_data['f_e_yawmi']?.length || 0,
+                data.day_data['f_m_yawmi']?.length || 0
+            ];
+            totalNobtjiYawmi += nobtjiCounts[index] + yawmiCounts[index];
+        });
+
+        grandTotal = totalKhawarij + totalNobtjiYawmi;
+
+        // إضافة عمود الإجمالي العام أولاً
+        summaryHtml += `<td class="number-cell"><strong>${toEasternArabicNumerals(grandTotal)}</strong></td>`;
+
+        // إضافة أعمدة الفئات
+        summaryCategories.forEach((category, index) => {
+            summaryHtml += `<td class="number-cell"><strong>${toEasternArabicNumerals(columnTotals[index])}</strong></td>`;
+        });
+
+        // إضافة أعمدة الخوارج والموجود
+        summaryHtml += `<td class="number-cell"><strong>${toEasternArabicNumerals(totalKhawarij)}</strong></td>`;
+        summaryHtml += `<td class="number-cell"><strong>${toEasternArabicNumerals(totalNobtjiYawmi)}</strong></td>`;
+        summaryHtml += '</tr>';
+
+        summaryHtml += '</table>';
+        summaryTable.innerHTML = summaryHtml;
+
+        // Categories for main report table (including nobtji, yawmi, and ghiyab)
+        const categories = [
+            { key: 'dawrya', label: 'دورية' },
+            { key: 'tarka', label: 'طارئة' },
+            { key: 'sick', label: 'مرضي' },
+            { key: 'khas', label: 'خاصة' },
+            { key: 'mamrya', label: 'مأمورية' },
+            { key: 'intdab', label: 'إنتداب' },
+            { key: 'ferka', label: 'فرقة' },
+            { key: 'raha', label: 'راحة' },
+            { key: 'nobtji', label: 'نوبتجي' },
+            { key: 'yawmi', label: 'يومي' },
+            { key: 'ghiyab', label: 'غياب' } // الإبقاء على فئة الغياب
+        ];
+
+        // Generate main report table
+        let allItems = [];
+        let globalIndex = 1;
+
+        categories.forEach(category => {
+            let m_e = data.day_data[`m_e_${category.key}`] || [];
+            let m_m = data.day_data[`m_m_${category.key}`] || [];
+            let f_e = data.day_data[`f_e_${category.key}`] || [];
+            let f_m = data.day_data[`f_m_${category.key}`] || [];
+
+            const totalCount = m_e.length + m_m.length + f_e.length + f_m.length;
+
+            if (totalCount) {
+                allItems.push({
+                    type: 'category',
+                    content: `${category.label} <span class="count">(${toEasternArabicNumerals(totalCount)})</span>`
+                });
+
+                // إعادة تعيين العداد لكل مجموعة فرعية
+                let groupIndex = 1;
+
+                if (m_e.length) {
+                    allItems.push({
+                        type: 'subcategory',
+                        content: `ذكور (إداري) <span class="count">(${toEasternArabicNumerals(m_e.length)})</span>`
+                    });
+                    m_e.forEach(name => {
+                        allItems.push({
+                            type: 'name',
+                            content: `<span class="name-item" data-index="${toEasternArabicNumerals(groupIndex)}">${name}</span>`
+                        });
+                        groupIndex++;
+                    });
+                    for (let i = 0; i < 1; i++) {
+                        allItems.push({ type: 'empty' });
+                    }
+                }
+
+                if (m_m.length) {
+                    allItems.push({
+                        type: 'subcategory',
+                        content: `ذكور (موسيقي) <span class="count">(${toEasternArabicNumerals(m_m.length)})</span>`
+                    });
+                    // إعادة تعيين العداد للمجموعة الفرعية الجديدة
+                    groupIndex = 1;
+                    m_m.forEach(name => {
+                        allItems.push({
+                            type: 'name',
+                            content: `<span class="name-item" data-index="${toEasternArabicNumerals(groupIndex)}">${name}</span>`
+                        });
+                        groupIndex++;
+                    });
+                    for (let i = 0; i < 1; i++) {
+                        allItems.push({ type: 'empty' });
+                    }
+                }
+
+                if (f_e.length) {
+                    allItems.push({
+                        type: 'subcategory',
+                        content: `إناث (إداري) <span class="count">(${toEasternArabicNumerals(f_e.length)})</span>`
+                    });
+                    // إعادة تعيين العداد للمجموعة الفرعية الجديدة
+                    groupIndex = 1;
+                    f_e.forEach(name => {
+                        allItems.push({
+                            type: 'name',
+                            content: `<span class="name-item" data-index="${toEasternArabicNumerals(groupIndex)}">${name}</span>`
+                        });
+                        groupIndex++;
+                    });
+                    for (let i = 0; i < 5; i++) {
+                        allItems.push({ type: 'empty' });
+                    }
+                }
+
+                if (f_m.length) {
+                    allItems.push({
+                        type: 'subcategory',
+                        content: `إناث (موسيقي) <span class="count">(${toEasternArabicNumerals(f_m.length)})</span>`
+                    });
+                    // إعادة تعيين العداد للمجموعة الفرعية الجديدة
+                    groupIndex = 1;
+                    f_m.forEach(name => {
+                        allItems.push({
+                            type: 'name',
+                            content: `<span class="name-item" data-index="${toEasternArabicNumerals(groupIndex)}">${name}</span>`
+                        });
+                        groupIndex++;
+                    });
+                    for (let i = 0; i < 5; i++) {
+                        allItems.push({ type: 'empty' });
+                    }
+                }
+            }
+        });
+
+        // Distribute items into 5 columns
+        const maxRows = Math.ceil(allItems.length / 5);
+        let html = '<table><tr>';
+        for (let col = 0; col < 6; col++) {
+            html += '<td>';
+            for (let row = 0; row < maxRows; row++) {
+                const index = row + col * maxRows;
+                if (index < allItems.length) {
+                    const item = allItems[index];
+                    if (item.type === 'category') {
+                        html += `<div class="category-header">${item.content}</div>`;
+                    } else if (item.type === 'subcategory') {
+                        html += `<div class="subcategory-header">${item.content}</div>`;
+                    } else if (item.type === 'name') {
+                        html += item.content;
+                    } else if (item.type === 'empty') {
+                        html += '<div class="empty-row"></div>';
+                    }
+                }
+            }
+            html += '</td>';
+        }
+        html += '</tr></table>';
+
+        reportContent.innerHTML = html || '<p>لا توجد بيانات لعرضها</p>';
+    }
+
+    function getCSRFToken() {
+        const name = "csrftoken";
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== "") {
+            const cookies = document.cookie.split(";");
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === name + "=") {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock %} 

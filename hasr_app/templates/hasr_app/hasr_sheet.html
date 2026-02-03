@@ -1,0 +1,314 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load hindi_digits %}
+
+{% block content %}
+<style>
+    body {
+        font-family: 'Times New Roman', Times, serif;
+        font-size: 14pt;
+        margin: 0;
+        padding: 20px;
+        background-color: #fff;
+    }
+    .hasr-container {
+        width: 210mm;
+        min-height: 297mm;
+        margin: auto;
+        background: white;
+        padding: 10mm;
+        box-sizing: border-box;
+    }
+    @media print {
+        body { background: none; margin: 0; padding: 0; }
+        .hasr-container { width: 100%; margin: 0; padding: 0; }
+        .no-print { display: none !important; }
+        
+        /* Hide base template elements if any */
+        header, footer, nav, .sidebar { display: none !important; }
+    }
+
+    /* Override base styles for this specific sheet if needed */
+    h1, h2, h3 { text-align: center; margin: 10px 0; }
+    
+    /* Main table properties */
+    table.main-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+        table-layout: fixed;
+    }
+    table.main-table th, table.main-table td {
+        border: 1px solid #000;
+        padding: 0;
+        vertical-align: top;
+    }
+    table.main-table th {
+        font-weight: bold;
+        background-color: #eaeaea;
+        text-align: center;
+        padding: 5px;
+    }
+    
+    /* Internal lists/rows styling */
+    .inner-row {
+        border-bottom: 1px solid #000;
+        padding: 5px;
+        min-height: 25px; /* Minimum height for empty rows */
+        box-sizing: border-box;
+    }
+    .inner-row:last-child {
+        border-bottom: none;
+    }
+    
+    .content-cell {
+        padding: 5px;
+        min-height: 25px;
+    }
+    
+    /* Split cell (vertical split or horizontal split) */
+    .split-v-top {
+        border-bottom: 1px solid #000;
+        padding: 5px;
+        min-height: 30px;
+    }
+    .split-v-bottom {
+        padding: 5px;
+    }
+
+</style>
+
+<div class="no-print" style="text-align:center; padding: 10px; background: #eee; margin-bottom: 20px;">
+    <div style="margin-bottom: 10px;">
+        <label for="employeeSelect" style="font-weight: bold; margin-left: 10px;">اختر الموظف:</label>
+        <select id="employeeSelect" onchange="if(this.value) window.location.href='/hasr/'+this.value+'/'" style="padding: 5px; font-size: 16px; width: 300px;">
+            <option value="">-- اختر --</option>
+            {% for emp in all_employees %}
+                <option value="{{ emp.id }}" {% if emp.id == employee.id %}selected{% endif %}>
+                    {{ emp.name }} {% if emp.nickname %}({{ emp.nickname }}){% endif %}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+    <button onclick="window.print()" style="padding: 10px 20px; font-size: 16px; cursor: pointer;">طباعة (Print)</button>
+</div>
+
+<div class="hasr-container">
+    <h2 style="text-align: center;">دفتر حصر القوة</h2>
+    <br>
+
+    <!-- Header / Personal Info -->
+    <table class="main-table" cellpadding="0" cellspacing="0">
+        <tr>
+            <th width="15%">الاسم</th>
+            <td width="35%" class="content-cell">{{ employee.name|default:"" }}</td>
+            <th width="15%">رقم الشرطة</th>
+            <td width="35%" class="content-cell">{{ employee.police_number|to_hindi|default:"" }}</td>
+        </tr>
+        <tr>
+            <th>المؤهل الدراسي</th>
+            <td class="content-cell">
+                {% for edu in employee.educations.all %}
+                    {{ edu.qualification_type }} {% if not forloop.last %} - {% endif %}
+                {% empty %}
+                {% endfor %}
+            </td>
+            <th>الرقم التأميني</th>
+            <td class="content-cell">{{ employee.insurance_number|to_hindi|default:"" }}</td>
+        </tr>
+        <tr>
+            <th>تاريخ الميلاد</th>
+            <td class="content-cell">{{ employee.date_of_birth|date:"Y/m/d"|to_hindi|default:"" }}</td>
+            <th>الرقم القومي</th>
+            <td class="content-cell">{{ employee.id_number|to_hindi|default:"" }}</td>
+        </tr>
+        <tr>
+            <th>درجة القراءة</th>
+            <td class="content-cell"></td> <!-- Empty -->
+            <th>تاريخ التعيين</th>
+            <td class="content-cell">{{ employee.date_of_appointment|date:"Y/m/d"|to_hindi|default:"" }}</td>
+        </tr>
+        <tr>
+            <th>تاريخ التثبيت</th>
+            <td class="content-cell">{{ employee.date_of_appointment|date:"Y/m/d"|to_hindi|default:"" }}</td>
+            <th>تاريخ المعاش</th>
+            <td class="content-cell">{{ retirement_date|date:"Y/m/d"|to_hindi|default:"" }}</td>
+        </tr>
+    </table>
+
+    <!-- First Table -->
+    <table class="main-table">
+        <thead>
+            <!-- Row 1: Main Headers -->
+            <tr>
+                <th width="12%" rowspan="2" style="vertical-align: middle;">الدرجة</th>
+                <th width="20%" rowspan="2" style="vertical-align: middle;">محل الميلاد/الإقامة</th>
+                <th width="20%" colspan="2">الحالة الاجتماعية</th>
+                <th width="24%" rowspan="2" style="vertical-align: middle;">الفرق التدريبية</th>
+                <th rowspan="2" style="vertical-align: middle;">مجالس التأديب</th>
+            </tr>
+            <!-- Row 2: Sub Headers -->
+            <tr>
+                <th width="10%">أعزب/متزوج</th>
+                <th width="10%">عدد الأولاد</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <!-- Rank -->
+                <td style="text-align: center; vertical-align: middle;">{{ rank_name }}</td>
+                
+                <!-- Birth & Residence: Vertical Split -->
+                <td>
+                    <div class="split-v-top">
+                        محل الميلاد: {{ birth_place }}
+                    </div>
+                    <div class="split-v-bottom">
+                        الإقامة: {{ residence_str }}
+                    </div>
+                </td>
+                
+                <!-- Marital Status: Column 1 -->
+                <td style="text-align: center; vertical-align: middle;">
+                     {{ marital_status }}
+                </td>
+
+                <!-- Marital Status: Column 2 (Children) -->
+                <td style="text-align: center; vertical-align: middle;">
+                    {{ children_count|to_hindi }}
+                </td>
+                
+                <!-- Training Teams: List (min 10) -->
+                <td>
+                    {% for team in training_teams %}
+                        <div class="inner-row">{{ team|default:"&nbsp;" }}</div>
+                    {% endfor %}
+                </td>
+                
+                <!-- Disciplinary: NO ROWS requested update -->
+                <td style="vertical-align: top; padding: 5px;">
+                    <!-- Just content, no rows forcing -->
+                    {% for item in disciplinary %}
+                        <div>{{ item }}</div>
+                    {% endfor %}
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Second Table: Promotions & Bonuses -->
+    <table class="main-table">
+        <thead>
+            <tr>
+                <th width="10%">رقم الدفعة</th>
+                <th width="20%">الترقيات</th>
+                <th width="15%">تاريخ الترقية</th>
+                <th width="25%">العلاوات التشجيعية</th>
+                <th width="15%">مأمورية حفظ السلام</th>
+                <th width="15%">الحج والعمرة</th>
+            </tr>
+        </thead>
+        <tbody>
+             <tr>
+                 <!-- Batch Number -->
+                 <td style="vertical-align: middle; text-align: center;"></td>
+                 
+                 <!-- Promotions -->
+                 <td>
+                    {% for promo in promotions %}
+                        <div class="inner-row">
+                             {% if promo %}{{ promo.to_rank.name }}{% else %}&nbsp;{% endif %}
+                        </div>
+                    {% endfor %}
+                 </td>
+                 
+                 <!-- Promotion Dates -->
+                 <td>
+                    {% for promo in promotions %}
+                        <div class="inner-row">
+                             {% if promo %}{{ promo.promotion_date|date:"Y/m/d"|to_hindi }}{% else %}&nbsp;{% endif %}
+                        </div>
+                    {% endfor %}
+                 </td>
+                 
+                 <!-- Bonuses -->
+                 <td>
+                    {% for elawa in elawat %}
+                        <div class="inner-row">
+                             {% if elawa %}{{ elawa.elawa_date|date:"Y/m/d"|to_hindi }}{% else %}&nbsp;{% endif %}
+                        </div>
+                    {% endfor %}
+                 </td>
+                 
+                 <!-- Peacekeeping -->
+                 <td style="vertical-align: top; padding: 5px;">
+                     {% for p in peacekeeping %}
+                        <div>{{ p }}</div>
+                     {% endfor %}
+                 </td>
+                 
+                 <!-- Hajj -->
+                 <td style="vertical-align: top; padding: 5px;">
+                     {% for h in hajj %}
+                        <div>{{ h }}</div>
+                     {% endfor %}
+                 </td>
+             </tr>
+        </tbody>
+    </table>
+
+    <!-- Third Table: Leaves & History -->
+    <table class="main-table">
+        <thead>
+            <tr>
+                <th>الإعارة</th>
+                <th>التكريم</th>
+                <th>جهات العمل السابقة</th>
+                <th>الإجازات الخاصة</th>
+                <th>التحاق بالإدارة</th>
+                <th>الوقف</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td></td> <!-- Loan -->
+                
+                <!-- Honors -->
+                <td>
+                    {% for h in honors %}
+                        <div class="inner-row">&nbsp;</div>
+                    {% endfor %}
+                </td>
+                
+                <!-- Prev Work -->
+                <td>
+                    {% for w in prev_work %}
+                        <div class="inner-row">&nbsp;</div>
+                    {% endfor %}
+                </td>
+                
+                <!-- Special Leaves -->
+                <td>
+                    {% for leave in special_leaves %}
+                        <div class="inner-row">
+                            {% if leave %}
+                                {{ leave.leave_reason }} ({{ leave.start_date|date:"Y/m/d"|to_hindi }})
+                            {% else %}
+                                &nbsp;
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </td>
+                
+                <td class="content-cell" style="vertical-align: middle; text-align: center;">
+                    {{ employee.date_of_edara|date:"Y/m/d"|to_hindi|default:"" }}
+                </td>
+                
+                <td></td> <!-- Suspension -->
+            </tr>
+        </tbody>
+    </table>
+
+</div>
+
+{% endblock %}

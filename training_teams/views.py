@@ -48,7 +48,9 @@ def training_teams_view(request):
         training_teams[team_name].append(team.employee.name)  # إضافة أسماء الأفراد
 
     # ترتيب الفرق حسب عدد الأفراد (من الأكثر إلى الأقل)
-    training_teams = dict(sorted(training_teams.items(), key=lambda x: len(x[1]), reverse=True))
+    # training_teams = dict(sorted(training_teams.items(), key=lambda x: len(x[1]), reverse=True))
+    training_teams = dict(sorted(training_teams.items(), key=lambda x: x[0]))  # ترتيب حسب اسم الفرقة
+
 
     # التأكد من أن كل فرقة تحتوي على 80 صفًا على الأقل
     for team_name in training_teams:
@@ -82,8 +84,8 @@ def training_teams_filter(request):
     if employee_query:
         teams = teams.filter(employee_id=employee_query)
 
-    training_teams = TrainingTeam.objects.all()
-    employees = Employee.objects.all()
+    training_teams = TrainingTeam.objects.all().order_by('name')
+    employees = Employee.objects.all().order_by('sort_number')
 
     context = {
         'teams': teams,
@@ -139,15 +141,39 @@ def insert_training(request):
 # 6. تعديل سجل تدريبي (edit_training_record.html)
 @login_required(login_url='/login/')
 def edit_training_record(request):
-    employees = Employee.objects.all()
+    employees = Employee.objects.all().order_by('sort_number')
     return render(request, 'training/edit_training_record.html', {'employees': employees})
+
+
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+from .models import EmTrainingTeams
+
+@csrf_exempt
+@require_http_methods(["DELETE"])
+def delete_training_record(request, training_id):
+    try:
+        # Delete record from EmTrainingTeams using the provided training_id
+        training_record = EmTrainingTeams.objects.get(id=training_id)
+        training_record.delete()
+        return JsonResponse({"success": True, "message": "تم الحذف بنجاح"})
+    except EmTrainingTeams.DoesNotExist:
+        return JsonResponse({"success": False, "error": "السجل التدريبي غير موجود"}, status=404)
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=500)
+
+
+
+
 
 @login_required(login_url='/login/')
 def get_employee_training_data(request, employee_id):
     """Fetch training data for a selected employee and return as JSON."""
     training_data = EmTrainingTeams.objects.filter(employee_id=employee_id).select_related('place', 'training_team').values(
         'id', 'employee__name', 'start_date', 'end_date', 'result', 'round_num', 'place_id', 'training_team_id'
-    )
+    ).order_by('start_date')
     
     places = list(Places.objects.values('id', 'name'))  # Fetch available places
     training_teams = list(TrainingTeam.objects.values('id', 'name'))  # Fetch available training teams

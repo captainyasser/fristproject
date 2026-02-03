@@ -1,0 +1,105 @@
+<!-- E:\yasser\emapi2025\myproject\templates\periodic_allowances\allowances_dftr.html -->
+<!-- Updated template to include rank column before each year -->
+
+{% extends 'base.html' %}
+{% load static %}
+
+{% block head %}
+    <title>دفتر العلاوات الدورية</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            direction: rtl;
+            text-align: right;
+            background-color: #f8f9fa;
+        }
+        h1 {
+            color: #0d6efd;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        table.dataTable thead th {
+            background-color: #e9ecef;
+        }
+        .container-fluid {
+            padding: 20px;
+        }
+        .year-header {
+            text-align: center;
+            font-weight: bold;
+        }
+        .value-header {
+            text-align: center;
+            font-weight: bold;
+        }
+        .rank-header {
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1>دفتر العلاوات الدورية</h1>
+
+    <table id="allowances_table" class="display nowrap" style="width:100%">
+        <thead>
+            <tr>
+                <th>م</th>
+                <th>الدرجة</th>
+                <th>رقم الشرطة</th>
+                <th>الاسم</th>
+                <th>تاريخ الميلاد</th>
+                <th>تاريخ التعيين</th>
+                {% for _ in pair_indices %}
+                    <th class="rank-header">الدرجة</th>
+                    <th class="year-header">العام</th>
+                    <th class="value-header">قيمة العلاوة</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in data_list %}
+            <tr>
+                <td>{{ item.serial }}</td>
+                <td>{{ item.rank_name }}</td>
+                <td>{{ item.police_number }}</td>
+                <td>{{ item.name }}</td>
+                <td>{{ item.dob }}</td>
+                <td>{{ item.appointment }}</td>
+                {% for pair in item.year_value_pairs %}
+                    <td>{{ pair.0 }}</td>
+                    <td>{{ pair.1 }}</td>
+                    <td>{{ pair.2 }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        var table = $('#allowances_table').DataTable({
+            responsive: true,
+            dom: 'Bfrtip',
+            buttons: ['copy', 'excel', 'print'],
+            lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "الكل"]],
+            pageLength: 25,
+            language: {
+                url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/ar.json"
+            },
+            order: [[0, 'asc']]  // ترتيب افتراضي حسب المسلسل
+        });
+    });
+</script>
+{% endblock %}

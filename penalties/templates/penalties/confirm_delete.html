@@ -1,0 +1,42 @@
+<!-- F:\emapi-edit\myproject\penalties\templates\penalties\confirm_delete.html -->
+{% extends 'base.html' %}
+{% block title %}تأكيد الحذف{% endblock %}
+
+{% block content %}
+<div class="">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>تأكيد الحذف</h1>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="card card-danger card-outline shadow-sm">
+                        <div class="card-header">
+                            <h3 class="card-title">هل أنت متأكد؟</h3>
+                        </div>
+                        <div class="card-body">
+                            <p class="lead">هل أنت متأكد أنك تريد حذف هذا العنصر: <br><strong>"{{ object }}"</strong>؟</p>
+                            <p class="text-danger small"><i class="fas fa-exclamation-triangle"></i> هذه العملية لا يمكن التراجع عنها.</p>
+                        </div>
+                        <div class="card-footer bg-white">
+                            <form method="post">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger"><i class="fas fa-trash"></i> نعم، حذف نهائي</button>
+                                <a href="javascript:history.back()" class="btn btn-default float-right">إلغاء</a>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

@@ -1,0 +1,332 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
+<style>
+    .spinner { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 40px; color: #007bff; z-index: 9999; }
+    .table-container { margin-top: 20px; }
+    .details-toggle { cursor: pointer; color: #007bff; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center mb-4">إدارة الموظفين</h2>
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <input type="text" id="searchInput" class="form-control" placeholder="ابحث بالاسم أو الرقم القومي">
+        </div>
+        <div class="col-md-6 text-right">
+            <button class="btn btn-success" data-toggle="modal" data-target="#addModal">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/></svg> إضافة موظف
+            </button>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table id="employeesTable" class="table table-striped table-bordered">
+            <thead class="thead-dark">
+                <tr>
+                    <th>الترتيب</th>
+                    <th>الاسم</th>
+                    <th>الدرجة</th>
+                    <th>القسم</th>
+                    <th>رقم الهاتف</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+
+<div id="loadingSpinner" class="spinner">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" stroke-width="2" stroke-linecap="round" stroke-dasharray="50 150" stroke-dashoffset="50"/></svg>
+</div>
+
+<div class="modal fade" id="addModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">إضافة موظف جديد</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+            </div>
+            <div class="modal-body">
+                <form id="addForm">
+                    <div class="form-group"><label>رقم الترتيب</label><input type="number" name="sort_number" class="form-control" required></div>
+                    <div class="form-group"><label>الاسم</label><input type="text" name="name" class="form-control" required></div>
+                    <div class="form-group"><label>الدرجة</label><select name="rank_id" class="form-control" id="addRankSelect" required></select></div>
+                    <div class="form-group"><label>القسم</label><select name="department_id" class="form-control" id="addDeptSelect" required></select></div>
+                    <div class="form-group"><label>رقم الهاتف</label><input type="text" name="phone_number" class="form-control"></div>
+                    <button type="submit" class="btn btn-primary">إضافة</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="editModalContainer"></div>
+<div id="detailsModalContainer"></div>
+
+<script async src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script async src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+<script async src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script async src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
+
+<script>
+let employeesTable;
+let ranksCache = [];
+let departmentsCache = [];
+
+function fetchEmployees(search = '', page = 1) {
+    const url = `/em_data/api/employees/?search=${encodeURIComponent(search)}&page=${page}&page_size=500`;
+    $('#loadingSpinner').show();
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (employeesTable) employeesTable.destroy();
+
+            employeesTable = $('#employeesTable').DataTable({
+                data: data.results,
+                deferRender: true,
+                columns: [
+                    { data: 'sort_number', defaultContent: '-' },
+                    { data: 'name', defaultContent: '-' },
+                    { data: 'rank', render: data => data ? data.name : '-', defaultContent: '-' },
+                    { data: 'department', render: data => data ? data.name : '-', defaultContent: '-' },
+                    { data: 'phone_number', defaultContent: '-' },
+                    {
+                        data: null,
+                        render: data => `<button class="btn btn-sm btn-info mr-1" onclick="openEditModal(${data.id})">تعديل</button>
+                                        <span class="details-toggle" onclick="openDetailsModal(${data.id})">تفاصيل</span>`
+                    }
+                ],
+                language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/ar.json' },
+                pageLength: 50,
+                paging: true, // تفعيل التقسيم
+                searching: false,
+                ordering: true, // تفعيل الترتيب لضمان عمل أزرار التالي والسابق
+                order: [[0, 'asc']],
+                scrollY: '50vh',
+                scrollCollapse: true
+            });
+
+            populateModals(data.results);
+            $('#loadingSpinner').hide();
+        })
+        .catch(error => {
+            console.error('Error fetching employees:', error);
+            $('#loadingSpinner').hide();
+        });
+}
+
+function populateModals(employees) {
+    if (!ranksCache.length) fetchRanks();
+    if (!departmentsCache.length) fetchDepartments();
+}
+
+function fetchRanks() {
+    fetch('/em_data/api/ranks/')
+        .then(response => response.json())
+        .then(ranks => {
+            ranksCache = ranks;
+            const addRankSelect = document.getElementById('addRankSelect');
+            addRankSelect.innerHTML = '<option value="">اختر الدرجة</option>' + ranks.map(rank => `<option value="${rank.id}">${rank.name}</option>`).join('');
+        });
+}
+
+function fetchDepartments() {
+    fetch('http://http://2.21.2.99:9090/departments/api/departments/')
+        .then(response => response.json())
+        .then(depts => {
+            departmentsCache = depts;
+            const addDeptSelect = document.getElementById('addDeptSelect');
+            addDeptSelect.innerHTML = '<option value="">اختر القسم</option>' + depts.map(dept => `<option value="${dept.id}">${dept.name}</option>`).join('');
+        });
+}
+
+document.getElementById('addForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    $('#loadingSpinner').show();
+    fetch('/em_data/api/employees/', {
+        method: 'POST',
+        body: formData,
+        headers: { 'X-CSRFToken': getCookie('csrftoken') }
+    })
+    .then(response => response.json())
+    .then(data => {
+        $('#addModal').modal('hide');
+        this.reset();
+        fetchEmployees(document.getElementById('searchInput').value);
+        $('#loadingSpinner').hide();
+        alert('تمت الإضافة بنجاح');
+    })
+    .catch(error => {
+        $('#loadingSpinner').hide();
+        alert('حدث خطأ أثناء الإضافة');
+    });
+});
+
+function openEditModal(id) {
+    const emp = employeesTable.data().toArray().find(e => e.id === id);
+    const modal = `
+        <div class="modal fade" id="editModal${id}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">تعديل ${emp.name || '-'}</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editForm${id}">
+                            <div class="form-group"><label>رقم الترتيب</label><input type="number" name="sort_number" class="form-control" value="${emp.sort_number || ''}" required></div>
+                            <div class="form-group"><label>الاسم</label><input type="text" name="name" class="form-control" value="${emp.name || ''}" required></div>
+                            <div class="form-group"><label>اللقب</label><input type="text" name="nickname" class="form-control" value="${emp.nickname || ''}"></div>
+                            <div class="form-group"><label>الرقم القومي</label><input type="text" name="id_number" class="form-control" value="${emp.id_number || ''}"></div>
+                            <div class="form-group"><label>الجنس</label><select name="gender" class="form-control">
+                                <option value="" ${!emp.gender ? 'selected' : ''}>اختر الجنس</option>
+                                <option value="أنثى" ${emp.gender === 'أنثى' ? 'selected' : ''}>أنثى</option>
+                                <option value="ذكر" ${emp.gender === 'ذكر' ? 'selected' : ''}>ذكر</option>
+                            </select></div>
+                            <div class="form-group"><label>الحالة الاجتماعية</label><select name="marital_status" class="form-control">
+                                <option value="" ${!emp.marital_status ? 'selected' : ''}>اختر الحالة</option>
+                                <option value="أعزب" ${emp.marital_status === 'أعزب' ? 'selected' : ''}>أعزب</option>
+                                <option value="متزوج" ${emp.marital_status === 'متزوج' ? 'selected' : ''}>متزوج</option>
+                                <option value="مطلق" ${emp.marital_status === 'مطلق' ? 'selected' : ''}>مطلق</option>
+                            </select></div>
+                            <div class="form-group"><label>رقم الهاتف</label><input type="text" name="phone_number" class="form-control" value="${emp.phone_number || ''}"></div>
+                            <div class="form-group"><label>رقم الهاتف البديل</label><input type="text" name="alt_phone_number" class="form-control" value="${emp.alt_phone_number || ''}"></div>
+                            <div class="form-group"><label>المحافظة</label><input type="text" name="governorate" class="form-control" value="${emp.governorate || ''}"></div>
+                            <div class="form-group"><label>المركز</label><input type="text" name="district" class="form-control" value="${emp.district || ''}"></div>
+                            <div class="form-group"><label>العنوان</label><input type="text" name="address" class="form-control" value="${emp.address || ''}"></div>
+                            <div class="form-group"><label>الدرجة</label><select name="rank_id" class="form-control" id="editRankSelect${id}" required>
+                                ${ranksCache.map(rank => `<option value="${rank.id}" ${emp.rank && emp.rank.id === rank.id ? 'selected' : ''}>${rank.name}</option>`).join('')}
+                            </select></div>
+                            <div class="form-group"><label>القسم</label><select name="department_id" class="form-control" id="editDeptSelect${id}" required>
+                                ${departmentsCache.map(dept => `<option value="${dept.id}" ${emp.department && emp.department.id === dept.id ? 'selected' : ''}>${dept.name}</option>`).join('')}
+                            </select></div>
+                            <div class="form-group"><label>رقم الشرطة</label><input type="text" name="police_number" class="form-control" value="${emp.police_number || ''}"></div>
+                            <div class="form-group"><label>رقم التأمين</label><input type="text" name="insurance_number" class="form-control" value="${emp.insurance_number || ''}"></div>
+                            <div class="form-group"><label>التشغيل</label><input type="text" name="operation" class="form-control" value="${emp.operation || ''}"></div>
+                            <div class="form-group"><label>ملاحظات</label><input type="text" name="nots" class="form-control" value="${emp.nots || ''}"></div>
+                            <button type="submit" class="btn btn-primary">حفظ</button>
+                            <button type="button" class="btn btn-danger ml-2" onclick="deleteEmployee(${id})">حذف</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    $('#editModalContainer').html(modal);
+    $(`#editModal${id}`).modal('show');
+    attachEditListener(id);
+}
+
+function openDetailsModal(id) {
+    const emp = employeesTable.data().toArray().find(e => e.id === id);
+    const modal = `
+        <div class="modal fade" id="detailsModal${id}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">تفاصيل ${emp.name || '-'}</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group"><label>رقم الترتيب</label><input type="number" class="form-control" value="${emp.sort_number || '-'}" readonly></div>
+                        <div class="form-group"><label>الاسم</label><input type="text" class="form-control" value="${emp.name || '-'}" readonly></div>
+                        <div class="form-group"><label>اللقب</label><input type="text" class="form-control" value="${emp.nickname || '-'}" readonly></div>
+                        <div class="form-group"><label>الرقم القومي</label><input type="text" class="form-control" value="${emp.id_number || '-'}" readonly></div>
+                        <div class="form-group"><label>الجنس</label><input type="text" class="form-control" value="${emp.gender || '-'}" readonly></div>
+                        <div class="form-group"><label>الحالة الاجتماعية</label><input type="text" class="form-control" value="${emp.marital_status || '-'}" readonly></div>
+                        <div class="form-group"><label>رقم الهاتف</label><input type="text" class="form-control" value="${emp.phone_number || '-'}" readonly></div>
+                        <div class="form-group"><label>رقم الهاتف البديل</label><input type="text" class="form-control" value="${emp.alt_phone_number || '-'}" readonly></div>
+                        <div class="form-group"><label>المحافظة</label><input type="text" class="form-control" value="${emp.governorate || '-'}" readonly></div>
+                        <div class="form-group"><label>المركز</label><input type="text" class="form-control" value="${emp.district || '-'}" readonly></div>
+                        <div class="form-group"><label>العنوان</label><input type="text" class="form-control" value="${emp.address || '-'}" readonly></div>
+                        <div class="form-group"><label>الدرجة</label><input type="text" class="form-control" value="${emp.rank ? emp.rank.name : '-'}" readonly></div>
+                        <div class="form-group"><label>القسم</label><input type="text" class="form-control" value="${emp.department ? emp.department.name : '-'}" readonly></div>
+                        <div class="form-group"><label>رقم الشرطة</label><input type="text" class="form-control" value="${emp.police_number || '-'}" readonly></div>
+                        <div class="form-group"><label>رقم التأمين</label><input type="text" class="form-control" value="${emp.insurance_number || '-'}" readonly></div>
+                        <div class="form-group"><label>التشغيل</label><input type="text" class="form-control" value="${emp.operation || '-'}" readonly></div>
+                        <div class="form-group"><label>ملاحظات</label><input type="text" class="form-control" value="${emp.nots || '-'}" readonly></div>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    $('#detailsModalContainer').html(modal);
+    $(`#detailsModal${id}`).modal('show');
+}
+
+function attachEditListener(id) {
+    document.getElementById(`editForm${id}`).addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        $('#loadingSpinner').show();
+        fetch(`/em_data/api/employees/${id}/`, {
+            method: 'PATCH',
+            body: formData,
+            headers: { 'X-CSRFToken': getCookie('csrftoken') }
+        })
+        .then(response => response.json())
+        .then(data => {
+            $(`#editModal${id}`).modal('hide');
+            fetchEmployees(document.getElementById('searchInput').value);
+            $('#loadingSpinner').hide();
+            alert('تم التعديل بنجاح');
+        })
+        .catch(error => {
+            $('#loadingSpinner').hide();
+            alert('حدث خطأ أثناء التعديل');
+        });
+    });
+}
+
+function deleteEmployee(id) {
+    if (confirm('هل أنت متأكد من الحذف؟')) {
+        $('#loadingSpinner').show();
+        fetch(`/em_data/api/employees/${id}/`, {
+            method: 'DELETE',
+            headers: { 'X-CSRFToken': getCookie('csrftoken') }
+        })
+        .then(response => {
+            $(`#editModal${id}`).modal('hide');
+            fetchEmployees(document.getElementById('searchInput').value);
+            $('#loadingSpinner').hide();
+            alert('تم الحذف بنجاح');
+        })
+        .catch(error => {
+            $('#loadingSpinner').hide();
+            alert('حدث خطأ أثناء الحذف');
+        });
+    }
+}
+
+let debounceTimeout;
+document.getElementById('searchInput').addEventListener('input', function() {
+    clearTimeout(debounceTimeout);
+    debounceTimeout = setTimeout(() => fetchEmployees(this.value), 300);
+});
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+window.onload = function() {
+    fetchEmployees();
+};
+</script>
+{% endblock %}

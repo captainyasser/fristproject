@@ -15,7 +15,7 @@
 
         <!-- نموذج اختيار الموظف -->
         <div class="row g-3 align-items-center mb-4">
-            <div class="col-md-6">
+            <div class="col-md-12">
                 <form method="GET">
                     <div class="input-group">
                         <span class="input-group-text"><i class="fas fa-user"></i></span>
@@ -31,7 +31,7 @@
                 </form>
             </div>
             {% if selected_employee_id %}
-            <div class="col-md-6 text-md-end">
+            <div class="col-md-12 text-md-end">
                 <button type="button" class="btn btn-success" data-toggle="modal" data-target="#addPromotionModal">
                     <i class="fas fa-plus"></i> إضافة ترقية جديدة
                 </button>
@@ -121,19 +121,19 @@
                 <div class="modal-body">
                     <input type="hidden" name="employee" value="{{ selected_employee_id }}">
                     <div class="row g-3">
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <label class="form-label fw-bold">الدرجة السابقة:</label>
                             {{ form.from_rank }}
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <label class="form-label fw-bold">الدرجة الجديدة:</label>
                             {{ form.to_rank }}
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <label class="form-label fw-bold">تاريخ الترقية:</label>
                             {{ form.promotion_date }}
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <label class="form-label fw-bold">نوع الترقية:</label>
                             <select name="promotion_type" id="add_promotion_type" class="form-control">
                                 <option value="">اختر نوع الترقية (اختياري)</option>
@@ -142,12 +142,12 @@
                                 <option value="cadre">كادر أمناء</option>
                             </select>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <label class="form-label fw-bold">رقم دورة الترقية:</label>
                             {{ form.promotion_course_number }}
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">تحديث درجة الفرد:</label>
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">تحديث درجة الفرد الحالية</label>
                             <select name="update_rank" class="form-control" required>
                                 <option value="">-- اختر خيارًا --</option>
                                 <option value="yes">نعم</option>
@@ -156,19 +156,19 @@
                         </div>
                         <!-- بيانات الفرقة التأهيلية -->
                         <div class="training-fields">
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <label class="form-label fw-bold">تاريخ بداية الفرقة:</label>
                                 {{ form.training_start_date }}
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <label class="form-label fw-bold">تاريخ نهاية الفرقة:</label>
                                 {{ form.training_end_date }}
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <label class="form-label fw-bold">رقم الفرقة التأهيلية:</label>
                                 {{ form.training_course_number }}
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <label class="form-label fw-bold">مكان انعقاد الفرقة:</label>
                                 {{ form.training_location }}
                             </div>
@@ -204,7 +204,7 @@
                 <div class="modal-body">
                     <input type="hidden" name="employee" value="{{ promotion.employee.id }}">
                     <div class="row g-3">
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <label class="form-label fw-bold">الدرجة السابقة:</label>
                             <select name="from_rank" class="form-control">
                                 <option value="">-- اختر الدرجة السابقة --</option>
@@ -215,7 +215,7 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <label class="form-label fw-bold">الدرجة الجديدة:</label>
                             <select name="to_rank" class="form-control" required>
                                 <option value="">-- اختر الدرجة الجديدة --</option>
@@ -226,11 +226,11 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <label class="form-label fw-bold">تاريخ الترقية:</label>
                             <input type="date" name="promotion_date" class="form-control" value="{{ promotion.promotion_date|date:'Y-m-d' }}" required>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <label class="form-label fw-bold">نوع الترقية:</label>
                             <select name="promotion_type" id="edit_promotion_type_{{ promotion.id }}" class="form-control promotion-type">
                                 <option value="" {% if not promotion.promotion_type %}selected{% endif %}>اختر نوع الترقية (اختياري)</option>
@@ -239,12 +239,12 @@
                                 <option value="cadre" {% if promotion.promotion_type == "cadre" %}selected{% endif %}>كادر أمناء</option>
                             </select>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <label class="form-label fw-bold">رقم دورة الترقية:</label>
                             <input type="text" name="promotion_course_number" class="form-control" value="{{ promotion.promotion_course_number|default:'' }}">
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">تحديث درجة الفرد:</label>
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">تحديث درجة الفرد الحالية</label>
                             <select name="update_rank" class="form-control" required>
                                 <option value="">-- اختر خيارًا --</option>
                                 <option value="yes">نعم</option>
@@ -253,19 +253,19 @@
                         </div>
                         <!-- بيانات الفرقة التأهيلية -->
                         <div class="training-fields">
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <label class="form-label fw-bold">تاريخ بداية الفرقة:</label>
                                 <input type="date" name="training_start_date" class="form-control" value="{{ promotion.training_start_date|date:'Y-m-d' }}">
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <label class="form-label fw-bold">تاريخ نهاية الفرقة:</label>
                                 <input type="date" name="training_end_date" class="form-control" value="{{ promotion.training_end_date|date:'Y-m-d' }}">
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <label class="form-label fw-bold">رقم الفرقة التأهيلية:</label>
                                 <input type="text" name="training_course_number" class="form-control" value="{{ promotion.training_course_number|default:'' }}">
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <label class="form-label fw-bold">مكان انعقاد الفرقة:</label>
                                 <input type="text" name="training_location" class="form-control" value="{{ promotion.training_location|default:'' }}">
                             </div>

@@ -1,4 +1,249 @@
-<title>
+{% extends "base.html" %}
+{% load static %}
+{% block title %}
+كشف التمام
+{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <form id="date-form" class="my-3">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label for="date">حدد بداية الأسبوع:</label>
+                        <input type="date" id="date" name="date" class="form-control" required>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label for="departments">الأقسام:</label>
+                        <select id="departments" name="departments" class="form-control" multiple size="5">
+                            <option value="all" selected>الكل</option>
+                            <option value="1">شئون الأفراد</option>
+                            <option value="2">شئون المالية</option>
+                            <option value="3">شئون الدارسين</option>
+                            <option value="4">شئون المجندين</option>
+                            <option value="5">شئون الضباط</option>
+                            <option value="6">الخدمات المعاونة</option>
+                            <option value="14">فريق الموسيقي</option>
+                            <option value="17">سكرتارية المدير</option>
+                            <option value="18">ملف الجودة</option>
+                            <option value="19">ملفات الأفراد</option>
+                            <option value="11">السويتش</option>
+                            <option value="10">السلاح</option>
+                        </select>
+                        <small class="form-text text-muted">اضغط Ctrl لتحديد أكثر من قسم</small>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label for="start">من رقم:</label>
+                        <input type="number" id="start" name="start" class="form-control" min="1" value="1">
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label for="end">إلى رقم:</label>
+                        <input type="number" id="end" name="end" class="form-control" min="1" value="47">
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label for="padding_size">التباعد الداخلي:</label>
+                        <input type="number" id="padding_size" name="padding_size" class="form-control" min="1" max="50" value="1">
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <button type="submit" class="btn btn-primary">عرض</button>
+                        <button type="button" class="btn btn-success" onclick="printTable()">طباعة</button>
+                    </div>
+                </div>
+            </form>
+
+            <div class="my-3">
+                <button class="btn btn-info" onclick="fetchData(1, 47, 1)">الصفحة 1 (1-47)</button>
+                <button class="btn btn-info" onclick="fetchData(48, 94, 1)">الصفحة 2 (48-94)</button>
+                <button class="btn btn-info" onclick="fetchData(95, 133, 3)">الصفحة 3 (95-133)</button>
+                <button class="btn btn-info" onclick="fetchData(134, 168, 6)">الصفحة 4 (134-168)</button>
+            </div>
+
+            <table class="table table-bordered" dir="rtl" id="attendance-table" style="display: none;">
+                <thead id="table-header"></thead>
+                <tbody id="table-body"></tbody>
+            </table>
+            <p id="no-date-msg" class="text-center">حدد يوم بداية الأسبوع</p>
+        </div>
+    </div>
+</div>
+
+<style>
+    body { padding: 0px; margin: 0px; }
+    #attendance-table th, #attendance-table td {
+        border: 1px solid black;
+        text-align: center;
+        font-size: 10px;
+    }
+    #attendance-table {
+        border: 1px solid red;
+        border-collapse: collapse;
+    }
+    @media print {
+        #date-form, .btn { display: none; }
+        #attendance-table td, #attendance-table th {
+            border: 1px solid black !important;
+        }
+        #attendance-table tr {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        /* ضمان تطبيق لون الخلفية للصفوف الخاصة بقسم موسيقي أثناء الطباعة */
+        #attendance-table tr.music-row {
+            background-color: rgb(162, 172, 173) !important;
+        }
+    }
+</style>
+
+<script>
+    function printTable() {
+        window.print();
+    }
+
+    function getNextSaturday() {
+        const today = new Date();
+        const dayOfWeek = today.getDay();
+        const daysUntilSaturday = (6 - dayOfWeek + 7) % 7 || 7;
+        const nextSaturday = new Date(today);
+        nextSaturday.setDate(today.getDate() + daysUntilSaturday);
+        return nextSaturday.toISOString().split('T')[0];
+    }
+
+    async function fetchData(start, end, paddingSize) {
+        const date = document.getElementById('date').value;
+        if (!date) {
+            alert('يرجى تحديد تاريخ بداية الأسبوع أولاً!');
+            return;
+        }
+
+        // Get selected departments
+        const departmentSelect = document.getElementById('departments');
+        const selectedDepts = Array.from(departmentSelect.selectedOptions).map(opt => opt.value);
+        
+        // If "all" is selected or nothing is selected, don't filter by department
+        const deptParam = selectedDepts.includes('all') || selectedDepts.length === 0 
+            ? '' 
+            : `&departments=${selectedDepts.join(',')}`;
+
+        const url = `/attendance/api/kashftmam/?date=${date}&start=${start}&end=${end}&padding_size=${paddingSize}${deptParam}`;
+        try {
+            const response = await fetch(url, {
+                credentials: 'include',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`فشل في جلب البيانات: ${response.status} - ${errorText}`);
+            }
+            const data = await response.json();
+            renderTable(data, paddingSize);
+        } catch (error) {
+            console.error('Error:', error);
+            alert(error.message);
+        }
+    }
+
+    function renderTable(data, paddingSize) {
+        const table = document.getElementById('attendance-table');
+        const header = document.getElementById('table-header');
+        const body = document.getElementById('table-body');
+        const noDateMsg = document.getElementById('no-date-msg');
+
+        if (!data.filtered_employees.length) {
+            table.style.display = 'none';
+            noDateMsg.textContent = 'لا توجد بيانات للعرض';
+            noDateMsg.style.display = 'block';
+            return;
+        }
+
+        table.style.display = 'table';
+        noDateMsg.style.display = 'none';
+        header.innerHTML = '';
+        body.innerHTML = '';
+
+        let headerRow = '<tr><th>م</th><th>الاســـــــــــم</th><th>القسم</th><th>التشغيل</th>';
+        data.date_range.forEach(date => {
+            const d = new Date(date);
+            const dayName = d.toLocaleDateString('ar', { weekday: 'long' });
+            const dateStr = `${d.getMonth() + 1}/${d.getDate()}`;
+            headerRow += `<th style="width:70px;">${dayName}_${dateStr}</th>`;
+        });
+        headerRow += '<th>ر</th></tr>';
+        header.innerHTML = headerRow;
+
+        data.filtered_employees.forEach(employee => {
+            let operationDisplay = employee.operation === 'عمل يومي' ? 'يومي' : (employee.operation || '-');
+            const departmentMapping = {
+                "فريق الموسيقي": "♫موسيقي",
+                "شئون الأفراد": "افراد",
+                "الخدمات المعاونة": "معاونة",
+                "شئون المالية": "ماليه",
+                "شئون الدارسين": "دارسين",
+                "شئون المجندين": "مجندين",
+                "شئون الضباط": "ضباط",
+                "سكرتارية المدير": "سكرتارية",
+                "ملف الجودة": "جودة",
+                "ملفات الأفراد": "ملفات",
+                "السويتش": "سويتش",
+                "السلاح": "سلاح",
+            };
+            let departmentDisplay = employee.department ? (departmentMapping[employee.department.name] || employee.department.name) : '-';
+            
+            let rowClass = departmentDisplay === '♫موسيقي' ? 'music-row' : '';
+            
+            let row = `
+                <tr class="${rowClass}" style="background-color:${rowClass ? 'rgb(162, 172, 173)' : ''}">
+                    <td style="font-weight:bolder; text-align:center; font-size:12px; width:5px; padding:${paddingSize}px;">${employee.serial_number}</td>
+                    <td style="font-weight:bolder; text-align:center; font-size:17px; width:320px; padding:${paddingSize}px;">${employee.name}</td>
+                    <td style="font-weight:bolder; text-align:right; font-size:17px; width:50px; padding:${paddingSize}px;">${departmentDisplay}</td>
+                    <td style="font-weight:bolder; text-align:right; font-size:18px; width:5px; padding:${paddingSize}px;">${operationDisplay}</td>
+            `;
+            data.date_range.forEach(date => {
+                const record = data.attendance_data.find(r => r.employee.id === employee.id && r.date === date);
+                const state = record ? record.formatted_state : '';
+                const rawState = record ? record.state : '';
+                const isSpecialState = ['انتداب', 'مرضي', 'فرقة', 'خاصه', 'طارئة', 'دورية', 'ج وضع'].includes(rawState);
+                row += `
+                    <td style="text-align:left; font-size:11px; width:70px; padding:${paddingSize}px;
+                        background-color:${isSpecialState ? 'rgb(255, 255, 255)' : 'inherit'};
+                        color:${isSpecialState ? 'rgb(0, 0, 0)' : '#3D3D3D'}">
+                        ${state}
+                    </td>
+                `;
+            });
+            row += `<td style="font-weight:bolder; text-align:center; font-size:10px; width:5px; padding:${paddingSize}px;">${employee.rahatcounter}</td></tr>`;
+            body.innerHTML += row;
+        });
+    }
+
+    document.getElementById('date-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const start = document.getElementById('start').value;
+        const end = document.getElementById('end').value;
+        const paddingSize = document.getElementById('padding_size').value;
+        fetchData(start, end, paddingSize);
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('date').value = getNextSaturday();
+    });
+</script>
+{% endblock %}
+
+
+
+
+
+
+{% comment %} <title>
 كشف التمام
 </title>
 {% extends "base.html" %}
@@ -150,4 +395,4 @@
         dateInput.value = nextSaturday.toISOString().split('T')[0];
     });
 </script>
-{% endblock %}
+{% endblock %} {% endcomment %}

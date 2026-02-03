@@ -1,218 +1,385 @@
-
-
+<!-- F:\emapi-edit\myproject\templates\attendance\attendance_3w.html -->
 <title>
-كشف 3 أسابيع
-
+    كشف 3 أسسابيع
 </title>
 {% extends "base.html" %}
+{% comment %} attendance_3w.html {% endcomment %}
 {% load static attendance_filters %}
 
-
 {% block styles %}
-    <style>
-        select {
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-            background-color: white;
-            padding: 2px;
-            border: 1px solid #ccc;
-        }
+<style>
+    select {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background-color: white;
+        padding: 2px;
+        border: 1px solid #ccc;
+    }
 
-        option[value="_"] { background-color: white; color: black; }
-        option[value="نوبتجي"] { background-color: #219C90; color: white; }
-        option[value="يومي"] { background-color: #A7D397; color: black; }
-        option[value="راحة"] { background-color: #00A9FF; color: white; }
-        option[value="ر بديلة"] { background-color:rgb(4, 136, 202); color: white; }
-        option[value="8 صباحاً"] { background-color: #89CFF3; color: black; }
-        option[value="عطلة"] { background-color: #CDF5FD; color: black; }
-        option[value="منحة"] { background-color: #A0E9FF; color: black; }
-        option[value="دورية"] { background-color: #C70039; color: white; }
-        option[value="طارئة"] { background-color: #FF9130; color: white; }
-        option[value="مأمورية"] { background-color: #eb5bad; color: white; }
-        option[value="مأمورية خ"] { background-color: #DA0C81; color: white; }
-        option[value="فرقة"] { background-color: #BCA37F; color: black; }
-        option[value="انتداب"] { background-color: #713ABE; color: white; }
-        option[value="مرضي"] { background-color: yellow; color: black; }
-        option[value="ج وضع"] { background-color: yellow; color: black; }
-        option[value="خاصه"] { background-color: yellow; color: black; }
-        option[value="ت دوري"] { background-color: #FFF2D8; color: black; }
-        option[value="ت تكراري"] { background-color: #EAD7BB; color: black; }
-        option[value="غياب"] { background-color: black; color: white; }
-        option[value="قرار66"] { background-color: yellow; color: black; }
+    option[value="_"] {
+        background-color: white;
+        color: black;
+    }
 
-        .att-states {
-            margin: 0px;
-            padding: 0px;
-            font-size: 10px;
-            width: 100%;
-        }
+    option[value="نوبتجي"] {
+        background-color: #219C90;
+        color: white;
+    }
 
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-        thead th {
-            position: sticky;
-            top: 0;
-            background-color: #f2f2f2;
-            z-index: 10;
-        }
-        .inall {
-            font-size: 8px;
-        }
-        table th {
-            border: 1px solid #fff;
-            text-align: center;
-            font-size: 10px;
-            color: #000;
-            padding: 0px;
-        }
-        table td {
-            border: 1px solid #fff;
-            text-align: center;
-            font-size: 13px;
-            color: #000;
-            padding: 15px 0px;
-            font-weight: bolder;
-        }
-        .sorting {
-            margin: 0px;
-            padding: 0px;
-            font-size: 20px;
-        }
-        table tr:nth-child(odd) {
-            background-color: rgb(236, 237, 238);
-        }
-        table tr:nth-child(even) {
-            background-color: rgb(171, 211, 214);
-        }
-        input[type="checkbox"] {
-            margin-right: 5px;
-            width: 7px;
-            height: 7px;
-            accent-color: #219C90;
-        }
-    </style>
+    option[value="يومي"] {
+        background-color: #A7D397;
+        color: black;
+    }
+
+    option[value="راحة"] {
+        background-color: #00A9FF;
+        color: white;
+    }
+
+    option[value="ر بديلة"] {
+        background-color: rgb(4, 136, 202);
+        color: white;
+    }
+
+    option[value="8 صباحاً"] {
+        background-color: #89CFF3;
+        color: black;
+    }
+
+    option[value="عطلة"] {
+        background-color: #CDF5FD;
+        color: black;
+    }
+
+    option[value="منحة"] {
+        background-color: #A0E9FF;
+        color: black;
+    }
+
+    option[value="دورية"] {
+        background-color: #C70039;
+        color: white;
+    }
+
+    option[value="طارئة"] {
+        background-color: #FF9130;
+        color: white;
+    }
+
+    option[value="مأمورية"] {
+        background-color: #eb5bad;
+        color: white;
+    }
+
+    option[value="مأمورية خ"] {
+        background-color: #DA0C81;
+        color: white;
+    }
+
+    option[value="فرقة"] {
+        background-color: #BCA37F;
+        color: black;
+    }
+
+    option[value="انتداب"] {
+        background-color: #713ABE;
+        color: white;
+    }
+
+    option[value="مرضي"] {
+        background-color: yellow;
+        color: black;
+    }
+
+    option[value="ج وضع"] {
+        background-color: yellow;
+        color: black;
+    }
+
+    option[value="خاصه"] {
+        background-color: yellow;
+        color: black;
+    }
+
+    option[value="ت دوري"] {
+        background-color: #FFF2D8;
+        color: black;
+    }
+
+    option[value="ت تكراري"] {
+        background-color: #EAD7BB;
+        color: black;
+    }
+
+    option[value="غياب"] {
+        background-color: black;
+        color: white;
+    }
+
+    option[value="قرار66"] {
+        background-color: yellow;
+        color: black;
+    }
+
+    .att-states {
+        margin: 0px;
+        padding: 0px;
+        font-size: 10px;
+        width: 100%;
+    }
+
+    .table-container {
+        max-height: 70vh;
+        overflow-y: auto;
+        overflow-x: auto;
+        position: relative;
+    }
+
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    thead th {
+        position: sticky;
+        top: 0;
+        background-color: #f2f2f2;
+        z-index: 10;
+    }
+
+    .inall {
+        font-size: 8px;
+    }
+
+    table th {
+        border: 1px solid #fff;
+        text-align: center;
+        font-size: 10px;
+        color: #000;
+        padding: 0px;
+    }
+
+    table td {
+        border: 1px solid #fff;
+        text-align: center;
+        font-size: 13px;
+        color: #000;
+        padding: 15px 0px;
+        font-weight: bolder;
+    }
+
+    .sorting {
+        margin: 0px;
+        padding: 0px;
+        font-size: 20px;
+    }
+
+    table tr:nth-child(odd) {
+        background-color: rgb(236, 237, 238);
+    }
+
+    table tr:nth-child(even) {
+        background-color: rgb(171, 211, 214);
+    }
+
+    input[type="checkbox"] {
+        margin-right: 5px;
+        width: 7px;
+        height: 7px;
+        accent-color: #219C90;
+    }
+
+    .today-column {
+        background-color: rgb(171, 211, 214);
+    }
+</style>
+<style>
+    .btn-xs {
+        padding: 0.15rem 0.3rem;
+        font-size: 0.75rem;
+        line-height: 1;
+        border-radius: 0.5rem;
+    }
+
+    .context-menu {
+        display: none;
+        position: absolute;
+        z-index: 1000;
+        background-color: white;
+        border: 1px solid #ccc;
+        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+        padding: 5px 0;
+        min-width: 120px;
+        text-align: right;
+    }
+
+    .context-menu-item {
+        padding: 8px 12px;
+        cursor: pointer;
+        font-size: 14px;
+        color: #333;
+    }
+
+    .context-menu-item:hover {
+        background-color: #f0f0f0;
+    }
+</style>
+
 {% endblock %}
 
 {% block content %}
-    <div dir="rtl">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-md-12">
-                    <form method="get" action="{% url 'attendance_3w' %}">
-                        <label for="start_date">تاريخ البداية:</label>
-                        <input type="date" id="start_date" name="start_date" value="{{ start_date|date:'Y-m-d' }}" required>
-                        <button type="button" onclick="changeDate(-7)">- 7 أيام</button>
-                        <button type="button" onclick="changeDate(7)">+ 7 أيام</button>
-
-                        <!-- حقل عدد الأيام مع قيمة افتراضية 27 -->
-                        <label for="num_days">عدد الأيام :</label>
-                        <input type="number" id="num_days" name="num_days" value="{{ num_days|default:'27' }}" min="1" max="40" required>
-                        <label for="sort_by">ترتيب حسب:</label>
-                        <select class="sorting" name="sort_by" id="sort_by">
-                            <option value="dep_sort" {% if sort_by == 'dep_sort' %}selected{% endif %}>مخصص</option>
-                            <option value="sort_number" {% if sort_by == 'sort_number' %}selected{% endif %}>أقدمية</option>
-                            <option value="operation" {% if sort_by == 'operation' %}selected{% endif %}>التشغيل</option>
-                            <option value="department" {% if sort_by == 'department' %}selected{% endif %}>القسم</option>
-                        </select>
-                        <label for="departments">اختر القسم:</label>
-                        <select class="sorting" name="departments" id="departments">
-                            {% for department_id, department_name in department_choices %}
-                                <option value="{{ department_id }}" {% if department_id|stringformat:'s' == department_filter %}selected{% endif %}>
-                                    {{ department_name }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                        
-                        <input type="submit" value="عرض" class="btn btn-primary">
-                    </form>
-                    <button onclick="location.href='{% url 'simple_attendance' %}';">
-                        التبديل الي  الوضع العادي
+<div dir="rtl">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <!-- Undo/Redo Buttons -->
+                <div class="mb-3" style="text-align: left; margin-bottom: 15px;">
+                    <button type="button" class="btn btn-warning btn-sm" onclick="globalUndo()">
+                        <i class="fas fa-undo"></i> ↩ تراجع (Undo)
                     </button>
-                    <form method="post" class="mainform">
-                        {% csrf_token %}
-                        <br><br><br>
-                        <div class="table-responsive">
-                            <table class="">
+                    <button type="button" class="btn btn-info btn-sm" onclick="globalRedo()">
+                        <i class="fas fa-redo"></i> ↪ إعادة (Redo)
+                    </button>
+                </div>
+
+                <form method="get" action="{% url 'attendance_3w' %}">
+                    <label for="start_date">تاريخ البداية:</label>
+                    <input type="date" id="start_date" name="start_date" value="{{ start_date|date:'Y-m-d' }}" required>
+                    <button type="button" onclick="changeDate(-7)">- 7 أيام</button>
+                    <button type="button" onclick="changeDate(7)">+ 7 أيام</button>
+
+                    <label for="num_days">عدد الأيام :</label>
+                    <input type="number" id="num_days" name="num_days" value="{{ num_days|default:'28' }}" min="1" max="40" required>
+
+                    <label for="sort_by">ترتيب حسب:</label>
+                    <select class="sorting" name="sort_by" id="sort_by">
+                        <option value="sort_number" {% if sort_by == 'sort_number' %}selected{% endif %}>أقدمية</option>
+                        <option value="dep_sort" {% if sort_by == 'dep_sort' %}selected{% endif %}>مخصص</option>
+                        <option value="operation" {% if sort_by == 'operation' %}selected{% endif %}>التشغيل</option>
+                        <option value="department" {% if sort_by == 'department' %}selected{% endif %}>القسم</option>
+                    </select>
+
+                    <label for="departments">اختر القسم:</label>
+                    <select class="sorting" name="departments" id="departments">
+                        <option value="" {% if not department_filter %}selected{% endif %}>كل الأقسام</option>
+                        {% for department_id, department_name in department_choices %}
+                            <option value="{{ department_id }}"
+                                {% if department_id|stringformat:'s' == department_filter %}selected{% endif %}>
+                                {{ department_name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+
+                    <input type="submit" value="عرض" class="btn btn-primary">
+                </form>
+
+                <form method="post" class="mainform">
+                    {% csrf_token %}
+                    <br><br><br>
+
+                    <div class="table-responsive table-container">
+                        <table class="">
                             <thead>
                                 <tr>
                                     <th>م</th>
                                     <th>الاســــــــــــــــــــــــــــــــــــــــــم</th>
                                     <th>الراحات</th>
+
                                     {% for day in week_days %}
-                                    <th style="{% if day == today %}background-color: #F0E68C;{% endif %}">
-                                        {{ day|date:"l"|ar_day }}<br>{{ day|date:'Y-m-d' }}<br>
+                                    <th style="{% if day|date:'Y-m-d' == today|date:'Y-m-d' %}background-color:rgb(228, 70, 22);{% endif %}">
+                                        {{ day|date:"l"|ar_day }}<br>
+                                        {{ day|date:'Y-m-d' }}<br>
+
                                         {% if not forloop.first %}
-                                        <form method="post" action="{% url 'insert_attendance_for_date' %}">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="selected_date" value="{{ day|date:'Y-m-d' }}">
-                                            <button type="submit" class="btn-primary mt-1 inall">إضافة</button>
-                                        </form>
+                                            <form method="post" action="{% url 'insert_attendance_for_date' %}" style="display: inline;">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="selected_date" value="{{ day|date:'Y-m-d' }}">
+                                                <button type="submit" class="btn btn-primary mt-1 inall">إضافة</button>
+                                            </form>
                                         {% endif %}
                                     </th>
                                     {% endfor %}
-                                    
+
                                 </tr>
                             </thead>
+
                             <tbody>
                                 {% for employee in page_obj %}
                                 <tr>
                                     <td>{{ forloop.counter }}</td>
+
                                     <td>
                                         {{ employee.nickname }} <br>
-                                        <select class="operation-select" name="operation_{{ employee.id }}" onchange="updateOperation('{{ employee.id }}', this.value)">
+                                        <select class="operation-select" name="operation_{{ employee.id }}"
+                                            onchange="updateOperation('{{ employee.id }}', this.value)">
                                             {% for value, label in operation_choices %}
-                                                <option value="{{ value }}" {% if employee.operation == value %}selected{% endif %}>{{ label }}</option>
+                                            <option value="{{ value }}" {% if employee.operation == value %}selected{% endif %}>
+                                                {{ label }}
+                                            </option>
                                             {% endfor %}
                                         </select>
                                     </td>
+
                                     <td>
-                                        <span id="rahatcounter_{{ employee.id }}">{{ employee.rahatcounter }}</span>
-                                        <button type="button" 
-                                                onclick="confirmReset('{{ employee.id }}')" 
-                                                class="btn btn-sm 
-                                                    {% if employee.rahatcounter == 0 %}btn-success
-                                                    {% elif employee.rahatcounter > 0 %}btn-warning
-                                                    {% else %}btn-danger{% endif %}">
-                                            ـ
+                                        <button type="button" onclick="incrementRahatcounter('{{ employee.id }}')" class="btn btn-primary btn-xs">+</button>
+
+                                        <button type="button" onclick="confirmReset('{{ employee.id }}')"
+                                            class="btn btn-xs {% if employee.rahatcounter == 0 %}btn-success{% elif employee.rahatcounter > 0 %}btn-warning{% else %}btn-danger{% endif %}"
+                                            id="rahatcounter_btn_{{ employee.id }}">
+                                            <span id="rahatcounter_{{ employee.id }}">{{ employee.rahatcounter }}</span>
                                         </button>
+
+                                        <button type="button" onclick="decrementRahatcounter('{{ employee.id }}')" class="btn btn-primary btn-xs">-</button>
                                     </td>
+
                                     {% for day in week_days %}
-                                    <td style="{% if day == today %}background-color:rgb(171, 211, 214);{% endif %}{% if day|date:'l'|ar_day == 'الجمعة' %}border-left: 3px solid #F26B0F;{% endif %}"
+                                    <td style="
+                                        {% if day|date:'Y-m-d' == today|date:'Y-m-d' %}
+                                            background-color:rgb(171, 211, 214);
+                                        {% endif %}
+                                        {% if day|date:'l'|ar_day == 'الجمعة' %}
+                                            border-left: 3px solid #F26B0F;
+                                        {% endif %}
+                                        "
                                         data-employee-id="{{ employee.id }}"
                                         data-date="{{ day|date:'Ymd' }}"
                                         class="attendance-cell">
                                         <!-- تعبئة ديناميكية عبر JavaScript -->
                                     </td>
                                     {% endfor %}
+
                                 </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
 
-                        <!-- التنقل بين الصفحات -->
                         <div class="pagination">
                             {% if page_obj.has_previous %}
-                            <a href="?page=1">First</a>
-                            <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                                <a href="?page=1">First</a>
+                                <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
                             {% endif %}
+
                             <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+
                             {% if page_obj.has_next %}
-                            <a href="?page={{ page_obj.next_page_number }}">Next</a>
-                            <a href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+                                <a href="?page={{ page_obj.next_page_number }}">Next</a>
+                                <a href="?page={{ page_obj.paginator.num_pages }}">Last</a>
                             {% endif %}
                         </div>
-                    </form>
-                </div>
+
+                    </div>
+                </form>
+
             </div>
         </div>
     </div>
+</div>
+
+<div id="custom-context-menu" class="context-menu">
+    <div class="context-menu-item" onclick="globalUndo()">تراجع عن آخر خطوة (Undo Last)</div>
+</div>
 {% endblock %}
-
-
-
 
 
 {% block scripts %}
@@ -241,7 +408,7 @@
         'قرار66': 'yellow'
     };
 
-    let attendanceData = {}; // متغير عالمي لتخزين البيانات
+    let attendanceData = {};
 
     function changeDate(days) {
         const startDateInput = document.getElementById('start_date');
@@ -250,7 +417,7 @@
         startDateInput.value = currentDate.toISOString().split('T')[0];
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         fetchAttendanceData();
     });
 
@@ -258,14 +425,31 @@
         const startDate = document.getElementById('start_date').value;
         const numDays = document.getElementById('num_days').value;
         const page = new URLSearchParams(window.location.search).get('page') || '1';
-        const response = await fetch(`{% url 'get_attendance' %}?start_date=${startDate}&num_days=${numDays}&page=${page}`);
-        const data = await response.json();
-        if (data.success) {
-            attendanceData = data.attendance_data;
-            observeRows(); // بدء مراقبة الصفوف
-            addEventListeners();
-        } else {
-            console.error('Error fetching attendance data:', data.error);
+        const url = `{% url 'get_attendance' %}?start_date=${startDate}&num_days=${numDays}&page=${page}`;
+
+        try {
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            const data = await response.json();
+            if (data.success) {
+                attendanceData = data.attendance_data || {};
+                observeRows();
+                addEventListeners();
+            } else {
+                console.error('Error in response:', data.error);
+                alert('فشل في جلب بيانات الحضور: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Fetch error:', error);
+            alert('حدث خطأ أثناء جلب البيانات: ' + error.message);
         }
     }
 
@@ -289,15 +473,12 @@
             } else {
                 console.error('Error updating operation:', data.error);
                 alert('حدث خطأ أثناء تحديث العملية: ' + data.error);
-                const selectElement = document.querySelector(`select[name="operation_${employeeId}"]`);
-                selectElement.value = data.operation || 'لم يحدد';
             }
         } catch (error) {
             console.error('AJAX error:', error);
             alert('حدث خطأ في الاتصال بالخادم');
         }
     }
-
 
     function observeRows() {
         const rows = document.querySelectorAll('tbody tr');
@@ -308,12 +489,10 @@
                     const cells = row.querySelectorAll('.attendance-cell:not(.loaded)');
                     populateAttendanceCellsForRow(cells);
                     cells.forEach(cell => cell.classList.add('loaded'));
-                    observer.unobserve(row); // إيقاف المراقبة بعد التحميل
+                    observer.unobserve(row);
                 }
             });
-        }, {
-            rootMargin: '100px' // تحميل الصفوف قبل ظهورها بـ 100 بكسل
-        });
+        }, { rootMargin: '100px' });
 
         rows.forEach(row => observer.observe(row));
     }
@@ -377,6 +556,7 @@
             foodCheckbox.className = 'att-food-checkbox';
             foodCheckbox.title = 'يحصل على تعيين';
 
+            cell.innerHTML = '';
             cell.appendChild(select);
             cell.appendChild(comfortCheckbox);
             cell.appendChild(foodCheckbox);
@@ -388,10 +568,12 @@
 
     async function submitAttendanceForm(employeeId, selectedDate, comfortValue, foodValue, source) {
         const key = `${employeeId}_${selectedDate}`;
+        const selectedValue = document.querySelector(`select[name="attendance_state_${employeeId}_${selectedDate}"]`)?.value || null;
+
         pendingChanges[key] = {
             employee_id: employeeId,
             selected_date: selectedDate,
-            selected_value: document.querySelector(`select[name="attendance_state_${employeeId}_${selectedDate}"]`)?.value || null,
+            selected_value: selectedValue,
             comfort_adjustment: comfortValue !== null && comfortValue !== undefined ? comfortValue : null,
             food: foodValue !== null && foodValue !== undefined ? (foodValue ? '1' : '0') : null,
             source: source
@@ -403,14 +585,7 @@
         debounceTimeout = setTimeout(async () => {
             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
             const formData = new FormData();
-            for (const [key, change] of Object.entries(pendingChanges)) {
-                formData.append(`changes[${key}][employee_id]`, change.employee_id);
-                formData.append(`changes[${key}][selected_date]`, change.selected_date);
-                if (change.selected_value) formData.append(`changes[${key}][selected_value]`, change.selected_value);
-                if (change.comfort_adjustment !== null) formData.append(`changes[${key}][comfort_adjustment]`, change.comfort_adjustment);
-                if (change.food !== null) formData.append(`changes[${key}][food]`, change.food);
-                formData.append(`changes[${key}][source]`, change.source);
-            }
+            formData.append('changes', JSON.stringify(pendingChanges));
 
             try {
                 const response = await fetch("{% url 'update_attendance' %}", {
@@ -473,7 +648,7 @@
     }
 
     function addEventListeners() {
-        document.querySelector('tbody').addEventListener('change', function(event) {
+        document.querySelector('tbody').addEventListener('change', function (event) {
             const target = event.target;
             if (target.classList.contains('att-states')) {
                 const [_, __, employeeId, selectedDate] = target.name.split('_');
@@ -519,15 +694,6 @@
         });
     }
 
-    function updateButtonColor(employeeId, rahatcounter) {
-        const button = document.getElementById(`rahatcounter_${employeeId}`).nextElementSibling;
-        if (button) {
-            button.classList.remove('btn-success', 'btn-warning', 'btn-danger');
-            if (rahatcounter == 0) button.classList.add('btn-success');
-            else if (rahatcounter > 0) button.classList.add('btn-warning');
-            else button.classList.add('btn-danger');
-        }
-    }
 
     function confirmReset(employeeId) {
         if (confirm("هل أنت متأكد من تصفير عداد الراحات للفرد المحدد فقط؟")) {
@@ -535,10 +701,10 @@
         }
     }
 
+
     async function resetRahatcounter(employeeId) {
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
         const url = "{% url 'reset_rahatcounter' %}";
-    
         try {
             const response = await fetch(url, {
                 method: 'POST',
@@ -548,11 +714,9 @@
                 },
                 body: JSON.stringify({ employee_id: employeeId })
             });
-    
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
-    
             const data = await response.json();
             if (data.success) {
                 const rahatcounterElement = document.getElementById(`rahatcounter_${employeeId}`);
@@ -565,6 +729,166 @@
             }
         } catch (error) {
             alert('حدث خطأ في الاتصال بالخادم: ' + error.message);
+        }
+    }
+
+    async function incrementRahatcounter(employeeId) {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        try {
+            const response = await fetch("{% url 'adjust_rahatcounter' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ employee_id: employeeId, adjustment: 1 })
+            });
+            const data = await response.json();
+            if (data.success) {
+                const rahatcounterElement = document.getElementById(`rahatcounter_${employeeId}`);
+                if (rahatcounterElement) {
+                    const newValue = parseInt(rahatcounterElement.textContent) + 1;
+                    rahatcounterElement.textContent = newValue;
+                    updateButtonColor(employeeId, newValue);
+                }
+            } else {
+                alert('خطأ أثناء زيادة عداد الراحات: ' + data.error);
+            }
+        } catch (error) {
+            alert('حدث خطأ في الاتصال بالخادم: ' + error.message);
+        }
+    }
+
+    async function decrementRahatcounter(employeeId) {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        try {
+            const response = await fetch("{% url 'adjust_rahatcounter' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ employee_id: employeeId, adjustment: -1 })
+            });
+            const data = await response.json();
+            if (data.success) {
+                const rahatcounterElement = document.getElementById(`rahatcounter_${employeeId}`);
+                if (rahatcounterElement) {
+                    const newValue = parseInt(rahatcounterElement.textContent) - 1;
+                    rahatcounterElement.textContent = newValue;
+                    updateButtonColor(employeeId, newValue);
+                }
+            } else {
+                alert('خطأ أثناء تقليل عداد الراحات: ' + data.error);
+            }
+        } catch (error) {
+            alert('حدث خطأ في الاتصال بالخادم: ' + error.message);
+        }
+    }
+
+    function updateButtonColor(employeeId, rahatcounter) {
+        const button = document.getElementById(`rahatcounter_btn_${employeeId}`); // استهداف الزر نفسه
+        if (button) {
+            button.classList.remove('btn-success', 'btn-warning', 'btn-danger');
+            if (rahatcounter == 0) button.classList.add('btn-success');
+            else if (rahatcounter > 0) button.classList.add('btn-warning');
+            else button.classList.add('btn-danger');
+        }
+    }
+
+    // Undo Functionality
+    let contextMenuTarget = null;
+
+    document.addEventListener('click', function (e) {
+        const menu = document.getElementById('custom-context-menu');
+        if (menu.style.display === 'block') {
+            menu.style.display = 'none';
+        }
+    });
+
+    document.querySelector('tbody').addEventListener('contextmenu', function (e) {
+        const cell = e.target.closest('.attendance-cell');
+        if (cell) {
+            e.preventDefault();
+            contextMenuTarget = cell;
+
+            const menu = document.getElementById('custom-context-menu');
+            menu.style.display = 'block';
+            menu.style.left = e.pageX + 'px';
+            menu.style.top = e.pageY + 'px';
+        }
+    });
+
+    async function globalUndo() {
+        await executeGlobalAction("{% url 'undo_last_change' %}", "فشل التراجع");
+    }
+
+    async function globalRedo() {
+        await executeGlobalAction("{% url 'redo_last_change' %}", "فشل الإعادة");
+    }
+
+    async function executeGlobalAction(url, errorMsg) {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({})
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                const update = data.updates;
+                const employeeId = update.employee_id;
+                const date = update.date;
+
+                // Update internal data
+                if (!attendanceData[employeeId]) attendanceData[employeeId] = {};
+                attendanceData[employeeId][date] = {
+                    state: update.state,
+                    comfort_adjustment: update.comfort_adjustment,
+                    food: update.food
+                };
+
+                // Update UI Elements
+                const selectElement = document.querySelector(`select[name="attendance_state_${employeeId}_${date}"]`);
+                const comfortCheckbox = document.querySelector(`input[name="comfort_${employeeId}_${date}"]`);
+                const foodCheckbox = document.querySelector(`input[name="food_${employeeId}_${date}"]`);
+
+                if (selectElement) {
+                    selectElement.value = update.state;
+                    selectElement.style.backgroundColor = stateColors[update.state] || 'white';
+                }
+                if (comfortCheckbox) {
+                    comfortCheckbox.checked = update.comfort_adjustment === 1;
+                    if (['راحة', 'ر بديلة', '8 صباحاً'].includes(update.state)) {
+                        comfortCheckbox.disabled = true;
+                    } else {
+                        comfortCheckbox.disabled = false;
+                    }
+                }
+                if (foodCheckbox) {
+                    foodCheckbox.checked = update.food;
+                }
+
+                // Update Rahat Counter
+                if (update.rahatcounter !== undefined) {
+                    const rahatcounterElement = document.getElementById(`rahatcounter_${employeeId}`);
+                    if (rahatcounterElement) {
+                        rahatcounterElement.textContent = update.rahatcounter;
+                        updateButtonColor(employeeId, update.rahatcounter);
+                    }
+                }
+
+            } else {
+                alert('تنبيه: ' + (data.error || errorMsg));
+            }
+        } catch (e) {
+            alert('خطأ في الاتصال: ' + e);
         }
     }
 </script>

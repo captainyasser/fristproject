@@ -26,7 +26,7 @@
 
         <!-- Sidebar Menu -->
         <nav class="mt-2">
-          <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+           <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
             <!-- Add icons to the links using the .nav-icon class
                 with font-awesome or any other icon font library -->
             <li class="nav-item has-treeview menu-open">
@@ -72,14 +72,9 @@
                     <p>بيانات الافراد</p>
                   </a>
                 </li>
+
                 <li class="nav-item">
-                  <a href="{% url 'add_employee' %}" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>اضافة فرد</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="{% url 'employee_statement' %}" class="nav-link">
+                  <a href="{% url 'employee-statement-html' %}" class="nav-link">
                     <i class="far fa-circle nav-icon"></i>
                     <p>بيان حاله وظيفية</p>
                   </a>
@@ -96,6 +91,18 @@
                     <p>تعديل بيانات متعدد</p>
                   </a>
                 </li>
+                <li class="nav-item">
+                  <a href="{% url 'idcard_data' %}" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>تعديل بيانات البطاقات</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="{% url 'idcard_filter' %}" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>البطاقات المنتهية</p>
+                  </a>
+                </li>
 
 
               </ul>
@@ -110,13 +117,19 @@
               </a>
               <ul class="nav nav-treeview">
                 <li class="nav-item">
-                  <a href="{% url 'simple_attendance' %}" class="nav-link">
+                  <a href="{% url 'attendance_3w' %}" class="nav-link">
                     <i class="far fa-circle nav-icon"></i>
                     <p>التشغيل</p>
                   </a>
                 </li>
                 <li class="nav-item">
-                  <a href="{% url 'one_employee' %}" class="nav-link">
+                  <a href="{% url 'attendance_validation' %}" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>مخالفات الحضور</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="{% url 'one_employee_view' %}" class="nav-link">
                     <i class="far fa-circle nav-icon"></i>
                     <p>تشغيل فردي</p>
                   </a>
@@ -134,51 +147,75 @@
               </a>
               <ul class="nav nav-treeview">
                 <li class="nav-item">
-                  <a href="{% url 'foodlist' %}" class="nav-link">
+                  <a href="{% url 'foodlist_page' %}" class="nav-link">
                     <i class="far fa-circle nav-icon"></i>
                     <p>يومية التعيين</p>
                   </a>
                 </li>
                 <li class="nav-item">
-                  <a href="{% url 'amtmam' %}" class="nav-link">
+                  <a href="{% url 'amtmam_page' %}" class="nav-link">
                     <i class="far fa-circle nav-icon"></i>
                     <p>يومية صباحية</p>
                   </a>
                 </li>
                 <li class="nav-item">
-                  <a href="{% url 'numreport' %}" class="nav-link">
+                  <a href="{% url 'numreport_page' %}" class="nav-link">
                     <i class="far fa-circle nav-icon"></i>
                     <p>يومية خوارج (عددي)</p>
                   </a>
                 </li>
                 <li class="nav-item">
-                  <a href="{% url 'outs' %}" class="nav-link">
+                  <a href="{% url 'namesreport_page' %}" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>يومية خوارج (عددي واسماء)</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="{% url 'employeestates_page' %}" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>حالات الحضور (اسماء واعداد)</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="{% url 'outs_report' %}" class="nav-link">
                     <i class="far fa-circle nav-icon"></i>
                     <p>يومية خوارج (بالأسماء)</p>
                   </a>
                 </li>
                 <li class="nav-item">
-                  <a href="{% url 'bus_view' %}" class="nav-link">
+                  <a href="{% url 'bus' %}" class="nav-link">
                     <i class="far fa-circle nav-icon"></i>
                     <p>يومية الأتوبيس</p>
                   </a>
                 </li>
                 <li class="nav-item">
-                  <a href="{% url 'kashftmam' %}" class="nav-link">
+                  <a href="{% url 'kashftmam_page' %}" class="nav-link">
                     <i class="far fa-circle nav-icon"></i>
                     <p>كشف التمام</p>
                   </a>
                 </li>
                 <li class="nav-item">
-                  <a href="{% url 'insert_many_attendance' %}" class="nav-link">
+                  <a href="{% url 'bulk-attendance' %}" class="nav-link">
                     <i class="far fa-circle nav-icon"></i>
                     <p>إدخال حالات لمدة</p>
                   </a>
                 </li>
                 <li class="nav-item">
-                  <a href="{% url 'monthly_discount' %}" class="nav-link">
+                  <a href="{% url 'musicians_page' %}" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>يومية الموسيقيين</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="{% url 'monthlydiscount_page' %}" class="nav-link">
                     <i class="far fa-circle nav-icon"></i>
                     <p>كشف الخصم المالي</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="{% url 'weekly_food_average' %}" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>يومية متوسط التعيينات</p>
                   </a>
                 </li>
 
@@ -188,6 +225,23 @@
 
             <li class="nav-item has-treeview">
               <a href="#" class="nav-link">
+                <i class="nav-icon fas fa-file-invoice"></i>
+                <p>
+                  الكشوف
+                  <i class="fas fa-angle-left right"></i>
+                </p>
+              </a>
+              <ul class="nav nav-treeview">
+                <li class="nav-item">
+                  <a href="{% url 'department_operation_report' %}" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>كشف تشغيل الاقسام</p>
+                  </a>
+                </li>
+              </ul>
+            </li>
+            <li class="nav-item has-treeview">
+              <a href="#" class="nav-link">
                 <i class="nav-icon fas fa-tree"></i>
                 <p>
                   الدفاتر
@@ -195,6 +249,11 @@
                 </p>
               </a>
               <ul class="nav nav-treeview">
+<a href="{% url 'hasr_app:hasr' %}" class="nav-link">
+    <i class="far fa-circle nav-icon"></i>
+    <p>دفتر حصر القوة</p>
+</a>
+
                 <li class="nav-item">
                   <a href="{% url 'training_page_view' %}" class="nav-link">
                     <i class="far fa-circle nav-icon"></i>
@@ -205,6 +264,51 @@
                   <a href="{% url 'tarkyat' %}" class="nav-link">
                     <i class="far fa-circle nav-icon"></i>
                     <p>ترقيات الأفراد</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="{% url 'penalties:dashboard' %}" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>جزاءات الأفراد</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="{% url 'periodic_allowances:comparison' %}" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>العلاوات الدورية</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="{% url 'elawat_tashgeea:index' %}" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>العلاوات التشجيعية</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="{% url 'periodic_allowances:allowances_dftr' %}" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>دفتر العلاوات الدورية</p>
+                  </a>
+                </li>
+                
+                <li class="nav-item">
+                  <a href="{% url 'education:list' %}" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>دفتر المؤهلات</p>
+                  </a>
+                </li>
+<li class="nav-item">
+  <a href="{% url 'agaza_khasa_app:select_employee' %}" class="nav-link">
+    <i class="far fa-circle nav-icon"></i>
+    <p>دفتر الأجازات الخاصة</p>
+  </a>
+</li>
+
+
+                <li class="nav-item">
+                  <a href="{% url 'secret_reports:index' %}" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>دفتر التقارير السرية</p>
                   </a>
                 </li>
 
@@ -233,7 +337,7 @@
                   </a>
                 </li>
                 <li class="nav-item">
-                  <a href="{% url 'rank_list' %}" class="nav-link">
+                  {% comment %} <a href="{% url 'rank_list' %}" class="nav-link"> {% endcomment %}
                     <i class="far fa-circle nav-icon"></i>
                     <p>درجات الافراد</p>
                   </a>
@@ -251,7 +355,7 @@
                   </a>
                 </li>
                 <li class="nav-item">
-                  <a href="{% url 'task_list' %}" class="nav-link">
+                <a href="{% url 'tasks:task_list' %}" class="nav-link">
                     <i class="far fa-circle nav-icon"></i>
                     <p>تذكيرات ومهام</p>
                   </a>

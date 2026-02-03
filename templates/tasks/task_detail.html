@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}تفاصيل المهمة{% endblock %}
+
+{% block content %}
+<!-- إضافة Tailwind CSS -->
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+<div class="container mx-auto p-4">
+    <h1 class="text-2xl font-bold mb-4">تفاصيل المهمة</h1>
+
+    <!-- عرض تفاصيل المهمة -->
+    <div class="bg-white p-4 rounded shadow">
+        <h2 class="text-xl font-semibold mb-2">{{ task.title }}</h2>
+        <p><strong>تاريخ الاستحقاق:</strong> {{ task.due_date }}</p>
+        <p><strong>التكرار:</strong> {{ task.get_repeat_type_display }} {% if task.repeat_interval > 1 %} (كل {{ task.repeat_interval }} {% if task.repeat_type == 'daily' %}يوم{% else %}شهر{% endif %}){% endif %}</p>
+        <p><strong>أيام التذكير:</strong> {{ task.reminder_days }} يوم</p>
+        <p><strong>الملاحظات:</strong> {{ task.notes|default:"لا توجد ملاحظات" }}</p>
+        <p><strong>الحالة:</strong> {% if task.is_completed %}مكتملة{% else %}منتظرة{% endif %}</p>
+        <p><strong>تاريخ الإنشاء:</strong> {{ task.created_at }}</p>
+
+        <!-- أزرار الإجراءات -->
+        <div class="mt-4 flex space-x-4">
+            {% if not task.is_completed %}
+                <a href="{% url 'tasks:complete_task' task.id %}" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">إكمال المهمة</a>
+            {% endif %}
+            <a href="{% url 'tasks:edit_task' task.id %}" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">تعديل</a>
+            <a href="{% url 'tasks:delete_task' task.id %}" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">حذف</a>
+            <a href="{% url 'tasks:task_list' %}" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">العودة إلى القائمة</a>
+        </div>
+    </div>
+
+    <!-- رفع الملفات -->
+    <h2 class="text-xl font-bold mt-6 mb-4">رفع ملفات</h2>
+    <form method="POST" enctype="multipart/form-data" class="mb-6 bg-white p-4 rounded shadow">
+        {% csrf_token %}
+        <div class="grid grid-cols-1 gap-4">
+            <div>
+                <label for="files" class="block text-sm font-medium text-gray-700">الملفات</label>
+                <input type="file" name="files" id="files" multiple class="p-2 border rounded w-full">
+            </div>
+            <div>
+                <button type="submit" class="bg-green-500 text-white p-2 rounded hover:bg-green-600 w-full">رفع</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- عرض الملفات -->
+    <h2 class="text-xl font-bold mb-4">الملفات المرفقة</h2>
+    <table class="w-full border-collapse bg-white shadow rounded">
+        <thead>
+            <tr class="bg-gray-100">
+                <th class="p-3 text-left">اسم الملف</th>
+                <th class="p-3 text-left">تاريخ الرفع</th>
+                <th class="p-3 text-left">الإجراء</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for file in task.files.all %}
+                <tr class="hover:bg-gray-50">
+                    <td class="p-3">{{ file.file.name }}</td>
+                    <td class="p-3">{{ file.uploaded_at }}</td>
+                    <td class="p-3">
+                        <a href="{{ file.file.url }}" class="text-blue-500 hover:underline">تحميل</a>
+                        <a href="{% url 'tasks:delete_file' file.id %}" class="text-red-500 hover:underline ml-2">حذف</a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="3" class="p-3 text-center">لا توجد ملفات</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+{% block footer %}
+    <footer class="main-footer">
+        <p>معا نحو التحول الرقمي - برمجة وتصميم كابتن ياسر أبو دراع</p>
+    </footer>
+{% endblock %}

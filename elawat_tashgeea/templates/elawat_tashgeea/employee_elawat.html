@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% load static %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+{% block content %}
+<div class="container mt-4">
+    <a href="{% url 'elawat_tashgeea:index' %}" class="btn btn-secondary">
+← رجوع
+</a>
+    <div class="card p-4 shadow">
+        <h3 class="text-center">عرض وتعديل العلاوات التشجيعية</h3>
+
+        <!-- اختيار الفرد -->
+        <form method="get" class="mb-4">
+            <label>اختر الفرد:</label>
+            <select name="employee_id" class="form-control" onchange="this.form.submit()">
+                <option value="">-- اختر الفرد --</option>
+                {% for emp in employees %}
+                    <option value="{{ emp.id }}" {% if selected_emp_id == emp.id|stringformat:"s" %}selected{% endif %}>
+                        {{ emp.sort_number }} - {{ emp.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </form>
+
+        {% if selected_employee %}
+            <h4 class="text-center text-primary mt-3">{{ selected_employee.name }}</h4>
+            <table class="table table-bordered mt-3">
+                <thead>
+                    <tr>
+                        <th>رقم القرار</th>
+                        <th>تاريخ العلاوة</th>
+                        <th>ملاحظات</th>
+                        <th>إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in elawat %}
+                    <tr>
+                        <td>{{ a.decision_number }}</td>
+                        <td>{{ a.elawa_date|date:"d/m/Y" }}</td>
+                        <td>{{ a.notes }}</td>
+                        <td>
+                            <a href="{% url 'elawat_tashgeea:edit_elawa' pk=a.id %}" class="btn btn-warning btn-sm">تعديل</a>
+<button type="button"
+        class="btn btn-danger btn-sm"
+        onclick="confirmDelete({{ a.id }}, '{{ a.decision_number }}')">
+    حذف
+</button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="text-center">لا توجد علاوات مسجلة</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+function confirmDelete(elawaId, decisionNumber) {
+    Swal.fire({
+        title: 'هل أنت متأكد؟',
+        text: `سيتم حذف العلاوة رقم القرار: ${decisionNumber}`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'نعم، احذف!',
+        cancelButtonText: 'إلغاء'
+    }).then((result) => {
+        if (result.isConfirmed) {
+
+            // 🔥 هنا أهم تعديل
+            window.location.href = "/elawat-tashgeea/delete-elawa/" + elawaId + "/";
+
+        }
+    });
+}
+</script>
+
+{% endblock %}

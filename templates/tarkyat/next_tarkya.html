@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <a href="{% url 'tarkyat' %}" class="btn btn-primary">عودة إلى صفحة الترقيات الرئيسية</a>
+
+            <div style="display: flex; justify-content: center;">
+                <h1>موعد الترقية القادمة</h1>
+            </div>
+            <br>
+            <table class="table table-bordered table-striped">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>اسم الفرد</th>
+                        <th>آخر درجة</th>
+                        <th>تاريخ آخر ترقية</th>
+                        <th>موعد الترقية القادمة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in employee_data %}
+                    <tr>
+                        <td>{{ data.employee.name }}</td>
+                        <td>{{ data.latest_promotion.to_rank.name }}</td>
+                        <td>{{ data.latest_promotion.promotion_date|date:"Y-m-d" }}</td>
+                        <td style="color: {{ data.next_promotion_color }}">
+                            {{ data.next_promotion_date|default:"لا يوجد ترقية قادمة" }}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center">لا توجد بيانات ترقيات</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

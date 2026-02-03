@@ -1,184 +1,250 @@
-<title>
-يومية التعيين
-
-</title>
+<title>يومية التعيين</title>
 {% extends "base.html" %}
-{% load static attendance_filters %}
-
+{% load static %}
 
 {% block styles %}
-<style>
-    /* Table Container */
-    .table-container {
-        width: 100%;
-        overflow-x: auto;
-        margin: 20px 0;
-    }
-
-    /* Styled Table */
-    .content-wrapper .table-container .styled-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-family: 'Arial', sans-serif;
-        font-size: 16px;
-        background-color: #fff;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    }
-
-    .content-wrapper .table-container .styled-table thead th {
-        background-color: #2c3e50;
-        color: #ffffff;
-        font-weight: bold;
-        padding: 10px;
-        text-align: right;
-        border-bottom: 2px solid #1a252f;
-    }
-
-    .content-wrapper .table-container .styled-table th,
-    .content-wrapper .table-container .styled-table td {
-        padding: 0px;
-        margin: 0px;
-        font-size: 25px;
-        border: 1px solid #ddd;
-        text-align: right;
-    }
-
-    .content-wrapper .table-container .styled-table th:first-child,
-    .content-wrapper .table-container .styled-table td:first-child {
-        width: 5px;
-    }
-
-    /* الصفوف العادية */
-    .content-wrapper .table-container .styled-table tbody tr {
-        height: 5px; /* الارتفاع الافتراضي للصفوف */
-    }
-
-    /* الصفوف الفارغة */
-    .content-wrapper .table-container .styled-table tbody tr:empty,
-    .content-wrapper .table-container .styled-table tbody tr td:empty {
-        height: 30px; /* ارتفاع الصف الفارغ */
-    }
-
-    .content-wrapper .table-container .styled-table tbody tr:nth-child(even) {
-        background-color: #f9f9f9;
-    }
-
-    .content-wrapper .table-container .styled-table tbody tr:hover {
-        background-color: #f1f1f1;
-    }
-
-    /* Button Styling */
-    .content-wrapper button {
-        padding: 8px 16px;
-        background-color: #3498db;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 14px;
-    }
-
-    .content-wrapper button:hover {
-        background-color: #2980b9;
-    }
-
-    /* Print Styles */
-    @media print {
-        .form-container,
-        .print-btn-container {
-            display: none !important;
+    <style>
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            margin: 20px 0;
         }
-
         .content-wrapper .table-container .styled-table {
-            box-shadow: none;
-            font-size: 20px;
-            font-weight: bolder;
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'Arial', sans-serif;
+            font-size: 16px;
+            background-color: #fff;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
-
+        .content-wrapper .table-container .styled-table thead th {
+            background-color: #2c3e50;
+            color: #ffffff;
+            font-weight: bold;
+            padding: 10px;
+            text-align: right;
+            border-bottom: 2px solid #1a252f;
+        }
         .content-wrapper .table-container .styled-table th,
         .content-wrapper .table-container .styled-table td {
             padding: 0px;
             margin: 0px;
             font-size: 25px;
-            border: .5px solid #000;
+            border: 1px solid #ddd;
+            text-align: right;
         }
-
-        .content-wrapper .table-container .styled-table thead th {
-            background-color: #fff !important;
-            color: #000 !important;
-            border-bottom: 2px solid #000;
+        .content-wrapper .table-container .styled-table th:first-child,
+        .content-wrapper .table-container .styled-table td:first-child {
+            width: 5px;
         }
-
-        .content-wrapper .table-container .styled-table tbody tr:nth-child(even) {
-            background-color: #fff;
+        .content-wrapper .table-container .styled-table tbody tr {
+            height: 5px;
         }
-        
-        /* التأكد من تطبيق الارتفاع في الطباعة */
         .content-wrapper .table-container .styled-table tbody tr:empty,
         .content-wrapper .table-container .styled-table tbody tr td:empty {
             height: 30px;
         }
-    }
-</style>
+        .content-wrapper .table-container .styled-table tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .content-wrapper .table-container .styled-table tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+        .content-wrapper button {
+            padding: 8px 16px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .content-wrapper button:hover {
+            background-color: #2980b9;
+        }
+        .date-input-container {
+            margin-bottom: 20px;
+        }
+        .date-input-container input[type="date"] {
+            padding: 8px;
+            font-size: 14px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        @media print {
+            .date-input-container,
+            .print-btn-container {
+                display: none !important;
+            }
+            .content-wrapper .table-container .styled-table {
+                box-shadow: none;
+                font-size: 20px;
+                font-weight: bolder;
+            }
+            .content-wrapper .table-container .styled-table th,
+            .content-wrapper .table-container .styled-table td {
+                padding: 0px;
+                margin: 0px;
+                font-size: 25px;
+                border: 0.5px solid #000;
+            }
+            .content-wrapper .table-container .styled-table thead th {
+                background-color: #fff !important;
+                color: #000 !important;
+                border-bottom: 2px solid #000;
+            }
+            .content-wrapper .table-container .styled-table tbody tr:nth-child(even) {
+                background-color: #fff;
+            }
+            .content-wrapper .table-container .styled-table tbody tr:empty,
+            .content-wrapper .table-container .styled-table tbody tr td:empty {
+                height: 30px;
+            }
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
-<div class="container" dir="rtl">
-    <div class="content">
-        <div class="form-container">
-            <form method="post">
-                {% csrf_token %}
-                {{ form.as_p }}
-                <button type="submit">عرض</button>
-            </form>
-        </div>
-        <br>
-        <div class="print-btn-container">
-            <button onclick="window.print()">طباعة</button>
-        </div>
-        <h5 style="margin: 0px;">يومية التعيين عن يوم: {{ formatted_date }}</h5>
-        <div class="table-container">
-            <table class="styled-table">
-                <thead>
-                    <tr>
-                        {% for column_index in columns|length|r_filter %}
-                        <th>م</th>
-                        <th>الأســـــــــــــــــم</th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        {% for row_index in num_rows|r_filter %}
-                        <tr>
-                            {% for column in columns %}
-                            {% with item=column|indexing:row_index %}
-                            <td>{{ item.0 }}</td>
-                            <td>{{ item.1 }}</td>
-                            {% endwith %}
-                            {% endfor %}
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-            </table>
-        </div>
-        <div style="display: flex; justify-content: space-between; text-align: right;">
-            <div>
-                <h4>بلوكامين الشئون</h4>
-                <h4>أ.ش / </h4>
-                <h4></h4>
+    <div class="container" dir="rtl">
+        <div class="content">
+            <div class="date-input-container">
+                <label for="date-input">اختر التاريخ: </label>
+                <input type="date" id="date-input" />
+                <button onclick="fetchFoodList()">عرض</button>
             </div>
-            <div>
-                <h4>رئيس قسم الشئون</h4>
-                <h4>عقيد / </h4>
-                <h4>محمد امام</h4>
+            <br>
+            <div class="print-btn-container">
+                <button onclick="window.print()">طباعة</button>
             </div>
-            <div>
-                <h4>مدير إدارة موسيقات الشرطة</h4>
-                <h4>عميد / </h4>
-                <h4>محمد زكي قورة</h4>
+            <h5 style="margin: 0px;" id="date-display">يومية التعيين عن يوم: </h5>
+            <div class="table-container">
+                <table class="styled-table">
+                    <thead id="table-header"></thead>
+                    <tbody id="table-body"></tbody>
+                </table>
+            </div>
+            <div style="display: flex; justify-content: space-between; text-align: right;">
+                <div>
+                    <h4>بلوكامين الشئون</h4>
+                    <h4>أ.ش / </h4>
+                    <h4></h4>
+                </div>
+                <div>
+                    <h4>رئيس قسم الشئون</h4>
+                    <h4>مقدم / </h4>
+                    <h4></h4>
+                </div>
+                <div>
+                    <h4>مدير إدارة موسيقات الشرطة</h4>
+                    <h4>عميد / </h4>
+                    <h4></h4>
+                </div>
+                <br>
+                <br>
+                <br>
+                <br>
+                <br>
             </div>
         </div>
     </div>
-</div>
+
+    <script>
+        // دالة لتحويل الأرقام إلى أرقام هندية
+        function toEasternArabicNumerals(num) {
+            const easternArabicNumerals = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+            return String(num).replace(/[0-9]/g, (digit) => easternArabicNumerals[digit]);
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const formattedTomorrow = tomorrow.toISOString().split("T")[0];
+            document.getElementById("date-input").value = formattedTomorrow;
+            fetchFoodList();
+        });
+
+        function fetchFoodList() {
+            const dateInput = document.getElementById("date-input").value;
+            const apiUrl = "/attendance/api/foodlist/";
+
+            fetch(apiUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCSRFToken(),
+                    "Accept": "application/json",
+                },
+                body: JSON.stringify({ date: dateInput }),
+                credentials: 'include'
+            })
+                .then((response) => {
+                    if (!response.ok) {
+                        return response.text().then((text) => {
+                            throw new Error(`فشل في جلب البيانات: ${response.status} - ${text}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then((data) => {
+                    updateTable(data);
+                })
+                .catch((error) => {
+                    console.error("Error:", error);
+                    alert(error.message);
+                });
+        }
+
+        function updateTable(data) {
+            const tableHeader = document.getElementById("table-header");
+            const tableBody = document.getElementById("table-body");
+            const dateDisplay = document.getElementById("date-display");
+
+            // تحويل الأرقام في formatted_date إلى أرقام هندية
+            const formattedDateWithEasternNumerals = data.formatted_date.replace(/[0-9]/g, (digit) => toEasternArabicNumerals(digit));
+            dateDisplay.textContent = `يومية التعيين عن يوم: ${formattedDateWithEasternNumerals}`;
+
+            tableHeader.innerHTML = "";
+            let headerRow = "<tr>";
+            for (let i = 0; i < data.columns.length; i++) {
+                headerRow += "<th>م</th><th>الأســـــــــــــــــم</th>";
+            }
+            headerRow += "</tr>";
+            tableHeader.innerHTML = headerRow;
+
+            tableBody.innerHTML = "";
+            for (let row = 0; row < data.num_rows; row++) {
+                let rowHtml = "<tr>";
+                for (let col of data.columns) {
+                    const item = col[row] || {};
+                    const serialNumber = item.serial_number ? toEasternArabicNumerals(item.serial_number) : "";
+                    rowHtml += `<td>${serialNumber}</td>`;
+                    rowHtml += `<td>${item.name || ""}</td>`;
+                }
+                rowHtml += "</tr>";
+                tableBody.innerHTML += rowHtml;
+            }
+        }
+
+        function getCSRFToken() {
+            const name = "csrftoken";
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== "") {
+                const cookies = document.cookie.split(";");
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === name + "=") {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+{% endblock %}
+
+{% block footer %}
+    <footer class="main-footer">
+        <p>معا نحو التحول الرقمي - برمجة وتصميم كابتن ياسر أبو دراع</p>
+    </footer>
 {% endblock %}

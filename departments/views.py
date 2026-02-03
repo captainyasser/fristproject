@@ -1,25 +1,36 @@
-from django.shortcuts import render, redirect
+# departments/views.py
+from rest_framework import generics, permissions
+from django.shortcuts import render
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views import View
 from .models import Department
+from .serializers import DepartmentSerializer
+from rest_framework.authtoken.models import Token
 
-def departments_list(request):
-    departments = Department.objects.all()
-    return render(request, 'departments/departments.html', {'departments': departments})
+# كلاس مخصص للتحكم في الصلاحيات
+class StaffOnlyForWrite(permissions.BasePermission):
+    def has_permission(self, request, view):
+        # العرض (GET) متاح لأي مستخدم مسجل
+        if request.method in permissions.SAFE_METHODS:  # GET, HEAD, OPTIONS
+            return request.user.is_authenticated
+        # الإضافة، التعديل، الحذف (POST, PUT, DELETE) للـ staff بس
+        return request.user.is_authenticated and request.user.is_staff
 
-def add_department(request):
-    if request.method == "POST":
-        name = request.POST.get("name")
-        if name:
-            Department.objects.create(name=name)
-        return redirect('departments_list')
+# عرض كل الأقسام وإضافة قسم جديد (API)
+class DepartmentList(generics.ListCreateAPIView):
+    queryset = Department.objects.all()
+    serializer_class = DepartmentSerializer
+    permission_classes = [StaffOnlyForWrite]  # عرض للكل، تعديل للـ staff
 
-def edit_department(request, department_id):
-    department = Department.objects.get(id=department_id)
-    if request.method == "POST":
-        department.name = request.POST.get("name")
-        department.save()
-        return redirect('departments_list')
+# عرض قسم معين وتعديله وحذفه (API)
+class DepartmentDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Department.objects.all()
+    serializer_class = DepartmentSerializer
+    lookup_field = 'id'
+    permission_classes = [StaffOnlyForWrite]  # عرض للكل، تعديل للـ staff
 
-def delete_department(request, department_id):
-    department = Department.objects.get(id=department_id)
-    department.delete()
-    return redirect('departments_list')
+# عرض صفحة الأقسام (Template)
+class DepartmentsPage(LoginRequiredMixin, View):
+    def get(self, request):
+        token, created = Token.objects.get_or_create(user=request.user)  # جلب أو إنشاء التوكن
+        return render(request, 'departments/departments.html', {'token': token.key})

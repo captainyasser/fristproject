@@ -1,0 +1,16 @@
+<h2>تعديل تقارير {{ employee.name }}</h2>
+<form method="post">
+  {% csrf_token %}
+  {{ formset.management_form }}
+  <table class="table">
+    <tr><th>السنة</th><th>الدرجة</th><th>ملاحظات</th></tr>
+    {% for form in formset %}
+      <tr>
+        <td>{{ form.year }}</td>
+        <td>{{ form.score }}</td>
+        <td>{{ form.notes }}</td>
+      </tr>
+    {% endfor %}
+  </table>
+  <button type="submit" class="btn btn-success">حفظ</button>
+</form>

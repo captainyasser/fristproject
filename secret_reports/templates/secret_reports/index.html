@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<div class="container text-center mt-5">
+    <div class="card shadow-lg border-0 rounded-4">
+        <div class="card-body p-5">
+            <h2 class="fw-bold mb-4 text-primary">
+                📊 التقارير السرّية
+            </h2>
+
+            <p class="text-muted mb-5 fs-5">برمجة / كابتن ياسر أبو دراع</p>
+
+            <div class="d-grid gap-3 col-md-6 mx-auto">
+                <button class="btn btn-lg btn-outline-primary" id="btn_edit_employee">
+                    ✏️ تعديل درجات حسب الفرد
+                </button>
+
+                <a href="{% url 'secret_reports:view_by_employee' %}" class="btn btn-lg btn-outline-secondary">
+                    👁️ عرض درجات فرد
+                </a>
+
+                <button class="btn btn-lg btn-outline-success" id="btn_edit_year">
+                    🗓️ تعديل درجات حسب العام
+                </button>
+
+                <a href="{% url 'secret_reports:secrets_dfter' %}" class="btn btn-lg btn-outline-info">
+                    📘 دفتر التقارير
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const PASSWORD = "323";
+
+    function askPassword(redirectUrl) {
+        Swal.fire({
+            title: '🔐 كلمة المرور مطلوبة',
+            input: 'password',
+            inputLabel: 'أدخل كلمة المرور للدخول إلى صفحة التعديل',
+            inputPlaceholder: '•••••',
+            inputAttributes: { maxlength: 10, autocapitalize: 'off', autocorrect: 'off' },
+            showCancelButton: true,
+            confirmButtonText: 'دخول',
+            cancelButtonText: 'إلغاء',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            preConfirm: (value) => {
+                if (value !== PASSWORD) {
+                    Swal.showValidationMessage('❌ كلمة المرور غير صحيحة');
+                    return false;
+                }
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                sessionStorage.setItem("auth_ok", "true");
+                window.location.href = redirectUrl;
+            }
+        });
+    }
+
+    document.getElementById("btn_edit_employee").addEventListener("click", () => {
+        if (sessionStorage.getItem("auth_ok") === "true") {
+            window.location.href = "{% url 'secret_reports:edit_by_employee' %}";
+        } else {
+            askPassword("{% url 'secret_reports:edit_by_employee' %}");
+        }
+    });
+
+    document.getElementById("btn_edit_year").addEventListener("click", () => {
+        if (sessionStorage.getItem("auth_ok") === "true") {
+            window.location.href = "{% url 'secret_reports:edit_by_year' %}";
+        } else {
+            askPassword("{% url 'secret_reports:edit_by_year' %}");
+        }
+    });
+});
+</script>
+
+<style>
+body {
+    background: linear-gradient(135deg, #f5f9ff, #e3efff);
+}
+.card {
+    background: white;
+}
+.btn {
+    transition: 0.3s ease-in-out;
+}
+.btn:hover {
+    transform: translateY(-3px);
+}
+</style>
+
+{% endblock %}

@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    ترقيات معاوني الأمن
+{% endblock %}
+
+{% block content %}
+<!-- Add DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
+
+<style>
+    .table-container {
+        width: 100%;
+        max-height: 500px;
+        overflow-x: auto;
+        overflow-y: auto;
+        position: relative;
+    }
+
+    .table thead {
+        position: sticky;
+        top: 0;
+        background: white;
+        z-index: 100;
+    }
+
+    th, td {
+        white-space: nowrap;
+        padding: 20px;
+        text-align: center;
+    }
+
+    td:nth-child(7), td:nth-child(9), td:nth-child(11), td:nth-child(13), td:nth-child(15), td:nth-child(17),
+    th:nth-child(7), th:nth-child(9), th:nth-child(11), th:nth-child(13), th:nth-child(15), th:nth-child(17) {
+        min-width: 120px;
+    }
+
+    td:nth-child(8), td:nth-child(10), td:nth-child(12), td:nth-child(14), td:nth-child(16), td:nth-child(18),
+    th:nth-child(8), th:nth-child(10), th:nth-child(12), th:nth-child(14), th:nth-child(16), th:nth-child(18) {
+        max-width: 80px;
+        text-align: center;
+    }
+
+    .dt-buttons {
+        margin-bottom: 10px;
+    }
+</style>
+
+<h2 class="text-center mb-4">ترقيات معاوني الأمن</h2>
+<a href="{% url 'tarkyat' %}" class="btn btn-primary">عودة إلى صفحة الترقيات الرئيسية</a>
+<br><br>
+<div class="table-container">
+    <table id="m3awnTable" class="table table-bordered table-striped">
+        <thead class="thead-dark">
+            <tr>
+                <th rowspan="2" class="align-middle text-center">م</th>
+                <th rowspan="2" class="align-middle text-center">الدرجة</th>
+                <th rowspan="2" class="align-middle text-center">رقم الشرطة</th>
+                <th rowspan="2" class="align-middle text-center">الاسم</th>
+                <th rowspan="2" class="align-middle text-center">تاريخ الميلاد</th>
+                <th rowspan="2" class="align-middle text-center">تاريخ التعيين</th>
+                <th colspan="2" class="text-center">معاون أمن ثالث</th>
+                <th colspan="2" class="text-center">معاون أمن ثان</th>
+                <th colspan="2" class="text-center">معاون أمن أول</th>
+                <th colspan="2" class="text-center">معاون أمن ممتاز</th>
+                <th colspan="2" class="text-center">معاون أمن ممتاز ثان</th>
+                <th colspan="2" class="text-center">معاون أمن ممتاز أول</th>
+            </tr>
+            <tr>
+                <th class="text-center">تاريخ الترقية</th>
+                <th class="text-center">رقم الدورة</th>
+                <th class="text-center">تاريخ الترقية</th>
+                <th class="text-center">رقم الدورة</th>
+                <th class="text-center">تاريخ الترقية</th>
+                <th class="text-center">رقم الدورة</th>
+                <th class="text-center">تاريخ الترقية</th>
+                <th class="text-center">رقم الدورة</th>
+                <th class="text-center">تاريخ الترقية</th>
+                <th class="text-center">رقم الدورة</th>
+                <th class="text-center">تاريخ الترقية</th>
+                <th class="text-center">رقم الدورة</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for data in employee_data %}
+                <tr>
+                    <td class="text-center">{{ forloop.counter }}</td>
+                    <td class="text-center">{{ data.employee.rank.name|default:"-" }}</td>
+                    <td class="text-center">{{ data.employee.police_number|default:"-" }}</td>
+                    <td>{{ data.employee.name }}</td>
+                    <td class="text-center">{{ data.employee.date_of_birth|date:"Y-m-d"|default:"-" }}</td>
+                    <td class="text-center">{{ data.employee.date_of_appointment|date:"Y-m-d"|default:"-" }}</td>
+                    <td class="text-center">{{ data.promotions.m3awn_thaleth_date|date:"Y-m-d"|default:"-" }}</td>
+                    <td class="text-center">{{ data.promotions.m3awn_thaleth_num|default:"-" }}</td>
+                    <td class="text-center">{{ data.promotions.m3awn_thani_date|date:"Y-m-d"|default:"-" }}</td>
+                    <td class="text-center">{{ data.promotions.m3awn_thani_num|default:"-" }}</td>
+                    <td class="text-center">{{ data.promotions.m3awn_awwal_date|date:"Y-m-d"|default:"-" }}</td>
+                    <td class="text-center">{{ data.promotions.m3awn_awwal_num|default:"-" }}</td>
+                    <td class="text-center">{{ data.promotions.m3awn_momtaz_date|date:"Y-m-d"|default:"-" }}</td>
+                    <td class="text-center">{{ data.promotions.m3awn_momtaz_num|default:"-" }}</td>
+                    <td class="text-center">{{ data.promotions.m3awn_momtaz_thani_date|date:"Y-m-d"|default:"-" }}</td>
+                    <td class="text-center">{{ data.promotions.m3awn_momtaz_thani_num|default:"-" }}</td>
+                    <td class="text-center">{{ data.promotions.m3awn_momtaz_awwal_date|date:"Y-m-d"|default:"-" }}</td>
+                    <td class="text-center">{{ data.promotions.m3awn_momtaz_awwal_num|default:"-" }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="18" class="text-center">لا توجد بيانات متاحة لمعاوني الأمن</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Add DataTables JS and dependencies -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    $('#m3awnTable').DataTable({
+        dom: 'Bfrtip',
+        buttons: [
+            {
+                extend: 'copy',
+                text: 'نسخ',
+            },
+            {
+                extend: 'csv',
+                text: 'CSV',
+            },
+            {
+                extend: 'excel',
+                text: 'Excel',
+            },
+            {
+                extend: 'pdf',
+                text: 'PDF',
+                customize: function(doc) {
+                    doc.defaultStyle.alignment = 'right';
+                    doc.styles.tableHeader.alignment = 'center';
+                }
+            },
+            {
+                extend: 'print',
+                text: 'طباعة',
+            }
+        ],
+        language: {
+            "zeroRecords": "لا توجد بيانات متاحة",
+            "info": "عرض _TOTAL_ سجل",
+            "infoEmpty": "لا توجد سجلات متاحة",
+            "infoFiltered": "(تمت تصفيته من _MAX_ إجمالي السجلات)",
+            "search": "بحث:"
+        },
+        scrollX: true,
+        scrollY: '400px',
+        scrollCollapse: true,
+        paging: false,
+        info: true,
+        fixedHeader: true
+    });
+});
+</script>
+
+{% endblock %}
+
+{% block extra_css %}
+    <style>
+        th, td { white-space: nowrap; }
+        .table-responsive { overflow-x: auto; }
+    </style>
+{% endblock %}

@@ -1,0 +1,73 @@
+<!-- F:\emapi-edit\myproject\penalties\templates\penalties\level_list.html -->
+{% extends 'base.html' %}
+{% block title %}أنواع الجزاءات{% endblock %}
+
+{% block content %}
+<div class="">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>أنواع الجزاءات</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{% url 'penalties:dashboard' %}">الجزاءات</a></li>
+                        <li class="breadcrumb-item active">الأنواع</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="card card-primary card-outline shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h3 class="card-title">قائمة أنواع الجزاءات</h3>
+                    <div class="card-tools">
+                        <a href="{% url 'penalties:level_create' %}" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> إضافة نوع جديد</a>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>الاسم</th>
+                                <th>الوصف</th>
+                                <th>الحالة</th>
+                                <th style="width: 150px">الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for level in levels %}
+                            <tr>
+                                <td>{{ level.name }}</td>
+                                <td>{{ level.description|default:"-" }}</td>
+                                <td>
+                                    {% if level.is_active %}
+                                    <span class="badge badge-success">مفعل</span>
+                                    {% else %}
+                                    <span class="badge badge-secondary">غير مفعل</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="{% url 'penalties:level_update' level.pk %}" class="btn btn-sm btn-default"><i class="fas fa-pen"></i></a>
+                                        <a href="{% url 'penalties:level_delete' level.pk %}" class="btn btn-sm btn-default text-danger"><i class="fas fa-trash"></i></a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">لا توجد بيانات.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

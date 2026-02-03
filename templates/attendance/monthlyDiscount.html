@@ -1,148 +1,120 @@
-<title>كشف الخصم المالي</title>
 {% extends "base.html" %}
-<!DOCTYPE html>
 {% load static %}
-<html lang="ar">
-<head>
-    <meta charset="UTF-8">
-    <style>
-        .text-right { text-align: right; }
-    </style>
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- DataTables CSS -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-    <!-- DataTables Buttons CSS -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
-    <!-- DataTables JS -->
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <!-- DataTables Buttons JS -->
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
-    <!-- Buttons Extensions -->
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.colVis.min.js"></script>
-    <!-- JSZip لـ Excel -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <!-- pdfMake لـ PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
-</head>
-<body class="hold-transition sidebar-mini layout-fixed">
-    <div class="container">
-        <div class="content">
-            {% block content %}
-            <div class="container-fluid">
-                <div class="row">
-                    <div class="col-md-12">
-                        {% block inner_content %}
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="card-title">تقرير الخصم الشهري</h3>
-                            </div>
-                            <div class="card-body">
-                                <form method="post" class="mb-4">
-                                    {% csrf_token %}
-                                    <div class="form-row align-items-center">
-                                        <div class="col-auto">
-                                            <label for="month" class="sr-only">الشهر:</label>
-                                            <select id="month" name="month" class="form-control" required>
-                                                {% for value, name in months %}
-                                                    <option value="{{ value }}" {% if month == value %}selected{% endif %}>{{ name }}</option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-                                        <div class="col-auto">
-                                            <label for="year" class="sr-only">السنة:</label>
-                                            <select id="year" name="year" class="form-control" required>
-                                                {% for year_option in years %}
-                                                    <option value="{{ year_option }}" {% if year == year_option %}selected{% endif %}>{{ year_option }}</option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-                                        <div class="col-auto">
-                                            <button type="submit" class="btn btn-primary">عرض التقرير</button>
-                                        </div>
-                                    </div>
-                                </form>
 
-                                {% if employees %}
-                                    <h4 class="mb-3">التقرير لشهر {{ month }} سنة {{ year }}</h4>
-                                    <div class="table-responsive" dir='rtl'>
-                                        <table id="employeesTable" class="table table-bordered table-striped">
-                                            <thead class="thead-dark">
-                                                <tr>
-                                                    <th class="text-right">ق</th>
-                                                    <th class="text-right">م</th>
-                                                    <th class="text-right">الدرجة</th>
-                                                    <th class="text-right">الاسم</th>
-                                                    <th class="text-right">اجازات</th>
-                                                    <th class="text-right">الراحات</th>
-                                                    <th class="text-right">الوجبات</th>
-                                                    <th class="text-right">مرضي</th>
-                                                    <th class="text-right">الخصم</th>
-                                                    <th class="text-right">المستحق</th>
-                                                    <th class="text-right">ملحوظات</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {% for employee in employees %}
-                                                    <tr>
-                                                        <td class="text-right">{{ employee.dep_sort }}</td>
-                                                        <td class="text-right">{{ forloop.counter }}</td>
-                                                        <td class="text-right">{{ employee.rank__name }}</td>
-                                                        <td class="text-right">{{ employee.name }}</td>
-                                                        <td class="text-right">{{ employee.total_d_t|default_if_none:"0" }}</td>
-                                                        <td class="text-right">{{ employee.total_rahat|default_if_none:"0" }}</td>
-                                                        <td class="text-right">{{ employee.total_food|default_if_none:"0" }}</td>
-                                                        <td class="text-right">{{ employee.total_maradi|default_if_none:"0" }}</td>
-                                                        <td class="text-right">{{ employee.total_discount|default_if_none:"0" }}</td>
-                                                        <td class="text-right">{{ employee.total_eligible|default_if_none:"0" }}</td>
-                                                        <td class="text-right">{{ employee.nots }}</td>
-                                                    </tr>
-                                                {% endfor %}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                {% else %}
-                                    <div class="alert alert-info" role="alert">
-                                        لا توجد بيانات لعرضها.
-                                    </div>
-                                {% endif %}
+{% block title %}تقرير الخصم المالي{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">تقرير الخصم الشهري</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="mb-4">
+                        {% csrf_token %}
+                        <div class="form-row align-items-center">
+                            <div class="col-auto">
+                                <label for="month" class="sr-only">الشهر:</label>
+                                <select id="month" name="month" class="form-control" required>
+                                    {% for value, name in months %}
+                                        <option value="{{ value }}" {% if month == value %}selected{% endif %}>{{ name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-auto">
+                                <label for="year" class="sr-only">السنة:</label>
+                                <select id="year" name="year" class="form-control" required>
+                                    {% for year_option in years %}
+                                        <option value="{{ year_option }}" {% if year == year_option %}selected{% endif %}>{{ year_option }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-auto">
+                                <button type="submit" class="btn btn-primary">عرض التقرير</button>
                             </div>
                         </div>
-                        {% endblock %}
-                    </div>
+                    </form>
+
+                    {% if employees %}
+                        <h4 class="mb-3">التقرير لشهر {{ month }} سنة {{ year }}</h4>
+                        <div class="table-responsive" dir="rtl">
+                            <table id="employeesTable" class="table table-bordered table-striped">
+                                <thead class="thead-dark">
+                                    <tr>
+                                        <th class="text-right">ق</th>
+                                        <th class="text-right">م</th>
+                                        <th class="text-right">الدرجة</th>
+                                        <th class="text-right">الاسم</th>
+                                        <th class="text-right">اجازات</th>
+                                        <th class="text-right">الراحات</th>
+                                        <th class="text-right">الوجبات</th>
+                                        <th class="text-right">مرضي</th>
+                                        <th class="text-right">الخصم</th>
+                                        <th class="text-right">المستحق</th>
+                                        <th class="text-right">ملحوظات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for employee in employees %}
+                                        <tr>
+                                            <td class="text-right">{{ employee.dep_sort }}</td>
+                                            <td class="text-right">{{ forloop.counter }}</td>
+                                            <td class="text-right">{{ employee.rank_name }}</td>
+                                            <td class="text-right">{{ employee.name }}</td>
+                                            <td class="text-right">{{ employee.total_d_t|default_if_none:"0" }}</td>
+                                            <td class="text-right">{{ employee.total_rahat|default_if_none:"0" }}</td>
+                                            <td class="text-right">{{ employee.total_food|default_if_none:"0" }}</td>
+                                            <td class="text-right">{{ employee.total_maradi|default_if_none:"0" }}</td>
+                                            <td class="text-right">{{ employee.total_discount|default_if_none:"0" }}</td>
+                                            <td class="text-right">{{ employee.total_eligible|default_if_none:"0" }}</td>
+                                            <td class="text-right">{{ employee.nots }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info" role="alert">
+                            اختر الشهر والعام لعرض اليانات
+                        </div>
+                    {% endif %}
                 </div>
             </div>
-            {% endblock %}
         </div>
     </div>
+</div>
+{% endblock %}
 
-    <script>
-    $(document).ready(function() {
-        if ($('#employeesTable').length) {
-            console.log("Initializing DataTable...");
-            $('#employeesTable').DataTable({
-                dom: 'Bfrtip',
-                buttons: [
-                    { extend: 'copy', text: '📋 نسخ', className: 'btn btn-secondary' },
-                    { extend: 'csv', text: '📄 تصدير CSV', className: 'btn btn-info' },
-                    { extend: 'excelHtml5', text: '📂 تصدير Excel', className: 'btn btn-success' },
-                    { extend: 'pdfHtml5', text: '📜 تصدير PDF', className: 'btn btn-danger' },
-                    { extend: 'print', text: '🖨️ طباعة', className: 'btn btn-primary' },
-                    { extend: 'colvis', text: '👁️ إظهار/إخفاء', className: 'btn btn-warning' }
-                ],
-                order: [[0, 'asc']],
-                language: {
-                    url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/ar.json"
-                }
-            });
-            console.log("DataTable initialized successfully.");
-        } else {
-            console.error("Table with ID 'employeesTable' not found.");
-        }
+{% block scripts %}
+<!-- تفعيل DataTable مع الأزرار -->
+<script>
+$(document).ready(function() {
+    $('#employeesTable').DataTable({
+        dom: 'Bfrtip',
+        buttons: [
+            { extend: 'copy', text: '📋 نسخ', className: 'btn btn-secondary' },
+            { extend: 'csv', text: '📄 CSV', className: 'btn btn-info' },
+            { extend: 'excelHtml5', text: '📂 Excel', className: 'btn btn-success' },
+            { extend: 'pdfHtml5', text: '📜 PDF', className: 'btn btn-danger' },
+            { extend: 'print', text: '🖨️ طباعة', className: 'btn btn-primary' },
+            { extend: 'colvis', text: '👁️ أعمدة', className: 'btn btn-warning' }
+        ],
+        language: {
+            url: "//cdn.datatables.net/plug-ins/1.13.4/i18n/ar.json"
+        },
+        responsive: true
     });
-    </script>
-</body>
-</html>
+});
+</script>
+
+<!-- تحسين شكل الأزرار -->
+<style>
+    .dt-buttons .btn {
+        margin-left: 5px;
+        margin-bottom: 10px;
+    }
+</style>
+{% endblock %}
+    

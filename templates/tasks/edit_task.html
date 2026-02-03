@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تعديل المهمة: {{ task.title }}{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">تعديل المهمة</h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/">الرئيسية</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'tasks:task_list' %}">المهام</a></li>
+                    <li class="breadcrumb-item active">تعديل</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <!-- عمود النموذج -->
+            <div class="col-md-12">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">بيانات المهمة</h3>
+                    </div>
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="title">عنوان المهمة</label>
+                                        <input type="text" name="title" id="title" class="form-control" value="{{ task.title }}" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="due_date">تاريخ الاستحقاق</label>
+                                        <input type="date" name="due_date" id="due_date" class="form-control" value="{{ task.due_date|date:'Y-m-d' }}" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="repeat_type">نوع التكرار</label>
+                                        <select name="repeat_type" id="repeat_type" class="form-control">
+                                            <option value="none" {% if task.repeat_type == 'none' %}selected{% endif %}>غير متكررة</option>
+                                            <option value="daily" {% if task.repeat_type == 'daily' %}selected{% endif %}>يومي</option>
+                                            <option value="monthly" {% if task.repeat_type == 'monthly' %}selected{% endif %}>شهري</option>
+                                            <option value="quarterly" {% if task.repeat_type == 'quarterly' %}selected{% endif %}>كل 3 أشهر</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="repeat_interval">الفاصل الزمني (أيام/أشهر)</label>
+                                        <input type="number" name="repeat_interval" id="repeat_interval" class="form-control" value="{{ task.repeat_interval }}" min="1">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="reminder_days">أيام التذكير</label>
+                                        <input type="number" name="reminder_days" id="reminder_days" class="form-control" value="{{ task.reminder_days }}" min="0">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="notes">ملاحظات</label>
+                                <textarea name="notes" id="notes" class="form-control" rows="4">{{ task.notes|default_if_none:"" }}</textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="files">إضافة ملفات جديدة</label>
+                                <div class="custom-file">
+                                    <input type="file" name="files" class="custom-file-input" id="customFile" multiple>
+                                    <label class="custom-file-label" for="customFile">اختر ملفات</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-footer">
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> حفظ التعديلات</button>
+                            <a href="{% url 'tasks:task_list' %}" class="btn btn-default float-left">إلغاء</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- عمود الملفات المرفقة -->
+            <div class="col-md-12">
+                <div class="card card-info">
+                    <div class="card-header">
+                        <h3 class="card-title">الملفات المرفقة الحالية</h3>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>اسم الملف</th>
+                                    <th>تاريخ الرفع</th>
+                                    <th style="width: 200px">الإجراء</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for file in task.files.all %}
+                                <tr>
+                                    <td>{{ file.file.name }}</td>
+                                    <td>{{ file.uploaded_at|date:"Y-m-d H:i" }}</td>
+                                    <td>
+                                        <a href="{{ file.file.url }}" class="btn btn-sm btn-info" target="_blank"><i class="fas fa-download"></i> تحميل</a>
+                                        <a href="{% url 'tasks:delete_file' file.id %}" class="btn btn-sm btn-danger" onclick="return confirm('هل أنت متأكد من حذف هذا الملف؟')"><i class="fas fa-trash"></i> حذف</a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted">لا توجد ملفات مرفقة</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'adminlte/plugins/bs-custom-file-input/bs-custom-file-input.min.js' %}"></script>
+<script>
+    $(function () {
+        bsCustomFileInput.init();
+    });
+</script>
+{% endblock %}
+
+{% block footer %}
+    <footer class="main-footer">
+        <p>معا نحو التحول الرقمي - برمجة وتصميم كابتن ياسر أبو دراع</p>
+    </footer>
+{% endblock %}

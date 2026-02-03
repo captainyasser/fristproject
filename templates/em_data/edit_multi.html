@@ -1,20 +1,6 @@
-<title>
-    تعديل متعدد
-</title>
+<!-- em_data/edit_multi.html -->
 {% extends "base.html" %}
 {% load static %}
-{% load employee_filters %}
-
-
-
-{% block styles %}
-    <link rel="stylesheet" href="{% static 'adminlte/plugins/fontawesome-free/css/all.min.css' %}">
-    <link rel="stylesheet" href="{% static 'adminlte/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css' %}">
-    <link rel="stylesheet" href="{% static 'adminlte/dist/css/adminlte.min.css' %}">
-    <link rel="stylesheet" href="{% static 'adminlte/plugins/overlayScrollbars/css/OverlayScrollbars.min.css' %}">
-    <link rel="stylesheet" href="https://cdn.rtlcss.com/bootstrap/v4.2.1/css/bootstrap.min.css">
-    <link rel="stylesheet" href="{% static 'adminlte/dist/css/custom.css' %}">
-{% endblock %}
 
 {% block content %}
     <div class="container" dir="rtl">
@@ -22,211 +8,361 @@
             <div class="row">
                 <div class="col-md-12">
                     <h1>تعديل بيانات الأفراد</h1>
-                    <form method="GET" action="{% url 'edit_multi' %}">
+                    <form id="field-select-form">
                         <div class="form-group">
                             <label for="sort_by">ترتيب حسب:</label>
-                            <select id="sort_by" name="sort_by" class="form-control" onchange="this.form.submit()">
-                                {% comment %} <option value="id" {% if sort_by == "id" %}selected{% endif %}>المعرف</option> {% endcomment %}
-                                <option value="sort_number" {% if sort_by == "sort_number" %}selected{% endif %}>رقم الترتيب</option>
-                                <option value="dep_sort" {% if sort_by == "dep_sort" %}selected{% endif %}>ترتيب القسم</option>
+                            <select id="sort_by" name="sort_by" class="form-control">
+                                <option value="sort_number">رقم الترتيب</option>
+                                <option value="dep_sort">ترتيب القسم</option>
                             </select>
                         </div>
                         <div class="form-group">
                             <label for="field">اختر الحقل المراد تعديله:</label>
-                            <select id="field" name="field" class="form-control" onchange="this.form.submit()" required>
+                            <select id="field" name="field" class="form-control" required>
                                 <option value="">-- اختر حقلًا --</option>
-                                {% for field in allowed_fields %}
-                                    <option value="{{ field }}" {% if selected_field == field %}selected{% endif %}>
-                                        {% if field == "id_number" %}الرقم القومي
-                                        {% elif field == "date_of_birth" %}تاريخ الميلاد
-                                        {% elif field == "date_of_retirement" %}تاريخ التقاعد
-                                        {% elif field == "age" %}العمر
-                                        {% elif field == "name" %}الاسم
-                                        {% elif field == "mainornot" %}رئيسي أم لا
-                                        {% elif field == "sort_number" %}رقم الترتيب
-                                        {% elif field == "dep_sort" %}ترتيب القسم
-                                        {% elif field == "image" %}الصورة
-                                        {% elif field == "amen_or_ola" %}أمن أو علا
-                                        {% elif field == "rank" %}الدرجة
-                                        {% elif field == "rank_kind" %}نوع الرتبة
-                                        {% elif field == "nickname" %}اللقب
-                                        {% elif field == "police_number" %}رقم الشرطة
-                                        {% elif field == "insurance_number" %}رقم التأمين
-                                        {% elif field == "date_of_edara" %}تاريخ دخول الإدارة
-                                        {% elif field == "date_of_appointment" %}تاريخ التعيين
-                                        {% elif field == "phone_number" %}رقم الهاتف
-                                        {% elif field == "alt_phone_number" %}رقم الهاتف البديل
-                                        {% elif field == "marital_status" %}الحالة الاجتماعية
-                                        {% elif field == "gender" %}الجنس
-                                        {% elif field == "governorate" %}المحافظة
-                                        {% elif field == "district" %}المنطقة
-                                        {% elif field == "address" %}العنوان
-                                        {% elif field == "health_status" %}الحالة الصحية
-                                        {% elif field == "tmamam" %}يحضر التمام
-                                        {% elif field == "food" %}الحصول على تعيين
-                                        {% elif field == "rahatcounter" %}عداد الراحة
-                                        {% elif field == "department" %}القسم
-                                        {% elif field == "total_leave" %}إجمالي الإجازات
-                                        {% elif field == "bus" %}يستقل الأتوبيس
-                                        {% elif field == "nots" %}ملاحظات
-                                        {% elif field == "operation" %}التشغيل
-                                        {% endif %}
-                                    </option>
-                                {% endfor %}
+                                <option value="id_number">الرقم القومي</option>
+                                <option value="date_of_birth">تاريخ الميلاد</option>
+                                <option value="date_of_retirement">تاريخ التقاعد</option>
+                                <option value="age">العمر</option>
+                                <option value="name">الاسم</option>
+                                <option value="mainornot">رئيسي أم لا</option>
+                                <option value="sort_number">رقم الترتيب</option>
+                                <option value="dep_sort">ترتيب القسم</option>
+                                <option value="image">الصورة</option>
+                                <option value="amen_or_ola">أمن أو علا</option>
+                                <option value="rank">الدرجة</option>
+                                <option value="rank_kind">نوع الرتبة</option>
+                                <option value="nickname">اللقب</option>
+                                <option value="police_number">رقم الشرطة</option>
+                                <option value="insurance_number">رقم التأمين</option>
+                                <option value="date_of_edara">تاريخ دخول الإدارة</option>
+                                <option value="date_of_appointment">تاريخ التعيين</option>
+                                <option value="phone_number">رقم الهاتف</option>
+                                <option value="alt_phone_number">رقم الهاتف البديل</option>
+                                <option value="marital_status">الحالة الاجتماعية</option>
+                                <option value="gender">الجنس</option>
+                                <option value="governorate">المحافظة</option>
+                                <option value="district">المنطقة</option>
+                                <option value="address">العنوان</option>
+                                <option value="health_status">الحالة الصحية</option>
+                                <option value="tmamam">يحضر التمام</option>
+                                <option value="food">الحصول على تعيين</option>
+                                <option value="rahatcounter">عداد الراحة</option>
+                                <option value="department">القسم</option>
+                                <option value="total_leave">إجمالي الإجازات</option>
+                                <option value="bus">يستقل الأتوبيس</option>
+                                <option value="nots">ملاحظات</option>
+                                <option value="operation">التشغيل</option>
                             </select>
                         </div>
                     </form>
 
-                    {% if selected_field and items %}
-                        <form method="POST" action="{% url 'edit_multi' %}" id="editForm" enctype="multipart/form-data">
+                    <div class="form-container" id="edit-form-container">
+                        <form id="edit-form">
                             {% csrf_token %}
-                            <input type="hidden" name="field" value="{{ selected_field }}">
-                            <table class="table mt-3">
-                                <thead>
-                                    <tr>
-                                        <th>الاسم</th>
-                                        <th>القيمة الحالية</th>
-                                        <th>القيمة الجديدة</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for item in items %}
+                            <div class="form-group">
+                                <label id="edit-label"></label>
+                                <table class="table">
+                                    <thead>
                                         <tr>
-                                            <td>{{ item.name }}</td>
-                                            <td>
-                                                {% if selected_field == "department" %}
-                                                    {{ item.department.name|default:"-" }}
-                                                {% elif selected_field == "rank" %}
-                                                    {{ item.rank.name|default:"-" }}
-                                                {% elif selected_field in "tmamam food bus amen_or_ola" %}
-                                                    {{ item|get_field_value:selected_field|yesno:"نعم,لا" }}
-                                                {% elif selected_field in "date_of_edara date_of_appointment date_of_birth date_of_retirement" %}
-                                                    {{ item|get_field_value:selected_field|date:"d/m/Y"|default:"-" }}
-                                                {% elif selected_field == "image" %}
-                                                    {% if item.image %}<img src="{{ item.image.url }}" width="50">{% else %}-{% endif %}
-                                                {% else %}
-                                                    {{ item|get_field_value:selected_field|default:"-" }}
-                                                {% endif %}
-                                            </td>
-                                            <td>
-                                                {% if selected_field in "name id_number nickname police_number insurance_number phone_number alt_phone_number governorate district address gender" %}
-                                                    <input type="text" name="values_{{ item.id }}" class="form-control" value="{{ item|get_field_value:selected_field|default:'' }}">
-                                                {% elif selected_field == "department" %}
-                                                    <select name="values_{{ item.id }}" class="form-control">
-                                                        <option value="">-- اختر قسمًا --</option>
-                                                        {% for dept in departments %}
-                                                            <option value="{{ dept.id }}" {% if item.department.id == dept.id %}selected{% endif %}>{{ dept.name }}</option>
-                                                        {% endfor %}
-                                                    </select>
-                                                {% elif selected_field == "rank" %}
-                                                    <select name="values_{{ item.id }}" class="form-control">
-                                                        <option value="">-- اختر درجة --</option>
-                                                        {% for rank in ranks %}
-                                                            <option value="{{ rank.id }}" {% if item.rank.id == rank.id %}selected{% endif %}>{{ rank.name }}</option>
-                                                        {% endfor %}
-                                                    </select>
-                                                {% elif selected_field in "tmamam food bus amen_or_ola" %}
-                                                    <input type="checkbox" name="values_{{ item.id }}" class="form-check-input" {% if item|get_field_value:selected_field %}checked{% endif %}>
-                                                {% elif selected_field in "date_of_edara date_of_appointment date_of_birth date_of_retirement" %}
-                                                    {% with current_date=item|get_field_value:selected_field %}
-                                                        <select name="day_{{ item.id }}" class="form-control d-inline-block" style="width: 30%;">
-                                                            <option value="">-- يوم --</option>
-                                                            {% for day in "31"|make_list %}
-                                                                {% with day_num=forloop.counter|stringformat:"02d" %}
-                                                                    <option value="{{ day_num }}" {% if current_date.day|stringformat:"02d" == day_num %}selected{% endif %}>{{ day_num }}</option>
-                                                                {% endwith %}
-                                                            {% endfor %}
-                                                        </select>
-                                                        <select name="month_{{ item.id }}" class="form-control d-inline-block" style="width: 30%;">
-                                                            <option value="">-- شهر --</option>
-                                                            {% for month in "12"|make_list %}
-                                                                {% with month_num=forloop.counter|stringformat:"02d" %}
-                                                                    <option value="{{ month_num }}" {% if current_date.month|stringformat:"02d" == month_num %}selected{% endif %}>{{ month_num }}</option>
-                                                                {% endwith %}
-                                                            {% endfor %}
-                                                        </select>
-                                                        <select name="year_{{ item.id }}" class="form-control d-inline-block" style="width: 30%;">
-                                                            <option value="">-- سنة --</option>
-                                                            {% for year in "1900 2025"|make_range %}
-                                                                <option value="{{ year }}" {% if current_date.year == year %}selected{% endif %}>{{ year }}</option>
-                                                            {% endfor %}
-                                                        </select>
-                                                    {% endwith %}
-                                                {% elif selected_field == "operation" %}
-                                                    <select name="values_{{ item.id }}" class="form-control">
-                                                        <option value="">-- اختر عملية --</option>
-                                                        {% for choice_value, choice_label in operation_choices %}
-                                                            <option value="{{ choice_value }}" {% if item.operation == choice_value %}selected{% endif %}>{{ choice_label }}</option>
-                                                        {% endfor %}
-                                                    </select>
-                                                {% elif selected_field == "marital_status" %}
-                                                    <select name="values_{{ item.id }}" class="form-control">
-                                                        <option value="">-- اختر حالة --</option>
-                                                        {% for choice_value, choice_label in marital_status_choices %}
-                                                            <option value="{{ choice_value }}" {% if item.marital_status == choice_value %}selected{% endif %}>{{ choice_label }}</option>
-                                                        {% endfor %}
-                                                    </select>
-                                                {% elif selected_field == "health_status" %}
-                                                    <select name="values_{{ item.id }}" class="form-control">
-                                                        <option value="">-- اختر حالة --</option>
-                                                        {% for choice_value, choice_label in health_status_choices %}
-                                                            <option value="{{ choice_value }}" {% if item.health_status == choice_value %}selected{% endif %}>{{ choice_label }}</option>
-                                                        {% endfor %}
-                                                    </select>
-                                                {% elif selected_field == "image" %}
-                                                    <input type="file" name="values_{{ item.id }}" class="form-control">
-                                                {% elif selected_field in "age sort_number dep_sort total_leave rank_kind mainornot rahatcounter" %}
-                                                    <input type="number" name="values_{{ item.id }}" class="form-control sort-number-input" value="{{ item|get_field_value:selected_field|default:'' }}">
-                                                {% elif selected_field == "nots" %}
-                                                    <textarea name="values_{{ item.id }}" class="form-control">{{ item|get_field_value:selected_field|default:'' }}</textarea>
-                                                {% else %}
-                                                    <input type="text" name="values_{{ item.id }}" class="form-control" value="{{ item|get_field_value:selected_field|default:'' }}">
-                                                {% endif %}
-                                            </td>
+                                            <th>الاسم</th>
+                                            <th>القيمة الحالية</th>
+                                            <th>القيمة الجديدة</th>
                                         </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                            {% if selected_field == "sort_number" %}
-                                <button type="button" class="btn btn-secondary mt-3" onclick="autoFillSortNumbers()">تعبئة أرقام تصاعدية</button>
-                            {% endif %}
-                            <button type="submit" class="btn btn-primary mt-3" onclick="this.disabled=true; this.innerHTML='جارٍ الحفظ...'; document.getElementById('editForm').submit();">حفظ التغييرات</button>
+                                    </thead>
+                                    <tbody id="edit-inputs"></tbody>
+                                </table>
+                            </div>
+                            <button type="button" id="fill-sort-numbers" class="btn btn-info" style="display: none;">ملء أرقام الترتيب</button>
+                            <button type="submit" class="btn btn-primary">حفظ</button>
                         </form>
-                    {% elif selected_field and not items %}
-                        <p class="mt-3">لا يوجد عناصر لعرضها.</p>
-                    {% endif %}
+                    </div>
 
-                    {% if messages %}
-                        <div class="mt-3">
-                            {% for message in messages %}
-                                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
+                    <div id="messages" class="mt-3"></div>
                 </div>
             </div>
         </div>
     </div>
-    <br><br><br><br><br>
 
-    <!-- إضافة JavaScript لتعبئة الأرقام التصاعدية -->
     <script>
-        function autoFillSortNumbers() {
-            const inputs = document.querySelectorAll('.sort-number-input');
-            inputs.forEach((input, index) => {
-                input.value = index + 1; // تعبئة الأرقام من 1 تصاعديًا
+        const token = "{{ token }}";
+        const apiUrl = "/api/employees/";
+        const csrfToken = "{{ csrf_token }}";
+        let employeesData = [];
+        let departments = [];
+        let ranks = [];
+
+        document.addEventListener("DOMContentLoaded", function() {
+            Promise.all([
+                fetch("/api/departments/", { headers: { "Authorization": `Token ${token}` } })
+                    .then(res => res.json())
+                    .then(data => departments = data),
+                fetch("/api/ranks/", { headers: { "Authorization": `Token ${token}` } })
+                    .then(res => res.json())
+                    .then(data => ranks = data),
+                loadEmployees()
+            ]).catch(error => {
+                console.error("Error loading initial data:", error);
+                showMessage("حدث خطأ أثناء تحميل البيانات الأولية", "danger");
+            });
+
+            document.getElementById("sort_by").addEventListener("change", loadEmployees);
+            document.getElementById("field").addEventListener("change", handleFieldChange);
+            document.getElementById("fill-sort-numbers").addEventListener("click", fillSortNumbers);
+        });
+
+        function handleFieldChange() {
+            const field = this.value;
+            const container = document.getElementById("edit-form-container");
+            const label = document.getElementById("edit-label");
+            const inputsBody = document.getElementById("edit-inputs");
+            const fillButton = document.getElementById("fill-sort-numbers");
+
+            if (field && employeesData.length > 0) {
+                container.style.display = "block";
+                label.textContent = document.querySelector(`#field option[value="${field}"]`).text;
+                renderInputs(field);
+                // إظهار زر الملء فقط عند اختيار sort_number
+                fillButton.style.display = (field === "sort_number") ? "inline-block" : "none";
+            } else {
+                container.style.display = "none";
+                inputsBody.innerHTML = "";
+                fillButton.style.display = "none";
+            }
+        }
+
+        function loadEmployees() {
+            const sortBy = document.getElementById("sort_by").value;
+            return fetch(`${apiUrl}?sort_by=${sortBy}`, {
+                headers: {
+                    "Authorization": `Token ${token}`,
+                    "Content-Type": "application/json"
+                }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return response.json();
+            })
+            .then(data => {
+                employeesData = data;
+                const field = document.getElementById("field").value;
+                if (field) renderInputs(field);
+            })
+            .catch(error => {
+                console.error("Error loading employees:", error);
+                showMessage(`حدث خطأ أثناء جلب بيانات الموظفين: ${error.message}`, "danger");
             });
         }
-    </script>
-{% endblock %}
 
-{% block extra_css %}
-    <style>
-        body, html { direction: rtl; }
-        .container { text-align: right; direction: rtl; }
-        .form-group, .form-control, .btn { direction: rtl; text-align: right; }
-        .table th, .table td { text-align: right; }
-        .form-check-input { margin-right: 10px; }
-        .d-inline-block { margin-left: 5px; }
-    </style>
+        function renderInputs(field) {
+            const tbody = document.getElementById("edit-inputs");
+            tbody.innerHTML = "";
+            
+            if (!employeesData.length) {
+                tbody.innerHTML = "<tr><td colspan='3'>لا توجد بيانات لعرضها</td></tr>";
+                return;
+            }
+
+            employeesData.forEach(employee => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${employee.name || '-'}</td>
+                    <td>${getCurrentValue(employee, field)}</td>
+                    <td>${getInputField(employee, field)}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function getCurrentValue(employee, field) {
+            if (field === "department" && employee.department) return employee.department.name || "-";
+            if (field === "rank" && employee.rank) return employee.rank.name || "-";
+            if (["tmamam", "food", "bus", "amen_or_ola"].includes(field)) return employee[field] ? "نعم" : "لا";
+            if (["date_of_edara", "date_of_appointment", "date_of_birth", "date_of_retirement"].includes(field)) {
+                return employee[field] ? new Date(employee[field]).toLocaleDateString("ar-EG") : "-";
+            }
+            if (field === "image" && employee.image) return `<img src="${employee.image}" width="50">`;
+            return employee[field] || "-";
+        }
+
+        function getInputField(employee, field) {
+            if (["name", "id_number", "nickname", "police_number", "insurance_number", "phone_number", "alt_phone_number", "governorate", "district", "address"].includes(field)) {
+                return `<input type="text" class="form-control edit-value" data-id="${employee.id}" value="${employee[field] || ''}">`;
+            }
+            if (field === "department") {
+                return `<select class="form-control edit-value" data-id="${employee.id}">
+                    <option value="">-- اختر قسمًا --</option>
+                    ${departments.map(d => `<option value="${d.id}" ${employee.department && employee.department.id === d.id ? "selected" : ""}>${d.name}</option>`).join('')}
+                </select>`;
+            }
+            if (field === "rank") {
+                return `<select class="form-control edit-value" data-id="${employee.id}">
+                    <option value="">-- اختر درجة --</option>
+                    ${ranks.map(r => `<option value="${r.id}" ${employee.rank && employee.rank.id === r.id ? "selected" : ""}>${r.name}</option>`).join('')}
+                </select>`;
+            }
+            if (["tmamam", "food", "bus", "amen_or_ola", "mainornot"].includes(field)) {
+                return `<input type="checkbox" class="form-check-input edit-value" data-id="${employee.id}" ${employee[field] ? "checked" : ""}>`;
+            }
+            if (["date_of_edara", "date_of_appointment", "date_of_birth", "date_of_retirement"].includes(field)) {
+                const dateValue = employee[field] ? new Date(employee[field]).toISOString().split('T')[0] : '';
+                return `<input type="date" class="form-control edit-value" data-id="${employee.id}" value="${dateValue}">`;
+            }
+            if (["age", "sort_number", "dep_sort", "total_leave", "rank_kind"].includes(field)) {
+                return `<input type="number" class="form-control edit-value" data-id="${employee.id}" value="${employee[field] || ''}">`;
+            }
+            if (field === "rahatcounter") {
+                return `<input type="number" class="form-control edit-value" data-id="${employee.id}" value="${employee[field] || ''}">`;
+            }
+            if (field === "rank_kind") {
+                return `<select class="form-control edit-value" data-id="${employee.id}">
+                    <option value="1" ${employee[field] === 1 ? "selected" : ""}>أمناء</option>
+                    <option value="2" ${employee[field] === 2 ? "selected" : ""}>مساعدين</option>
+                    <option value="3" ${employee[field] === 3 ? "selected" : ""}>مراقبين</option>
+                    <option value="4" ${employee[field] === 4 ? "selected" : ""}>مندوبين</option>
+                    <option value="5" ${employee[field] === 5 ? "selected" : ""}>رقيب أول</option>
+                    <option value="6" ${employee[field] === 6 ? "selected" : ""}>رقيب</option>
+                    <option value="7" ${employee[field] === 7 ? "selected" : ""}>عريف</option>
+                    <option value="8" ${employee[field] === 8 ? "selected" : ""}>شرطيين</option>
+                    <option value="9" ${employee[field] === 9 ? "selected" : ""}>معاونين</option>
+                </select>`;
+            }
+            if (field === "marital_status") {
+                return `<select class="form-control edit-value" data-id="${employee.id}">
+                    <option value="أعزب" ${employee[field] === "أعزب" ? "selected" : ""}>أعزب</option>
+                    <option value="متزوج" ${employee[field] === "متزوج" ? "selected" : ""}>متزوج</option>
+                    <option value="مطلق" ${employee[field] === "مطلق" ? "selected" : ""}>مطلق</option>
+                </select>`;
+            }
+            if (field === "gender") {
+                return `<select class="form-control edit-value" data-id="${employee.id}">
+                    <option value="ذكر" ${employee[field] === "ذكر" ? "selected" : ""}>ذكر</option>
+                    <option value="أنثى" ${employee[field] === "أنثى" ? "selected" : ""}>أنثى</option>
+                </select>`;
+            }
+            if (field === "health_status") {
+                return `<select class="form-control edit-value" data-id="${employee.id}">
+                    <option value="جيدة" ${employee[field] === "جيدة" ? "selected" : ""}>جيدة</option>
+                    <option value="عمل إداري مكتبي" ${employee[field] === "عمل إداري مكتبي" ? "selected" : ""}>عمل إداري مكتبي</option>
+                    <option value="ممنوع من حمل السلاح" ${employee[field] === "ممنوع من حمل السلاح" ? "selected" : ""}>ممنوع من حمل السلاح</option>
+                </select>`;
+            }
+            if (field === "operation") {
+                return `<select class="form-control edit-value" data-id="${employee.id}">
+                    <option value="لم يحدد" ${employee[field] === "لم يحدد" ? "selected" : ""}>لم يحدد</option>
+                    <option value="السبت" ${employee[field] === "السبت" ? "selected" : ""}>السبت</option>
+                    <option value="الأحد" ${employee[field] === "الأحد" ? "selected" : ""}>الأحد</option>
+                    <option value="الاثنين" ${employee[field] === "الاثنين" ? "selected" : ""}>الاثنين</option>
+                    <option value="الثلاثاء" ${employee[field] === "الثلاثاء" ? "selected" : ""}>الثلاثاء</option>
+                    <option value="الأربعاء" ${employee[field] === "الأربعاء" ? "selected" : ""}>الأربعاء</option>
+                    <option value="الخميس" ${employee[field] === "الخميس" ? "selected" : ""}>الخميس</option>
+                    <option value="الجمعة" ${employee[field] === "الجمعة" ? "selected" : ""}>الجمعة</option>
+                    <option value="عمل يومي" ${employee[field] === "عمل يومي" ? "selected" : ""}>عمل يومي</option>
+                    <option value="انتداب" ${employee[field] === "انتداب" ? "selected" : ""}>انتداب</option>
+                    <option value="قرار66" ${employee[field] === "قرار66" ? "selected" : ""}>قرار66</option>
+                </select>`;
+            }
+            if (field === "nots") {
+                return `<textarea class="form-control edit-value" data-id="${employee.id}">${employee[field] || ''}</textarea>`;
+            }
+            if (field === "image") {
+                return `<input type="file" class="form-control edit-value" data-id="${employee.id}">`;
+            }
+            return `<input type="text" class="form-control edit-value" data-id="${employee.id}" value="${employee[field] || ''}">`;
+        }
+
+        function fillSortNumbers() {
+            const inputs = document.querySelectorAll(".edit-value");
+            inputs.forEach((input, index) => {
+                input.value = index + 1;
+            });
+        }
+
+        document.getElementById("edit-form").addEventListener("submit", function(e) {
+            e.preventDefault();
+            const field = document.getElementById("field").value;
+            const updates = {};
+        
+            document.querySelectorAll(".edit-value").forEach(input => {
+                const id = input.dataset.id;
+                let value;
+        
+                if (input.type === "checkbox") {
+                    value = input.checked;
+                } else if (input.type === "file") {
+                    return; // Skip file inputs for now
+                } else if (["date_of_edara", "date_of_appointment", "date_of_birth", "date_of_retirement"].includes(field)) {
+                    value = input.value || null;
+                } else if (["age", "sort_number", "dep_sort", "total_leave", "rank_kind", "mainornot"].includes(field)) {
+                    value = input.value ? parseInt(input.value) : null;
+                } else if (field === "rahatcounter") {
+                    value = input.value !== "" ? parseInt(input.value) : null;
+                } else if (["department", "rank"].includes(field)) {
+                    value = input.value ? parseInt(input.value) : null;
+                } else {
+                    value = input.value || null;
+                }
+        
+                const employee = employeesData.find(emp => emp.id.toString() === id);
+                const currentValue = getRawCurrentValue(employee, field);
+                if (value !== currentValue && value !== "") {
+                    updates[id] = value;
+                }
+            });
+        
+            if (Object.keys(updates).length === 0) {
+                showMessage("لا توجد تغييرات للحفظ", "warning");
+                return;
+            }
+        
+            console.log("Sending updates:", { field, updates });
+        
+            fetch(`${apiUrl}bulk-update/`, {
+                method: "PATCH",
+                headers: {
+                    "Authorization": `Token ${token}`,
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken
+                },
+                body: JSON.stringify({ field, updates })
+            })
+            .then(response => {
+                console.log("Response status:", response.status);
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(`HTTP error! status: ${response.status}, message: ${JSON.stringify(err)}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Response data:", data);
+                showMessage(data.message || "تم الحفظ بنجاح", "success");
+                loadEmployees();
+            })
+            .catch(error => {
+                console.error("Error saving changes:", error);
+                showMessage(`حدث خطأ أثناء الحفظ: ${error.message}`, "danger");
+            });
+        });
+
+        function getRawCurrentValue(employee, field) {
+            if (["tmamam", "food", "bus", "amen_or_ola"].includes(field)) {
+                return employee[field];
+            }
+            if (["department", "rank"].includes(field)) {
+                return employee[field] ? employee[field].id : null;
+            }
+            if (["date_of_edara", "date_of_appointment", "date_of_birth", "date_of_retirement"].includes(field)) {
+                return employee[field] ? new Date(employee[field]).toISOString().split('T')[0] : null;
+            }
+            return employee[field] || null;
+        }
+
+        function showMessage(message, type) {
+            const messagesDiv = document.getElementById("messages");
+            messagesDiv.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => messagesDiv.innerHTML = "", 5000);
+        }
+    </script>
 {% endblock %}

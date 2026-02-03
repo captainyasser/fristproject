@@ -1,0 +1,149 @@
+<!-- F:\emapi-edit\myproject\penalties\templates\penalties\penalty_extract_select.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}اختيار فرد - مستخرج جزاءات{% endblock %}
+
+{% block content %}
+<div class="">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>مستخرج جزاءات</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{% url 'penalties:dashboard' %}">الجزاءات</a></li>
+                        <li class="breadcrumb-item active">مستخرج جزاءات</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-8 offset-md-2">
+                    <div class="card card-primary card-outline">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-user-check"></i> اختر الفرد</h3>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted mb-4">
+                                <i class="fas fa-info-circle"></i>
+                                اختر الفرد الذي تريد عرض مستخرج الجزاءات الخاص به
+                            </p>
+
+                            {% if employees %}
+                            <div class="form-group">
+                                <label>اختر الفرد</label>
+                                <select id="employee_select" class="form-control select2" style="width: 100%;">
+                                    <option value="">-- اختر فرد --</option>
+                                    {% for employee in employees %}
+                                    <option value="{{ employee.id }}">
+                                        {{ employee.rank|default:"" }} {{ employee.name }}
+                                        {% if employee.police_number %}
+                                            - رقم الشرطة: {{ employee.police_number }}
+                                        {% endif %}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="mt-4">
+                                <button type="button" class="btn btn-primary btn-lg" id="view_extract_btn" disabled>
+                                    <i class="fas fa-file-alt"></i> عرض مستخرج الجزاءات
+                                </button>
+                                <a href="{% url 'penalties:dashboard' %}" class="btn btn-secondary btn-lg">
+                                    <i class="fas fa-arrow-right"></i> رجوع
+                                </a>
+                            </div>
+                            {% else %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                لا توجد جزاءات مسجلة حالياً. يرجى إضافة جزاءات أولاً.
+                            </div>
+                            <a href="{% url 'penalties:record_create' %}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> إضافة جزاء جديد
+                            </a>
+                            <a href="{% url 'penalties:dashboard' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-right"></i> رجوع
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Quick Stats -->
+                    {% if employees %}
+                    <div class="card card-info card-outline">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-chart-bar"></i> إحصائيات سريعة</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-md-6">
+                                    <div class="info-box bg-info">
+                                        <span class="info-box-icon"><i class="fas fa-users"></i></span>
+                                        <div class="info-box-content">
+                                            <span class="info-box-text">عدد الأفراد المخالفين</span>
+                                            <span class="info-box-number">{{ employees.count }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="info-box bg-warning">
+                                        <span class="info-box-icon"><i class="fas fa-exclamation-triangle"></i></span>
+                                        <div class="info-box-content">
+                                            <span class="info-box-text">الأفراد المسجلين</span>
+                                            <span class="info-box-number">{{ employees.count }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Initialize Select2
+    $('.select2').select2({
+        theme: 'bootstrap4',
+        placeholder: '-- اختر فرد --',
+        allowClear: true
+    });
+
+    // Enable/disable button based on selection
+    $('#employee_select').on('change', function() {
+        const employeeId = $(this).val();
+        if (employeeId) {
+            $('#view_extract_btn').prop('disabled', false);
+        } else {
+            $('#view_extract_btn').prop('disabled', true);
+        }
+    });
+
+    // Navigate to extract page
+    $('#view_extract_btn').on('click', function() {
+        const employeeId = $('#employee_select').val();
+        if (employeeId) {
+            window.location.href = "{% url 'penalties:penalty_extract' 0 %}".replace('0', employeeId);
+        }
+    });
+
+    // Allow Enter key to submit
+    $('#employee_select').on('select2:select', function() {
+        $('#view_extract_btn').focus();
+    });
+});
+</script>
+{% endblock %}

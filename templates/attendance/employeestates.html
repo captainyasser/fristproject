@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}إحصائيات حالات الأفراد{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">إحصائيات حالات الأفراد</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="mb-4">
+                        {% csrf_token %}
+                        <div class="form-row align-items-center">
+                            <div class="col-auto">
+                                <label for="date" class="sr-only">التاريخ:</label>
+                                <input type="date" id="date" name="date" class="form-control" required value="{{ selected_date|date:'Y-m-d' }}">
+                            </div>
+                            <div class="col-auto">
+                                <label for="sort_by" class="sr-only">ترتيب حسب:</label>
+                                <select id="sort_by" name="sort_by" class="form-control">
+                                    <option value="sort_number" {% if sort_by == 'sort_number' %}selected{% endif %}>رقم الترتيب</option>
+                                    <option value="dep_sort" {% if sort_by == 'dep_sort' %}selected{% endif %}>ترتيب القسم</option>
+                                    <option value="department_id" {% if sort_by == 'department_id' %}selected{% endif %}>معرف القسم</option>
+                                </select>
+                            </div>
+                            <div class="col-auto">
+                                <label class="sr-only">الأقسام:</label>
+                                <div class="form-group">
+                                    <button type="button" id="selectAllDepartments" class="btn btn-secondary btn-sm mb-2">تحديد كل الأقسام</button>
+                                    <div class="d-flex flex-wrap">
+                                        {% for department in departments %}
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input department-checkbox" type="checkbox" name="departments" id="department_{{ department.id }}" value="{{ department.id }}" {% if department.id|stringformat:"s" in selected_departments %}checked{% endif %}>
+                                                <label class="form-check-label" for="department_{{ department.id }}">{{ department.name }}</label>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <label class="sr-only">الجنس:</label>
+                                <div class="form-group">
+                                    <button type="button" id="selectAllGenders" class="btn btn-secondary btn-sm mb-2">تحديد كل الأجناس</button>
+                                    <div class="d-flex flex-wrap">
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input gender-checkbox" type="checkbox" name="genders" id="gender_ذكر" value="ذكر" {% if 'ذكر' in selected_genders %}checked{% endif %}>
+                                            <label class="form-check-label" for="gender_ذكر">ذكر</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input gender-checkbox" type="checkbox" name="genders" id="gender_أنثي" value="أنثي" {% if 'أنثي' in selected_genders %}checked{% endif %}>
+                                            <label class="form-check-label" for="gender_أنثي">أنثي</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <label class="sr-only">الحالات:</label>
+                                <div class="form-group">
+                                    <button type="button" id="selectAllStates" class="btn btn-secondary btn-sm mb-2">تحديد الكل</button>
+                                    <div class="d-flex flex-wrap">
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input state-checkbox" type="checkbox" name="states" id="state_present" value="موجود" {% if 'موجود' in selected_states %}checked{% endif %}>
+                                            <label class="form-check-label" for="state_present">موجود</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input state-checkbox present-state" type="checkbox" name="states" id="state_نوبتجي" value="نوبتجي" {% if 'نوبتجي' in selected_states %}checked{% endif %}>
+                                            <label class="form-check-label" for="state_نوبتجي">نوبتجي</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input state-checkbox present-state" type="checkbox" name="states" id="state_يومي" value="يومي" {% if 'يومي' in selected_states %}checked{% endif %}>
+                                            <label class="form-check-label" for="state_يومي">يومي</label>
+                                        </div>
+                                        {% for state_value, state_label in states %}
+                                            {% if state_value != 'نوبتجي' and state_value != 'يومي' %}
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input state-checkbox" type="checkbox" name="states" id="state_{{ state_value }}" value="{{ state_value }}" {% if state_value in selected_states %}checked{% endif %}>
+                                                    <label class="form-check-label" for="state_{{ state_value }}">{{ state_label }}</label>
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <button type="submit" class="btn btn-primary">عرض الإحصائيات</button>
+                            </div>
+                        </div>
+                    </form>
+
+                    {% if results %}
+                        <h4 class="mb-3">إحصائيات الحالات ليوم {{ selected_day }} {{ selected_date|date:'Y-m-d' }}</h4>
+                        <div class="table-responsive" dir="rtl">
+                            <table class="table table-bordered table-striped">
+                                <thead class="thead-dark">
+                                    <tr>
+                                        {% for state in results.states %}
+                                            <th class="text-right">{{ state }}</th>
+                                        {% endfor %}
+                                        <th class="text-right">الموجود</th>
+                                        <th class="text-right">الخوارج</th>
+                                        <th class="text-right">الإجمالي</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        {% for count in results.state_counts %}
+                                            <td class="text-right">{{ count|default:"0" }}</td>
+                                        {% endfor %}
+                                        <td class="text-right">{{ results.summary.present_total }}</td>
+                                        <td class="text-right">{{ results.summary.absent_total }}</td>
+                                        <td class="text-right">{{ results.summary.total }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h4 class="mb-3">أسماء الأفراد للحالات المختارة</h4>
+                        <div class="table-responsive" dir="rtl">
+                            <table id="employeesTable" class="table table-bordered table-striped">
+                                <thead class="thead-dark">
+                                    <tr>
+                                        <th class="text-right">م</th>
+                                        <th class="text-right">الاسم</th>
+                                        <th class="text-right">الحالة</th>
+                                        <th class="text-right">القسم</th>
+                                        <th class="text-right">ملاحظات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for employee in results.employees %}
+                                        <tr>
+                                            <td class="text-right">{{ forloop.counter }}</td>
+                                            <td class="text-right">{{ employee.name }}</td>
+                                            <td class="text-right">{{ employee.state }}</td>
+                                            <td class="text-right">{{ employee.department.name|default:"غير محدد" }}</td>
+                                            <td class="text-right">{{ employee.nots|default:"-" }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info" role="alert">
+                            الرجاء تحديد تاريخ وحالات لعرض الإحصائيات.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    $('#employeesTable').DataTable({
+        dom: 'lBfrtip',
+        buttons: [
+            { extend: 'copy', text: '📋 نسخ', className: 'btn btn-secondary' },
+            { extend: 'csv', text: '📄 CSV', className: 'btn btn-info' },
+            { extend: 'excelHtml5', text: '📂 Excel', className: 'btn btn-success' },
+            { extend: 'pdfHtml5', text: '📜 PDF', className: 'btn btn-danger' },
+            { extend: 'print', text: '🖨️ طباعة', className: 'btn btn-primary' },
+            { extend: 'colvis', text: '👁️ أعمدة', className: 'btn btn-warning' }
+        ],
+        language: {
+            url: "//cdn.datatables.net/plug-ins/1.13.4/i18n/ar.json"
+        },
+        responsive: true,
+        lengthMenu: [10, 25, 50, 100],
+        pageLength: 10
+    });
+
+    $('#selectAllStates').click(function() {
+        var checkboxes = $('.state-checkbox');
+        var allChecked = checkboxes.length === checkboxes.filter(':checked').length;
+        checkboxes.prop('checked', !allChecked);
+    });
+
+    $('#selectAllDepartments').click(function() {
+        var checkboxes = $('.department-checkbox');
+        var allChecked = checkboxes.length === checkboxes.filter(':checked').length;
+        checkboxes.prop('checked', !allChecked);
+    });
+
+    $('#selectAllGenders').click(function() {
+        var checkboxes = $('.gender-checkbox');
+        var allChecked = checkboxes.length === checkboxes.filter(':checked').length;
+        checkboxes.prop('checked', !allChecked);
+    });
+
+    $('#state_present').change(function() {
+        var isChecked = $(this).is(':checked');
+        $('.present-state').prop('checked', isChecked);
+    });
+});
+</script>
+
+<style>
+    .dt-buttons .btn {
+        margin-left: 5px;
+        margin-bottom: 10px;
+    }
+    .form-check-inline {
+        margin-right: 10px;
+    }
+</style>
+{% endblock %}

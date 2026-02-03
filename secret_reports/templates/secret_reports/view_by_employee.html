@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+{% block content %}
+<div class="container mt-4">
+    <h3 class="text-center mb-4">👁️ عرض درجات فرد</h3>
+    <div class="mb-3">
+        <a href="{% url 'secret_reports:index' %}" class="btn btn-secondary">⬅️ رجوع</a>
+    </div>
+
+    <div class="card p-4 shadow">
+        <form method="get">
+            <label class="form-label">اختر اسم الفرد:</label>
+            <select name="employee_id" class="form-select" onchange="this.form.submit()">
+                <option value="">-- اختر --</option>
+                {% for emp in employees %}
+                    <option value="{{ emp.id }}" {% if selected_employee and emp.id == selected_employee.id %}selected{% endif %}>
+                        {{ emp.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+
+    {% if selected_employee %}
+    <hr>
+    <h5 class="mt-3">الفرد: {{ selected_employee.name }}</h5>
+    <table class="table table-bordered text-center align-middle mt-3">
+        <thead class="table-dark">
+            <tr>
+                <th>العام</th>
+                <th>الدرجة</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for year in years %}
+            <tr>
+                <td>{{ year }}</td>
+                <td>{{ reports|get_item:year|default:"—" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+        <a href="{% url 'elawat_tashgeea:index' %}" class="btn btn-secondary">
+        ← رجوع
+    </a>
+    <div class="card p-4 shadow">
+        <h3 class="text-center">إضافة علاوة تشجيعية لمجموعة أفراد</h3>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary w-100">حفظ العلاوات</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

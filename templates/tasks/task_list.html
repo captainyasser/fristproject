@@ -1,74 +1,216 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}قائمة المهام{% endblock %}
 
 {% block content %}
-    <h1>قائمة المهام</h1>
+<!-- AdminLTE Style -->
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0 text-dark">قائمة المهام</h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/">الرئيسية</a></li>
+                    <li class="breadcrumb-item active">المهام</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
 
-    <!-- نموذج إضافة مهمة -->
-    <form method="POST">
-        {% csrf_token %}
-        <input type="text" name="title" placeholder="عنوان المهمة" required>
-        <input type="date" name="due_date" required> <!-- تغيير إلى date -->
-        <select name="repeat">
-            <option value="none">غير متكررة</option>
-            <option value="daily">يومي</option>
-            <option value="monthly">شهري</option>
-            <option value="quarterly">كل 3 أشهر</option>
-        </select>
-        <button type="submit">إضافة</button>
-    </form>
+<div class="content">
+    <div class="container-fluid">
+        
+        <!-- أزرار التصفية -->
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="btn-group">
+                    <a href="{% url 'tasks:task_list' %}?filter=pending" class="btn {% if filter_status == 'pending' %}btn-primary{% else %}btn-default{% endif %}">
+                        <i class="fas fa-clock"></i> المهام المنتظرة
+                    </a>
+                    <a href="{% url 'tasks:task_list' %}?filter=completed" class="btn {% if filter_status == 'completed' %}btn-success{% else %}btn-default{% endif %}">
+                        <i class="fas fa-check-circle"></i> المهام المكتملة
+                    </a>
+                </div>
+                <button type="button" class="btn btn-info float-left" data-toggle="modal" data-target="#addTaskModal">
+                    <i class="fas fa-plus"></i> إضافة مهمة جديدة
+                </button>
+            </div>
+        </div>
 
-    <!-- جدول المهام -->
-    <table border="1" style="width: 100%; border-collapse: collapse; margin-top: 20px;">
-        <thead>
-            <tr style="background-color: #f2f2f2;">
-                <th style="padding: 10px;">العنوان</th>
-                <th style="padding: 10px;">تاريخ الاستحقاق</th>
-                <th style="padding: 10px;">التكرار</th>
-                <th style="padding: 10px;">الإجراء</th>
-            </tr>
-        </thead>
-        <tbody>
+        {% if filter_status == 'pending' %}
+        <!-- تحذيرات المهام العاجلة -->
+        <div id="urgent-tasks-alert" class="alert alert-danger alert-dismissible" style="display: none;">
+            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+            <h5><i class="icon fas fa-ban"></i> تنبيه!</h5>
+            <span id="urgent-tasks-msg"></span>
+        </div>
+        {% endif %}
+
+        <div class="row">
             {% for task in tasks %}
-                <tr>
-                    <td style="padding: 10px;">{{ task.title }}</td>
-                    <td style="padding: 10px;">{{ task.due_date }}</td>
-                    <td style="padding: 10px;">{{ task.get_repeat_display }}</td>
-                    <td style="padding: 10px;">
-                        <a href="{% url 'complete_task' task.id %}">مكتملة</a>
-                    </td>
-                </tr>
+            <div class="col-md-4 col-sm-6 col-12">
+                {% now "Y-m-d" as today_str %}
+                <div class="card card-outline {% if task.is_completed %}card-success{% else %}card-primary{% endif %} task-card" data-due-date="{{ task.due_date|date:'Y-m-d' }}" data-id="{{ task.id }}">
+                    <div class="card-header">
+                        <h3 class="card-title">{{ task.title }}</h3>
+                        <div class="card-tools">
+                            <span class="badge badge-info">{{ task.get_repeat_type_display }}</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>تاريخ الاستحقاق:</strong> {{ task.due_date }}</p>
+                        {% if task.reminder_days > 0 %}
+                        <p class="text-muted"><small>تذكير قبل {{ task.reminder_days }} يوم</small></p>
+                        {% endif %}
+                        <p class="card-text">{{ task.notes|default:"لا توجد ملاحظات"|truncatechars:100 }}</p>
+                    </div>
+                    <div class="card-footer">
+                        {% if not task.is_completed %}
+                            <a href="{% url 'tasks:complete_task' task.id %}" class="btn btn-sm btn-success" title="إكمال"><i class="fas fa-check"></i></a>
+                        {% endif %}
+                        <a href="{% url 'tasks:task_detail' task.id %}" class="btn btn-sm btn-info" title="تفاصيل"><i class="fas fa-eye"></i></a>
+                        <a href="{% url 'tasks:edit_task' task.id %}" class="btn btn-sm btn-warning" title="تعديل"><i class="fas fa-edit"></i></a>
+                        <a href="{% url 'tasks:delete_task' task.id %}" class="btn btn-sm btn-danger float-left" title="حذف" onclick="return confirm('هل أنت متأكد من الحذف؟')"><i class="fas fa-trash"></i></a>
+                    </div>
+                </div>
+            </div>
             {% empty %}
-                <tr>
-                    <td colspan="4" style="padding: 10px; text-align: center;">لا توجد مهام</td>
-                </tr>
+            <div class="col-12">
+                <div class="callout callout-info">
+                    <h5>لا توجد مهام!</h5>
+                    <p>لا توجد مهام لعرضها حالياً.</p>
+                </div>
+            </div>
             {% endfor %}
-        </tbody>
-    </table>
+        </div>
+    </div>
+</div>
 
-    <!-- JavaScript للإشعارات -->
-    <script>
-        const tasks = {{ tasks_json | safe }};
-        const notification = document.getElementById('notification');
+<!-- Modal إضافة مهمة -->
+<div class="modal fade" id="addTaskModal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">إضافة مهمة جديدة</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>عنوان المهمة</label>
+                                <input type="text" name="title" class="form-control" required placeholder="عنوان المهمة">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>تاريخ الاستحقاق</label>
+                                <input type="date" name="due_date" class="form-control" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>نوع التكرار</label>
+                                <select name="repeat_type" class="form-control">
+                                    <option value="none">غير متكررة</option>
+                                    <option value="daily">يومي</option>
+                                    <option value="monthly">شهري</option>
+                                    <option value="quarterly">كل 3 أشهر</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>الفاصل الزمني</label>
+                                <input type="number" name="repeat_interval" class="form-control" value="1" min="1">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>أيام التذكير</label>
+                                <input type="number" name="reminder_days" class="form-control" value="0" min="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>ملاحظات</label>
+                        <textarea name="notes" class="form-control" rows="3" placeholder="ملاحظات..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>ملفات مرفقة</label>
+                        <div class="custom-file">
+                            <input type="file" name="files" class="custom-file-input" id="customFile" multiple>
+                            <label class="custom-file-label" for="customFile">اختر ملفات</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">إغلاق</button>
+                    <button type="submit" class="btn btn-primary">حفظ المهمة</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
 
-        function checkReminders() {
-            const now = new Date();
-            const today = now.toISOString().split('T')[0]; // الحصول على التاريخ فقط
-            tasks.forEach(task => {
-                if (task.reminder_date) {
-                    if (today === task.reminder_date && !task.notified) {
-                        notification.textContent = `تذكير: ${task.title} بعد يومين!`;
-                        notification.style.display = 'block';
-                        setTimeout(() => {
-                            notification.style.display = 'none';
-                        }, 5000);
-                        task.notified = true;
-                    }
-                }
-            });
+{% block scripts %}
+{% if filter_status == 'pending' %}
+<script src="{% static 'adminlte/plugins/bs-custom-file-input/bs-custom-file-input.min.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const today = new Date().toISOString().split('T')[0];
+        const cards = document.querySelectorAll('.task-card');
+        let urgentCount = 0;
+
+        cards.forEach(card => {
+            const dueDate = card.dataset.dueDate;
+            // إزالة الكلاسات الافتراضية
+            card.classList.remove('card-primary', 'card-danger', 'card-warning', 'card-success');
+            
+            if (dueDate < today) {
+                // متأخرة
+                card.classList.add('card-danger'); // أحمر
+                urgentCount++;
+            } else if (dueDate === today) {
+                // مستحقة اليوم
+                card.classList.add('card-warning'); // أصفر
+                urgentCount++;
+            } else {
+                // قادمة
+                card.classList.add('card-primary'); // أزرق
+            }
+        });
+
+        // عرض تنبيه عام إذا وجدت مهام عاجلة
+        if (urgentCount > 0) {
+            const alertBox = document.getElementById('urgent-tasks-alert');
+            const alertMsg = document.getElementById('urgent-tasks-msg');
+            if (alertBox && alertMsg) {
+                alertMsg.textContent = `لديك ${urgentCount} مهام متأخرة أو مستحقة اليوم يجب الانتباه لها!`;
+                alertBox.style.display = 'block';
+            }
         }
+        
+        // تفعيل input ملفات
+        bsCustomFileInput.init();
+    });
+</script>
+{% endif %}
+{% endblock %}
 
-        setInterval(checkReminders, 1000);
-    </script>
+{% block footer %}
+    <footer class="main-footer">
+        <p>معا نحو التحول الرقمي - برمجة وتصميم كابتن ياسر أبو دراع</p>
+    </footer>
 {% endblock %}

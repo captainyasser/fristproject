@@ -1,0 +1,111 @@
+<title>تعديل بيانات بطاقة الهوية</title>
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+    <!-- Dropdown Section (Right) -->
+    <div class="w-1/4 bg-gray-100 p-4">
+        <h2 class="text-xl font-bold mb-4 text-gray-800">قائمة الأفراد</h2>
+        <select id="employee-select" class="w-full p-2 border rounded max-h-[100px] overflow-y-auto bg-white focus:ring-2 focus:ring-blue-500">
+            <option value="" selected>اختر فرد</option>
+            {% for employee in employees %}
+                <option value="{{ employee.id }}">{{ employee.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+<div class="flex h-screen">
+    <!-- Form Section (Left) -->
+    <div class="w-3/4 p-6 bg-white shadow-md rounded-lg">
+        <h2 class="text-2xl font-bold mb-6 text-gray-800">تعديل بيانات بطاقة الهوية</h2>
+        <div id="employee-form-container">
+            <p class="text-gray-500">يرجى اختيار فرد من القائمة لتعديل بياناته</p>
+        </div>
+    </div>
+
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const employeeSelect = document.getElementById('employee-select');
+    const formContainer = document.getElementById('employee-form-container');
+
+    employeeSelect.addEventListener('change', function() {
+        const employeeId = this.value;
+
+        if (!employeeId) {
+            formContainer.innerHTML = '<p class="text-gray-500">يرجى اختيار فرد من القائمة لتعديل بياناته</p>';
+            return;
+        }
+
+        // Fetch form for the selected employee
+        fetch(`/em_data/employees/${employeeId}/`)
+            .then(response => response.json())
+            .then(data => {
+                formContainer.innerHTML = `
+                    <form id="employee-form" action="/em_data/employees/${employeeId}/" method="POST" class="grid grid-cols-1 gap-6 p-6 bg-gray-50 rounded-lg">
+                        {% csrf_token %}
+                        <div>
+                            <label for="id_number" class="block text-sm font-medium text-gray-700">الرقم القومي</label>
+                            <input type="text" id="id_number" name="id_number" value="${data.id_number || ''}" class="mt-1 p-3 w-full border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="idcard_expir" class="block text-sm font-medium text-gray-700">تاريخ انتهاء بطاقة الهوية</label>
+                            <input type="date" id="idcard_expir" name="idcard_expir" value="${data.idcard_expir || ''}" class="mt-1 p-3 w-full border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="idcard_work" class="block text-sm font-medium text-gray-700">المهنة</label>
+                            <select id="idcard_work" name="idcard_work" class="mt-1 p-3 w-full border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="" ${!data.idcard_work ? 'selected' : ''}>اختر المهنة</option>
+                                <option value="درجة شرطية" ${data.idcard_work === 'درجة شرطية' ? 'selected' : ''}>درجة شرطية</option>
+                                <option value="مهنة مدنية" ${data.idcard_work === 'مهنة مدنية' ? 'selected' : ''}>مهنة مدنية</option>
+                                <option value="طالب/طالبة" ${data.idcard_work === 'طالب/طالبة' ? 'selected' : ''}>طالب/طالبة</option>
+                                <option value="أخرى" ${data.idcard_work === 'أخرى' ? 'selected' : ''}>أخرى</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="idcard_social" class="block text-sm font-medium text-gray-700">الحالة الاجتماعية</label>
+                            <select id="idcard_social" name="idcard_social" class="mt-1 p-3 w-full border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="" ${!data.idcard_social ? 'selected' : ''}>اختر الحالة</option>
+                                <option value="أعزب" ${data.idcard_social === 'أعزب' ? 'selected' : ''}>أعزب</option>
+                                <option value="متزوج" ${data.idcard_social === 'متزوج' ? 'selected' : ''}>متزوج</option>
+                                <option value="مطلق" ${data.idcard_social === 'مطلق' ? 'selected' : ''}>مطلق</option>
+                            </select>
+                        </div>
+                        <div class="flex justify-end">
+                            <button type="submit" class="text-white px-6 py-2 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">حفظ</button>
+                        </div>
+                    </form>
+                `;
+
+                // Handle form submission
+                const form = document.getElementById('employee-form');
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const formData = new FormData(form);
+
+                    fetch(form.action, {
+                        method: 'PATCH',
+                        headers: {
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                        },
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        alert('تم تحديث البيانات بنجاح');
+                    })
+                    .catch(error => {
+                        alert('حدث خطأ أثناء تحديث البيانات');
+                    });
+                });
+            })
+            .catch(error => {
+                formContainer.innerHTML = '<p class="text-red-500">خطأ في تحميل بيانات الفرد</p>';
+            });
+    });
+});
+</script>
+{% endblock %}

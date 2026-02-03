@@ -8,7 +8,9 @@
         <ol class="breadcrumb float-sm-right">
           {% comment %} <li class="breadcrumb-item"><a href="#">الرئيسية</a></li> {% endcomment %}
           <li class="breadcrumb-item active" id="dynamic-color">
-            {% block breadcrumb %}برمجة وتصميم م / ياسر أبو دراع - 01063985786{% endblock %}
+            {% block breadcrumb %}
+           <h1> برمجة وتصميم م / ياسر أبو دراع - 01063985786</h1>
+            {% endblock %}
           </li>
         </ol>
       </div>
@@ -31,5 +33,5 @@
   setInterval(() => {
     document.getElementById("dynamic-color").style.color = colors[index];
     index = (index + 1) % colors.length; // الدوران بين الألوان
-  }, 500);
+  }, 300);
 </script>

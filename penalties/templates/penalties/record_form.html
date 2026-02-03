@@ -1,0 +1,349 @@
+<!-- F:\emapi-edit\myproject\penalties\templates\penalties\record_form.html -->
+{% extends 'base.html' %}
+{% block title %}{% if form.instance.pk %}تعديل جزاء{% else %}إضافة جزاء جديد{% endif %}{% endblock %}
+
+{% block content %}
+<div class="">
+<section class="content-header">
+<div class="container-fluid">
+<div class="row mb-2">
+<div class="col-sm-6">
+<h1>{% if form.instance.pk %}تعديل جزاء{% else %}إضافة جزاء جديد{% endif %}</h1>
+</div>
+<div class="col-sm-6">
+<ol class="breadcrumb float-sm-right">
+<li class="breadcrumb-item"><a href="{% url 'penalties:dashboard' %}">الجزاءات</a></li>
+<li class="breadcrumb-item"><a href="{% url 'penalties:record_list' %}">السجلات</a></li>
+<li class="breadcrumb-item active">بيانات الجزاء</li>
+</ol>
+</div>
+</div>
+</div>
+</section>
+
+<section class="content">
+<div class="container-fluid">
+
+<form method="post" enctype="multipart/form-data">
+{% csrf_token %}
+
+<!-- بيانات الفرد والتاريخ -->
+<div class="card card-primary card-outline">
+<div class="card-header">
+<h3 class="card-title"><i class="fas fa-user"></i> بيانات الفرد والتاريخ</h3>
+</div>
+<div class="card-body">
+<div class="row">
+<div class="col-md-6">
+<div class="form-group">
+<label>الفرد المخالف <span class="text-danger">*</span></label>
+<small class="form-text text-muted">اختر الفرد من القائمة</small>
+{{ form.employee }}
+<span class="text-danger">{{ form.employee.errors }}</span>
+</div>
+</div>
+<div class="col-md-6">
+<div class="form-group">
+<label>تاريخ الجزاء <span class="text-danger">*</span></label>
+<small class="form-text text-muted">تاريخ توقيع الجزاء</small>
+{{ form.penalty_date }}
+<span class="text-danger">{{ form.penalty_date.errors }}</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- تصنيف ونوع المخالفة -->
+<div class="card card-info card-outline">
+<div class="card-header">
+<h3 class="card-title"><i class="fas fa-clipboard-list"></i> تصنيف ونوع المخالفة</h3>
+</div>
+<div class="card-body">
+<div class="row">
+<div class="col-md-6">
+<div class="form-group">
+<label>التصنيف <span class="text-danger">*</span></label>
+<small class="form-text text-muted">اختر تصنيف المخالفة (إنضباطية، مسلكية، جنائية)</small>
+{{ form.category }}
+<span class="text-danger">{{ form.category.errors }}</span>
+</div>
+</div>
+<div class="col-md-6">
+<div class="form-group">
+<label>نوع المخالفة <span class="text-danger">*</span></label>
+<small class="form-text text-muted">يتم تصفية الأنواع حسب التصنيف المختار</small>
+{{ form.violation_type }}
+<span class="text-danger">{{ form.violation_type.errors }}</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- الجزاء الموقع -->
+<div class="card card-warning card-outline">
+<div class="card-header">
+<h3 class="card-title"><i class="fas fa-gavel"></i> الجزاء الموقع</h3>
+</div>
+<div class="card-body bg-light">
+<div class="row">
+<div class="col-md-4">
+<div class="form-group">
+<label>الجزاء الموقع (الفعلي) <span class="text-danger">*</span></label>
+<small class="form-text text-muted">اختر الجزاء الموقع - سيتم تحديد النوع تلقائياً</small>
+{{ form.penalty_applied }}
+<span class="text-danger">{{ form.penalty_applied.errors }}</span>
+</div>
+</div>
+<div class="col-md-4">
+<div class="form-group">
+<label>نوع الجزاء (كلي)</label>
+<small class="form-text text-muted">يتم تحديده تلقائياً عند اختيار الجزاء الموقع</small>
+{{ form.penalty_level }}
+<span class="text-danger">{{ form.penalty_level.errors }}</span>
+</div>
+</div>
+<div class="col-md-4">
+<div class="form-group">
+<label>مقدار الجزاء</label>
+<small class="form-text text-muted">اختر مقدار الجزاء - سيتم تحديث الجزاءات الموقعة تلقائياً</small>
+{{ form.penalty_amount }}
+<span class="text-danger">{{ form.penalty_amount.errors }}</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- وصف المخالفة -->
+<div class="card card-success card-outline">
+<div class="card-header">
+<h3 class="card-title"><i class="fas fa-file-alt"></i> وصف المخالفة</h3>
+</div>
+<div class="card-body">
+<!-- <div class="form-group">
+<label>نصوص مخالفات جاهزة (اختياري)</label>
+<small class="form-text text-muted">اختر نص جاهز ليتم ملء الوصف تلقائياً - يمكنك التعديل عليه بعد الاختيار</small>
+<select id="id_preset_select" class="form-control select2">
+<option value="">-- اختر نص جاهز --</option>
+</select>
+</div> -->
+
+<div class="form-group">
+<label>وصف المخالفة (تفاصيل) <span class="text-danger">*</span></label>
+<small class="form-text text-muted">اكتب تفاصيل المخالفة أو اختر من النصوص الجاهزة أعلاه</small>
+{{ form.violation_description }}
+<span class="text-danger">{{ form.violation_description.errors }}</span>
+</div>
+
+<!-- حقول الغياب (تظهر تلقائياً عند اختيار مخالفة غياب) -->
+<div class="row" id="absence_fields" style="display:none;">
+<div class="col-12">
+<div class="alert alert-info">
+<i class="fas fa-info-circle"></i> هذه المخالفة مرتبطة بالغياب - يرجى إدخال البيانات التالية
+</div>
+</div>
+<div class="col-md-6">
+<div class="form-group">
+<label>بند الغياب (كود)</label>
+<small class="form-text text-muted">رمز بند الغياب من النظام</small>
+{{ form.absence_code }}
+</div>
+</div>
+<div class="col-md-6">
+<div class="form-group">
+<label>بند الحضور (كود)</label>
+<small class="form-text text-muted">رمز بند الحضور من النظام</small>
+{{ form.attendance_code }}
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- ملاحظات ومرفقات -->
+<div class="card card-secondary card-outline">
+<div class="card-header">
+<h3 class="card-title"><i class="fas fa-paperclip"></i> ملاحظات ومرفقات</h3>
+</div>
+<div class="card-body">
+<div class="form-group">
+<label>ملاحظات إضافية</label>
+<small class="form-text text-muted">أي ملاحظات أو تفاصيل إضافية</small>
+{{ form.notes }}
+</div>
+
+<div class="form-group">
+<label>صورة الأورنيك</label>
+<small class="form-text text-muted">ارفع صورة الأورنيك الخاص بالجزاء (اختياري)</small>
+{{ form.form_image }}
+{% if form.instance.form_image %}
+<div class="mt-2">
+<img src="{{ form.instance.form_image.url }}" class="img-thumbnail" style="max-height: 200px;">
+</div>
+{% endif %}
+</div>
+</div>
+
+<div class="card-footer">
+<button type="submit" class="btn btn-primary btn-lg px-5">
+<i class="fas fa-save"></i> حفظ السجل
+</button>
+<a href="{% url 'penalties:record_list' %}" class="btn btn-default btn-lg float-left">
+<i class="fas fa-times"></i> إلغاء
+</a>
+</div>
+</div>
+
+</form>
+</div>
+</section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const violationTypes = JSON.parse('{{ violation_types|escapejs }}');
+    const penaltyApplied = JSON.parse('{{ penalty_applied_list|escapejs }}');
+    const presets = JSON.parse('{{ violation_presets|escapejs }}');
+    const penaltyAmounts = JSON.parse('{{ penalty_amounts|escapejs }}');
+
+    $(document).ready(function () {
+
+        $('.select2').select2({ theme: 'bootstrap4' });
+
+        const els = {
+            category: $('#id_category'),
+            type: $('#id_violation_type'),
+            level: $('#id_penalty_level'),
+            applied: $('#id_penalty_applied'),
+            amount: $('#id_penalty_amount'),
+            preset: $('#id_preset_select'),
+            desc: $('#id_violation_description'),
+            absence: $('#absence_fields')
+        };
+
+        /* 🔁 محرك التحديث المركزي */
+        function refreshAll(source = null) {
+
+            /* 0️⃣ تحديث تلقائي عكسي */
+            // أ) عند اختيار "مقدار الجزاء"
+            if (source === 'amount') {
+                const selectedAmtId = els.amount.val();
+                if (selectedAmtId) {
+                    const amObj = penaltyAmounts.find(x => x.id == selectedAmtId);
+                    if (amObj) {
+                        if (els.level.val() != amObj.penalty_applied__penalty_level_id) {
+                            els.level.val(amObj.penalty_applied__penalty_level_id);
+                        }
+                        els.applied.val(amObj.penalty_applied_id);
+                    }
+                }
+            }
+
+            // ب) عند اختيار "نوع المخالفة" -> تحديث التصنيف
+            if (source === 'type') {
+                const tId = els.type.val();
+                if (tId) {
+                    const tObj = violationTypes.find(x => x.id == tId);
+                    if (tObj && els.category.val() != tObj.category_id) {
+                        els.category.val(tObj.category_id).trigger('change.select2');
+                    }
+                }
+            }
+
+            /* 1️⃣ فلترة أنواع المخالفات */
+            const cat = els.category.val();
+            const currentType = els.type.val();
+
+            els.type.empty().append(new Option('---------', ''));
+            violationTypes.filter(v => !cat || v.category_id == cat)
+                .forEach(v => els.type.append(new Option(v.name, v.id)));
+            if (currentType && els.type.find(`option[value="${currentType}"]`).length) els.type.val(currentType);
+            els.type.trigger('change.select2');
+
+            /* 2️⃣ فلترة الجزاءات الموقعة حسب مستوى الجزاء و مقدار الجزاء */
+            const lvl = els.level.val();
+            const amt = els.amount.val(); // ID value
+            const currentApplied = els.applied.val();
+
+            els.applied.empty().append(new Option('---------', ''));
+            penaltyApplied
+                .filter(p => {
+                    const matchLevel = !lvl || p.penalty_level_id == lvl;
+                    
+                    // التحقق من توافق الجزاء الموقع مع المقدار المختار (إن وجد)
+                    let matchAmount = true;
+                    if (amt) {
+                         const amObj = penaltyAmounts.find(x => x.id == amt);
+                         if (amObj && amObj.penalty_applied_id != p.id) {
+                             matchAmount = false;
+                         }
+                    }
+                    return matchLevel && matchAmount;
+                })
+                .forEach(p => els.applied.append(new Option(p.name, p.id)));
+
+            if (currentApplied && els.applied.find(`option[value="${currentApplied}"]`).length) {
+                els.applied.val(currentApplied);
+            }
+
+             /* 3️⃣ تحديث المستوى إذا تم اختيار جزاء موقع (والعكس غير مفعل حالياً لتجنب التعارض) */
+            if (source === 'applied') {
+                const a = penaltyApplied.find(x => x.id == els.applied.val());
+                if (a) {
+                     // لا نحدث المستوى إذا كنا قد حدثناه للتو من المقدار
+                    if (els.level.val() != a.penalty_level_id) {
+                        els.level.val(a.penalty_level_id);
+                        // قد نحتاج لإعادة فلترة الجزاءات الموقعة مرة أخرى؟ 
+                        // في التصميم الحالي، الجزاء الموقع يتبع المستوى. إذا غيرنا المستوى هنا، القائمة الحالية (المفلترة أساساً حسب المستوى القديم) قد تصبح غير صالحة؟
+                        // لكن بما أننا اخترنا "جزاء موقع" معين، فمن المنطقي أن نضبط مستواه.
+                    }
+                }
+            }
+            
+            // تحديث Select2 للمستوى والجزاء الموقع لضمان ظهور القيم الجديدة
+            els.level.trigger('change.select2'); 
+            els.applied.trigger('change.select2');
+
+
+            /* 4️⃣ الغياب + الوصف */
+            const t = violationTypes.find(x => x.id == els.type.val());
+            els.absence.toggle(!!(t && t.is_absence));
+            if (t && t.description_template && !els.desc.val()) {
+                els.desc.val(t.description_template.replace('{date}', new Date().toLocaleDateString('en-CA'))); // استخدام تنسيق التاريخ YYYY-MM-DD
+            }
+
+            /* 5️⃣ النصوص الجاهزة */
+            els.preset.empty().append(new Option('---------', ''));
+            presets.filter(p => !p.violation_type_id || p.violation_type_id == els.type.val())
+                .forEach(p => els.preset.append(new Option(p.name, p.id)));
+                
+            els.preset.trigger('change.select2'); // تحديث قائمة النصوص
+        }
+
+        /* 🔔 جميع الأحداث */
+        els.category.on('change', () => refreshAll('category'));
+        els.type.on('change', () => refreshAll('type'));
+        els.level.on('change', () => refreshAll('level'));
+        els.amount.on('change', () => refreshAll('amount'));
+        els.applied.on('change', () => refreshAll('applied'));
+
+        els.preset.on('change', function () {
+            const p = presets.find(x => x.id == $(this).val());
+            if (p) {
+                els.desc.val(p.text.replace('{date}', new Date().toLocaleDateString('ar-EG'))); // عرض التاريخ بشكل عربي في الوصف
+            }
+        });
+
+        /* 🚀 تشغيل أولي */
+        setTimeout(() => refreshAll(), 100);
+
+    });
+</script>
+{% endblock %}
+
+
+
+

@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block styles %}
+<style>
+.card { border-radius: 12px; box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
+.table thead th { text-align: center; }
+.table tbody td { vertical-align: middle; text-align: center; }
+@media (max-width: 767px){
+  .table thead { display: none; }
+  .table tbody td { display: block; text-align: right; padding-left: 50%; position: relative; }
+  .table tbody td::before { position: absolute; left: 15px; font-weight: 600; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+  <div class="card p-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4>الإجازات الخاصة</h4>
+      <div>
+        <a href="{% url 'agaza_khasa_app:add_leave' %}" class="btn btn-success">إضافة إجازة خاصة</a>
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <form method="get" id="employeeSelectForm">
+          <label class="form-label">الموظف</label>
+          <select name="employee_id" class="form-select" onchange="document.getElementById('employeeSelectForm').submit()">
+            <option value="">-- اختر موظف --</option>
+            {% for emp in employees %}
+              <option value="{{ emp.id }}" {% if selected_employee and emp.id == selected_employee.id %}selected{% endif %}>{{ emp.name }} — {{ emp.id_number }}</option>
+            {% endfor %}
+          </select>
+        </form>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-bordered">
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th>السبب</th>
+            <th>نوع المدة</th>
+            <th>عدد الأيام</th>
+            <th>بداية</th>
+            <th>عودة</th>
+            <th>رقم القرار</th>
+            <th>السنة</th>
+            <th>ملاحظات</th>
+            <th>اجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if leaves %}
+            {% for leave in leaves %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ leave.leave_reason }}</td>
+                <td>{{ leave.duration_type }}</td>
+                <td>{{ leave.days_count }}</td>
+                <td>{{ leave.start_date|default:"-" }}</td>
+                <td>{{ leave.return_date|default:"-" }}</td>
+                <td>{{ leave.decision_number|default:"-" }}</td>
+                <td>{{ leave.year|default:"-" }}</td>
+                <td style="max-width:250px; white-space:pre-wrap; text-align: left;">{{ leave.notes|default:"-" }}</td>
+                <td>
+                  <a class="btn btn-sm btn-primary mb-1" href="{% url 'agaza_khasa_app:edit_leave' leave.id %}">تعديل</a>
+                  <button class="btn btn-sm btn-danger mb-1" onclick="confirmDelete({{ leave.id }})">حذف</button>
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="10">لا توجد إجازات خاصة لعرضها.</td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<form id="deleteForm" method="post" style="display:none;">
+  {% csrf_token %}
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+function confirmDelete(id){
+  Swal.fire({
+    title: 'هل أنت متأكد من حذف الإجازة؟',
+    text: "لن تتمكن من التراجع عن هذا الإجراء!",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'نعم، احذف',
+    cancelButtonText: 'إلغاء'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      // إنشاء فورم ديناميكي للإرسال
+      const form = document.createElement('form');
+      form.method = 'post';
+      form.action = "{% url 'agaza_khasa_app:delete_leave' 0 %}".replace('/0/', '/' + id + '/');
+      const csrfInput = document.createElement('input');
+      csrfInput.type = 'hidden';
+      csrfInput.name = 'csrfmiddlewaretoken';
+      csrfInput.value = '{{ csrf_token }}';
+      form.appendChild(csrfInput);
+      document.body.appendChild(form);
+      form.submit();
+    }
+  });
+}
+</script>
+{% endblock %}

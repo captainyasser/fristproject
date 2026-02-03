@@ -1,0 +1,17 @@
+<h2>إضافة تقارير سنة جديدة</h2>
+<form method="post">
+  {% csrf_token %}
+  <p>السنة: {{ form.year }}</p>
+  <table class="table">
+    <tr><th>الموظف</th><th>الدرجة</th></tr>
+    {% for field in form %}
+      {% if field.name != "year" %}
+        <tr>
+          <td>{{ field.label }}</td>
+          <td>{{ field }}</td>
+        </tr>
+      {% endif %}
+    {% endfor %}
+  </table>
+  <button type="submit" class="btn btn-primary">حفظ</button>
+</form>

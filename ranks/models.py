@@ -1,3 +1,7 @@
+# E:\yasser\emapi2025\myproject\ranks\models.py
+
+
+
 from django.db import models
 
 class Rank(models.Model):

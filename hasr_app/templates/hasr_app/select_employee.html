@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container" dir="rtl">
+
+    <h4 class="mb-4 text-center">اختر الفرد لعرض دفتر حصر القوة</h4>
+
+    <table class="table table-bordered table-hover text-center">
+        <thead class="table-dark">
+            <tr>
+                <th>م</th>
+                <th>الاسم</th>
+                <th>رقم الشرطة</th>
+                <th>الإجراء</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for emp in employees %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ emp.nickname }}</td>
+                <td>{{ emp.police_number }}</td>
+                <td>
+                    <a href="{% url 'hasr_app:hasr_sheet' emp.id %}" class="btn btn-sm btn-primary">
+                        فتح الدفتر
+                    </a>
+                </td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="4">لا يوجد بيانات</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+{% endblock %}

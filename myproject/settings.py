@@ -41,7 +41,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'backup_manager.apps.BackupManagerConfig',
     'myapp',
-    'em_data',
     'institutes',
     'users',
     'departments',
@@ -50,11 +49,35 @@ INSTALLED_APPS = [
     'file_sharing',
     'tasks',
     'training_teams',
-    'tarkyat.apps.TarkyatConfig',  # تطبيق الترقيات مع تفعيل الإشارات
-
+    'tarkyat.apps.TarkyatConfig',
+    'rest_framework',
+    'rest_framework.authtoken',
+    'drf_yasg', # to make endpoint decomntation
+    'django_filters',
+    'em_data.apps.EmDataConfig',  # استخدام التكوين المخصص
+    'secret_reports',
+    'periodic_allowances',  # إضافة التطبيق الجديد هنا
+    'elawat_tashgeea', 
+    'education',
+    'agaza_khasa_app',
+    'hasr_app',
+    'penalties',
 ]
 
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',  # للتيمبلتس
+        'rest_framework.authentication.TokenAuthentication',     # للـ frontend المنفصل
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+}
+
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 
 MIDDLEWARE = [
@@ -119,7 +142,7 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'yasser',
+        'NAME': 'yasser2',
         'USER': 'root',
         'PASSWORD': '',
         'HOST': 'localhost',
@@ -136,7 +159,7 @@ DATABASES = {
 }
 
 
-LOGIN_URL = '/users/login/'
+LOGIN_URL = '/'
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = '/users/login/'
 

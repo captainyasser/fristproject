@@ -1,353 +1,407 @@
 <title>يومية عددية</title>
 {% extends "base.html" %}
-{% load static attendance_filters %}
-<!DOCTYPE html>
-<html lang="ar">
-    <body class="hold-transition sidebar-mini layout-fixed">
-        <div class="container">
-            <div class="content">
-                {% block content %}
-                    <div class="container-fluid">
-                        <div class="row">
-                            <div class="col-md-12">
-                                {% block inner_content %}
-                                    <style>
-                                        body {
-                                            font-family: Arial, sans-serif;
-                                            background-color: #f4f4f4;
-                                            margin: 0;
-                                            padding: 20px;
-                                        }
-                                        h1, h3 {
-                                            text-align: center;
-                                            color: #333;
-                                        }
-                                        form {
-                                            text-align: center;
-                                            margin-bottom: 20px;
-                                        }
-                                        label {
-                                            font-size: 25px;
-                                            margin-left: 10px;
-                                        }
-                                        input[type="date"] {
-                                            padding: 5px;
-                                            font-size: 25px;
-                                        }
-                                        button {
-                                            padding: 5px 15px;
-                                            font-size: 25px;
-                                            background-color: #007bff;
-                                            color: white;
-                                            border: none;
-                                            cursor: pointer;
-                                        }
-                                        button:hover {
-                                            background-color: rgb(1, 23, 46);
-                                        }
-                                        table {
-                                            width: 100%;
-                                            border-collapse: collapse;
-                                            margin-top: 20px;
-                                            background-color: white;
-                                            direction: rtl;
-                                        }
-                                        table, th, td {
-                                            border: 2px solid #ddd;
-                                        }
-                                        td {
-                                            padding-top: 0px;
-                                            padding-bottom: 50px;
-                                            text-align: right;
-                                            width: 220px;
-                                            font-size: 30px;
-                                        }
-                                        th {
-                                            background-color: #16404D;
-                                            color: white;
-                                            text-align: center;
-                                        }
-                                        tr:nth-child(even) {
-                                            background-color: #f9f9f9;
-                                        }
-                                        tr:hover {
-                                            background-color: #f1f1f1;
-                                        }
-                                        @media print {
-                                            body {
-                                                direction: rtl;
-                                            }
-                                            .btn, form {
-                                                display: none;
-                                            }
-                                            table, th, td {
-                                                border: 2px solid black;
-                                            }
-                                            th {
-                                                background-color: rgb(255, 255, 255);
-                                                color: rgb(0, 0, 0);
-                                            }
-                                            button {
-                                                display: none;
-                                            }
-                                        }
-                                    </style>
-                                    <h1>يومية عددية لإدارة موسيقات الشرطة</h1>
-                                    <!-- Form to select the date -->
-                                    <form method="GET" action="">
-                                        <label for="date">حدد اليوم:</label>
-                                        <input type="date" id="date" name="date" value="{{ selected_date }}" required>
-                                        <button type="submit">عرض</button>
-                                    </form>
-                                    <!-- Print button -->
-                                    <button class="submit" onclick="window.print()">طباعة</button>
-                                    <!-- جدول يوم الخميس (يظهر دائمًا) -->
-                                    <h3>يومية: {{ formatted_date }}</h3>
-                                    <table dir="rtl">
-                                        <thead>
-                                            <tr>
-                                                <th rowspan="2">البيـــــــــــــــــــــــــــــــــــــان</th>
-                                                <th rowspan="2">العدد</th>
-                                                <th colspan="4">أجازات</th>
-                                                <th rowspan="2">مأمورية</th>
-                                                <th rowspan="2">إنتداب</th>
-                                                <th rowspan="2">فرقة</th>
-                                                <th rowspan="2">حفظ سلام</th>
-                                                <th rowspan="2">وفاه</th>
-                                                <th rowspan="2">راحه</th>
-                                                <th rowspan="2">إعارة</th>
-                                                <th rowspan="2">غياب</th>
-                                                <th rowspan="2">اجمالي خارج</th>
-                                                <th rowspan="2">اجمالي موجود</th>
-                                            </tr>
-                                            <tr>
-                                                <th>دورية</th>
-                                                <th>طارئة</th>
-                                                <th>مرضي</th>
-                                                <th>خاصه</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td>ذكور (إداري)</td>
-                                                <td>{% if thursday_data.count1 != 0 %}{{ thursday_data.count1|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.m_e_dawrya != 0 %}{{ thursday_data.m_e_dawrya|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.m_e_tarka != 0 %}{{ thursday_data.m_e_tarka|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.m_e_sick != 0 %}{{ thursday_data.m_e_sick|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.m_e_khas != 0 %}{{ thursday_data.m_e_khas|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.m_e_mamrya != 0 %}{{ thursday_data.m_e_mamrya|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.m_e_intdab != 0 %}{{ thursday_data.m_e_intdab|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.m_e_ferka != 0 %}{{ thursday_data.m_e_ferka|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.m_e_salam != 0 %}{{ thursday_data.m_e_salam|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.m_e_wafaa != 0 %}{{ thursday_data.m_e_wafaa|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.m_e_raha != 0 %}{{ thursday_data.m_e_raha|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.m_e_e3ara != 0 %}{{ thursday_data.m_e_e3ara|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.m_e_ghyab != 0 %}{{ thursday_data.m_e_ghyab|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.m_e_out != 0 %}{{ thursday_data.m_e_out|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.m_e_in != 0 %}{{ thursday_data.m_e_in|convert_to_arabic_numbers }}{% endif %}</td>
-                                            </tr>
-                                            <tr>
-                                                <td>ذكور (موسيقي)</td>
-                                                <td>{% if thursday_data.count2 != 0 %}{{ thursday_data.count2|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.m_m_dawrya != 0 %}{{ thursday_data.m_m_dawrya|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.m_m_tarka != 0 %}{{ thursday_data.m_m_tarka|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.m_m_sick != 0 %}{{ thursday_data.m_m_sick|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.m_m_khas != 0 %}{{ thursday_data.m_m_khas|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.m_m_mamrya != 0 %}{{ thursday_data.m_m_mamrya|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.m_m_intdab != 0 %}{{ thursday_data.m_m_intdab|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.m_m_ferka != 0 %}{{ thursday_data.m_m_ferka|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.m_m_salam != 0 %}{{ thursday_data.m_m_salam|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.m_m_wafaa != 0 %}{{ thursday_data.m_m_wafaa|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.m_m_raha != 0 %}{{ thursday_data.m_m_raha|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.m_m_e3ara != 0 %}{{ thursday_data.m_m_e3ara|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.m_m_ghyab != 0 %}{{ thursday_data.m_m_ghyab|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.m_m_out != 0 %}{{ thursday_data.m_m_out|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.m_m_in != 0 %}{{ thursday_data.m_m_in|convert_to_arabic_numbers }}{% endif %}</td>
-                                            </tr>
-                                            <tr>
-                                                <td>إناث (إداري)</td>
-                                                <td>{% if thursday_data.count3 != 0 %}{{ thursday_data.count3|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.f_e_dawrya != 0 %}{{ thursday_data.f_e_dawrya|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.f_e_tarka != 0 %}{{ thursday_data.f_e_tarka|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.f_e_sick != 0 %}{{ thursday_data.f_e_sick|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.f_e_khas != 0 %}{{ thursday_data.f_e_khas|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.f_e_mamrya != 0 %}{{ thursday_data.f_e_mamrya|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.f_e_intdab != 0 %}{{ thursday_data.f_e_intdab|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.f_e_ferka != 0 %}{{ thursday_data.f_e_ferka|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.f_e_salam != 0 %}{{ thursday_data.f_e_salam|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.f_e_wafaa != 0 %}{{ thursday_data.f_e_wafaa|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.f_e_raha != 0 %}{{ thursday_data.f_e_raha|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.f_e_e3ara != 0 %}{{ thursday_data.f_e_e3ara|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.f_e_ghyab != 0 %}{{ thursday_data.f_e_ghyab|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.f_e_out != 0 %}{{ thursday_data.f_e_out|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.f_e_in != 0 %}{{ thursday_data.f_e_in|convert_to_arabic_numbers }}{% endif %}</td>
-                                            </tr>
-                                            <tr>
-                                                <td>إناث (موسيقي)</td>
-                                                <td>{% if thursday_data.count4 != 0 %}{{ thursday_data.count4|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.f_m_dawrya != 0 %}{{ thursday_data.f_m_dawrya|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.f_m_tarka != 0 %}{{ thursday_data.f_m_tarka|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.f_m_sick != 0 %}{{ thursday_data.f_m_sick|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.f_m_khas != 0 %}{{ thursday_data.f_m_khas|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.f_m_mamrya != 0 %}{{ thursday_data.f_m_mamrya|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.f_m_intdab != 0 %}{{ thursday_data.f_m_intdab|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.f_m_ferka != 0 %}{{ thursday_data.f_m_ferka|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.f_m_salam != 0 %}{{ thursday_data.f_m_salam|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.f_m_wafaa != 0 %}{{ thursday_data.f_m_wafaa|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.f_m_raha != 0 %}{{ thursday_data.f_m_raha|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.f_m_e3ara != 0 %}{{ thursday_data.f_m_e3ara|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.f_m_ghyab != 0 %}{{ thursday_data.f_m_ghyab|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.f_m_out != 0 %}{{ thursday_data.f_m_out|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.f_m_in != 0 %}{{ thursday_data.f_m_in|convert_to_arabic_numbers }}{% endif %}</td>
-                                            </tr>
-                                            <tr>
-                                                <td>إجمالي</td>
-                                                <td>{% if thursday_data.count5 != 0 %}{{ thursday_data.count5|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.mf_dawrya != 0 %}{{ thursday_data.mf_dawrya|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.mf_tarka != 0 %}{{ thursday_data.mf_tarka|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.mf_sick != 0 %}{{ thursday_data.mf_sick|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.mf_khas != 0 %}{{ thursday_data.mf_khas|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.mf_mamrya != 0 %}{{ thursday_data.mf_mamrya|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.mf_intdab != 0 %}{{ thursday_data.mf_intdab|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.mf_ferka != 0 %}{{ thursday_data.mf_ferka|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.mf_salam != 0 %}{{ thursday_data.mf_salam|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.mf_wafaa != 0 %}{{ thursday_data.mf_wafaa|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.mf_raha != 0 %}{{ thursday_data.mf_raha|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.mf_e3ara != 0 %}{{ thursday_data.mf_e3ara|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.mf_ghyab != 0 %}{{ thursday_data.mf_ghyab|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.mf_out != 0 %}{{ thursday_data.mf_out|convert_to_arabic_numbers }}{% endif %}</td>
-                                                <td>{% if thursday_data.mf_in != 0 %}{{ thursday_data.mf_in|convert_to_arabic_numbers }}{% endif %}</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+{% load static %}
 
-                                    <!-- جدول يوم الجمعة (يظهر فقط إذا كان اليوم الخميس) -->
-                                    {% if is_thursday %}
-                                        <h3>يومية: {{ formatted_friday_date }}</h3>
-                                        <table dir="rtl">
-                                            <thead>
-                                                <tr>
-                                                    <th rowspan="2">البيـــــــــــــــــــــــــــــــــــــان</th>
-                                                    <th rowspan="2">العدد</th>
-                                                    <th colspan="4">أجازات</th>
-                                                    <th rowspan="2">مأمورية</th>
-                                                    <th rowspan="2">إنتداب</th>
-                                                    <th rowspan="2">فرقة</th>
-                                                    <th rowspan="2">حفظ سلام</th>
-                                                    <th rowspan="2">وفاه</th>
-                                                    <th rowspan="2">راحه</th>
-                                                    <th rowspan="2">إعارة</th>
-                                                    <th rowspan="2">غياب</th>
-                                                    <th rowspan="2">اجمالي خارج</th>
-                                                    <th rowspan="2">اجمالي موجود</th>
-                                                </tr>
-                                                <tr>
-                                                    <th>دورية</th>
-                                                    <th>طارئة</th>
-                                                    <th>مرضي</th>
-                                                    <th>خاصه</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr>
-                                                    <td>ذكور (إداري)</td>
-                                                    <td>{% if friday_data.count1 != 0 %}{{ friday_data.count1|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.m_e_dawrya != 0 %}{{ friday_data.m_e_dawrya|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.m_e_tarka != 0 %}{{ friday_data.m_e_tarka|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.m_e_sick != 0 %}{{ friday_data.m_e_sick|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.m_e_khas != 0 %}{{ friday_data.m_e_khas|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.m_e_mamrya != 0 %}{{ friday_data.m_e_mamrya|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.m_e_intdab != 0 %}{{ friday_data.m_e_intdab|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.m_e_ferka != 0 %}{{ friday_data.m_e_ferka|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.m_e_salam != 0 %}{{ friday_data.m_e_salam|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.m_e_wafaa != 0 %}{{ friday_data.m_e_wafaa|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.m_e_raha != 0 %}{{ friday_data.m_e_raha|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.m_e_e3ara != 0 %}{{ friday_data.m_e_e3ara|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.m_e_ghyab != 0 %}{{ friday_data.m_e_ghyab|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.m_e_out != 0 %}{{ friday_data.m_e_out|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.m_e_in != 0 %}{{ friday_data.m_e_in|convert_to_arabic_numbers }}{% endif %}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>ذكور (موسيقي)</td>
-                                                    <td>{% if friday_data.count2 != 0 %}{{ friday_data.count2|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.m_m_dawrya != 0 %}{{ friday_data.m_m_dawrya|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.m_m_tarka != 0 %}{{ friday_data.m_m_tarka|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.m_m_sick != 0 %}{{ friday_data.m_m_sick|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.m_m_khas != 0 %}{{ friday_data.m_m_khas|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.m_m_mamrya != 0 %}{{ friday_data.m_m_mamrya|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.m_m_intdab != 0 %}{{ friday_data.m_m_intdab|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.m_m_ferka != 0 %}{{ friday_data.m_m_ferka|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.m_m_salam != 0 %}{{ friday_data.m_m_salam|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.m_m_wafaa != 0 %}{{ friday_data.m_m_wafaa|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.m_m_raha != 0 %}{{ friday_data.m_m_raha|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.m_m_e3ara != 0 %}{{ friday_data.m_m_e3ara|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.m_m_ghyab != 0 %}{{ friday_data.m_m_ghyab|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.m_m_out != 0 %}{{ friday_data.m_m_out|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.m_m_in != 0 %}{{ friday_data.m_m_in|convert_to_arabic_numbers }}{% endif %}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>إناث (إداري)</td>
-                                                    <td>{% if friday_data.count3 != 0 %}{{ friday_data.count3|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.f_e_dawrya != 0 %}{{ friday_data.f_e_dawrya|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.f_e_tarka != 0 %}{{ friday_data.f_e_tarka|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.f_e_sick != 0 %}{{ friday_data.f_e_sick|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.f_e_khas != 0 %}{{ friday_data.f_e_khas|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.f_e_mamrya != 0 %}{{ friday_data.f_e_mamrya|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.f_e_intdab != 0 %}{{ friday_data.f_e_intdab|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.f_e_ferka != 0 %}{{ friday_data.f_e_ferka|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.f_e_salam != 0 %}{{ friday_data.f_e_salam|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.f_e_wafaa != 0 %}{{ friday_data.f_e_wafaa|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.f_e_raha != 0 %}{{ friday_data.f_e_raha|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.f_e_e3ara != 0 %}{{ friday_data.f_e_e3ara|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.f_e_ghyab != 0 %}{{ friday_data.f_e_ghyab|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.f_e_out != 0 %}{{ friday_data.f_e_out|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.f_e_in != 0 %}{{ friday_data.f_e_in|convert_to_arabic_numbers }}{% endif %}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>إناث (موسيقي)</td>
-                                                    <td>{% if friday_data.count4 != 0 %}{{ friday_data.count4|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.f_m_dawrya != 0 %}{{ friday_data.f_m_dawrya|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.f_m_tarka != 0 %}{{ friday_data.f_m_tarka|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.f_m_sick != 0 %}{{ friday_data.f_m_sick|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.f_m_khas != 0 %}{{ friday_data.f_m_khas|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.f_m_mamrya != 0 %}{{ friday_data.f_m_mamrya|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.f_m_intdab != 0 %}{{ friday_data.f_m_intdab|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.f_m_ferka != 0 %}{{ friday_data.f_m_ferka|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.f_m_salam != 0 %}{{ friday_data.f_m_salam|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.f_m_wafaa != 0 %}{{ friday_data.f_m_wafaa|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.f_m_raha != 0 %}{{ friday_data.f_m_raha|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.f_m_e3ara != 0 %}{{ friday_data.f_m_e3ara|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.f_m_ghyab != 0 %}{{ friday_data.f_m_ghyab|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.f_m_out != 0 %}{{ friday_data.f_m_out|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.f_m_in != 0 %}{{ friday_data.f_m_in|convert_to_arabic_numbers }}{% endif %}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>إجمالي</td>
-                                                    <td>{% if friday_data.count5 != 0 %}{{ friday_data.count5|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.mf_dawrya != 0 %}{{ friday_data.mf_dawrya|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.mf_tarka != 0 %}{{ friday_data.mf_tarka|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.mf_sick != 0 %}{{ friday_data.mf_sick|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.mf_khas != 0 %}{{ friday_data.mf_khas|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.mf_mamrya != 0 %}{{ friday_data.mf_mamrya|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.mf_intdab != 0 %}{{ friday_data.mf_intdab|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.mf_ferka != 0 %}{{ friday_data.mf_ferka|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.mf_salam != 0 %}{{ friday_data.mf_salam|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.mf_wafaa != 0 %}{{ friday_data.mf_wafaa|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.mf_raha != 0 %}{{ friday_data.mf_raha|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.mf_e3ara != 0 %}{{ friday_data.mf_e3ara|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.mf_ghyab != 0 %}{{ friday_data.mf_ghyab|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.mf_out != 0 %}{{ friday_data.mf_out|convert_to_arabic_numbers }}{% endif %}</td>
-                                                    <td>{% if friday_data.mf_in != 0 %}{{ friday_data.mf_in|convert_to_arabic_numbers }}{% endif %}</td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    {% endif %}
-                                {% endblock %}
-                            </div>
-                        </div>
+{% block content %}
+<div class="container">
+    <div class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12">
+                    <style>
+                        body {
+                            font-family: Arial, sans-serif;
+                            background-color: #f4f4f4;
+                            margin: 0;
+                            padding: 20px;
+                        }
+                        h1, h3 {
+                            text-align: center;
+                            color: #333;
+                        }
+                        .form-container {
+                            text-align: center;
+                            margin-bottom: 20px;
+                        }
+                        label {
+                            font-size: 25px;
+                            margin-left: 10px;
+                        }
+                        input[type="date"] {
+                            padding: 5px;
+                            font-size: 25px;
+                        }
+                        button {
+                            padding: 5px 15px;
+                            font-size: 25px;
+                            background-color: #007bff;
+                            color: white;
+                            border: none;
+                            cursor: pointer;
+                        }
+                        button:hover {
+                            background-color: rgb(1, 23, 46);
+                        }
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-top: 20px;
+                            background-color: white;
+                            direction: rtl;
+                        }
+                        table, th, td {
+                            border: 2px solid #ddd;
+                        }
+                        td {
+                            padding-top: 0px;
+                            padding-bottom: 50px;
+                            text-align: right;
+                            width: 220px;
+                            font-size: 30px;
+                        }
+                        th {
+                            background-color: #16404D;
+                            color: white;
+                            text-align: center;
+                        }
+                        tr:nth-child(even) {
+                            background-color: #f9f9f9;
+                        }
+                        tr:hover {
+                            background-color: #f1f1f1;
+                        }
+                        @media print {
+                            body {
+                                direction: rtl;
+                            }
+                            .form-container, .print-btn {
+                                display: none;
+                            }
+                            table, th, td {
+                                border: 2px solid black;
+                            }
+                            th {
+                                background-color: rgb(255, 255, 255);
+                                color: rgb(0, 0, 0);
+                            }
+                        }
+                    </style>
+                    <h1>يومية عددية لإدارة موسيقات الشرطة</h1>
+                    <div class="form-container">
+                        <label for="date-input">حدد اليوم:</label>
+                        <input type="date" id="date-input" />
+                        <button onclick="fetchNumReport()">عرض</button>
                     </div>
-                {% endblock %}
+                    <button class="print-btn" onclick="window.print()">طباعة</button>
+                    <h3 id="thursday-title">يومية: </h3>
+                    <table dir="rtl" id="thursday-table">
+                        <thead id="thursday-header"></thead>
+                        <tbody id="thursday-body"></tbody>
+                    </table>
+                    <h3 id="friday-title" style="display: none;">يومية: </h3>
+                    <table dir="rtl" id="friday-table" style="display: none;">
+                        <thead id="friday-header"></thead>
+                        <tbody id="friday-body"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
-    </body>
-</html>
+    </div>
+</div>
+
+<script>
+    function toEasternArabicNumerals(num) {
+        const easternArabicNumerals = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+        return String(num).replace(/[0-9]/g, (digit) => easternArabicNumerals[digit]);
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const formattedTomorrow = tomorrow.toISOString().split("T")[0];
+        document.getElementById("date-input").value = formattedTomorrow;
+        fetchNumReport();
+    });
+
+    function fetchNumReport() {
+        const dateInput = document.getElementById("date-input").value;
+        const apiUrl = "/attendance/api/numreport/";
+
+        fetch(apiUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCSRFToken(),
+                "Accept": "application/json",
+            },
+            body: JSON.stringify({ date: dateInput }),
+            credentials: 'include'
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    return response.text().then((text) => {
+                        throw new Error(`فشل في جلب البيانات: ${response.status} - ${text}`);
+                    });
+                }
+                return response.json();
+            })
+            .then((data) => {
+                updateReport(data);
+            })
+            .catch((error) => {
+                console.error("Error:", error);
+                alert(error.message);
+            });
+    }
+
+    function updateReport(data) {
+        const thursdayTitle = document.getElementById("thursday-title");
+        const thursdayHeader = document.getElementById("thursday-header");
+        const thursdayBody = document.getElementById("thursday-body");
+        const fridayTitle = document.getElementById("friday-title");
+        const fridayHeader = document.getElementById("friday-header");
+        const fridayBody = document.getElementById("friday-body");
+        const fridayTable = document.getElementById("friday-table"); // تعريف fridayTable
+
+        const formattedThursday = data.formatted_date.replace(/[0-9]/g, (digit) => toEasternArabicNumerals(digit));
+        thursdayTitle.textContent = `يومية: ${formattedThursday}`;
+
+        thursdayHeader.innerHTML = `
+            <tr>
+                <th rowspan="2">البيـــــــــــــــــــــــــــــــــــــان</th>
+                <th rowspan="2">العدد</th>
+                <th colspan="4">أجازات</th>
+                <th rowspan="2">مأمورية</th>
+                <th rowspan="2">إنتداب</th>
+                <th rowspan="2">فرقة</th>
+                <th rowspan="2">حفظ سلام</th>
+                <th rowspan="2">وفاه</th>
+                <th rowspan="2">راحه</th>
+                <th rowspan="2">إعارة</th>
+                <th rowspan="2">غياب</th>
+                <th rowspan="2">اجمالي خارج</th>
+                <th rowspan="2">اجمالي موجود</th>
+            </tr>
+            <tr>
+                <th>دورية</th>
+                <th>طارئة</th>
+                <th>مرضي</th>
+                <th>خاصه</th>
+            </tr>
+        `;
+
+        thursdayBody.innerHTML = `
+            <tr>
+                <td>ذكور (إداري)</td>
+                <td>${data.thursday_data.count1 ? toEasternArabicNumerals(data.thursday_data.count1) : ''}</td>
+                <td>${data.thursday_data.m_e_dawrya ? toEasternArabicNumerals(data.thursday_data.m_e_dawrya) : ''}</td>
+                <td>${data.thursday_data.m_e_tarka ? toEasternArabicNumerals(data.thursday_data.m_e_tarka) : ''}</td>
+                <td>${data.thursday_data.m_e_sick ? toEasternArabicNumerals(data.thursday_data.m_e_sick) : ''}</td>
+                <td>${data.thursday_data.m_e_khas ? toEasternArabicNumerals(data.thursday_data.m_e_khas) : ''}</td>
+                <td>${data.thursday_data.m_e_mamrya ? toEasternArabicNumerals(data.thursday_data.m_e_mamrya) : ''}</td>
+                <td>${data.thursday_data.m_e_intdab ? toEasternArabicNumerals(data.thursday_data.m_e_intdab) : ''}</td>
+                <td>${data.thursday_data.m_e_ferka ? toEasternArabicNumerals(data.thursday_data.m_e_ferka) : ''}</td>
+                <td>${data.thursday_data.m_e_salam ? toEasternArabicNumerals(data.thursday_data.m_e_salam) : ''}</td>
+                <td>${data.thursday_data.m_e_wafaa ? toEasternArabicNumerals(data.thursday_data.m_e_wafaa) : ''}</td>
+                <td>${data.thursday_data.m_e_raha ? toEasternArabicNumerals(data.thursday_data.m_e_raha) : ''}</td>
+                <td>${data.thursday_data.m_e_e3ara ? toEasternArabicNumerals(data.thursday_data.m_e_e3ara) : ''}</td>
+                <td>${data.thursday_data.m_e_ghyab ? toEasternArabicNumerals(data.thursday_data.m_e_ghyab) : ''}</td>
+                <td>${data.thursday_data.m_e_out ? toEasternArabicNumerals(data.thursday_data.m_e_out) : ''}</td>
+                <td>${data.thursday_data.m_e_in ? toEasternArabicNumerals(data.thursday_data.m_e_in) : ''}</td>
+            </tr>
+            <tr>
+                <td>ذكور (موسيقي)</td>
+                <td>${data.thursday_data.count2 ? toEasternArabicNumerals(data.thursday_data.count2) : ''}</td>
+                <td>${data.thursday_data.m_m_dawrya ? toEasternArabicNumerals(data.thursday_data.m_m_dawrya) : ''}</td>
+                <td>${data.thursday_data.m_m_tarka ? toEasternArabicNumerals(data.thursday_data.m_m_tarka) : ''}</td>
+                <td>${data.thursday_data.m_m_sick ? toEasternArabicNumerals(data.thursday_data.m_m_sick) : ''}</td>
+                <td>${data.thursday_data.m_m_khas ? toEasternArabicNumerals(data.thursday_data.m_m_khas) : ''}</td>
+                <td>${data.thursday_data.m_m_mamrya ? toEasternArabicNumerals(data.thursday_data.m_m_mamrya) : ''}</td>
+                <td>${data.thursday_data.m_m_intdab ? toEasternArabicNumerals(data.thursday_data.m_m_intdab) : ''}</td>
+                <td>${data.thursday_data.m_m_ferka ? toEasternArabicNumerals(data.thursday_data.m_m_ferka) : ''}</td>
+                <td>${data.thursday_data.m_m_salam ? toEasternArabicNumerals(data.thursday_data.m_m_salam) : ''}</td>
+                <td>${data.thursday_data.m_m_wafaa ? toEasternArabicNumerals(data.thursday_data.m_m_wafaa) : ''}</td>
+                <td>${data.thursday_data.m_m_raha ? toEasternArabicNumerals(data.thursday_data.m_m_raha) : ''}</td>
+                <td>${data.thursday_data.m_m_e3ara ? toEasternArabicNumerals(data.thursday_data.m_m_e3ara) : ''}</td>
+                <td>${data.thursday_data.m_m_ghyab ? toEasternArabicNumerals(data.thursday_data.m_m_ghyab) : ''}</td>
+                <td>${data.thursday_data.m_m_out ? toEasternArabicNumerals(data.thursday_data.m_m_out) : ''}</td>
+                <td>${data.thursday_data.m_m_in ? toEasternArabicNumerals(data.thursday_data.m_m_in) : ''}</td>
+            </tr>
+            <tr>
+                <td>إناث (إداري)</td>
+                <td>${data.thursday_data.count3 ? toEasternArabicNumerals(data.thursday_data.count3) : ''}</td>
+                <td>${data.thursday_data.f_e_dawrya ? toEasternArabicNumerals(data.thursday_data.f_e_dawrya) : ''}</td>
+                <td>${data.thursday_data.f_e_tarka ? toEasternArabicNumerals(data.thursday_data.f_e_tarka) : ''}</td>
+                <td>${data.thursday_data.f_e_sick ? toEasternArabicNumerals(data.thursday_data.f_e_sick) : ''}</td>
+                <td>${data.thursday_data.f_e_khas ? toEasternArabicNumerals(data.thursday_data.f_e_khas) : ''}</td>
+                <td>${data.thursday_data.f_e_mamrya ? toEasternArabicNumerals(data.thursday_data.f_e_mamrya) : ''}</td>
+                <td>${data.thursday_data.f_e_intdab ? toEasternArabicNumerals(data.thursday_data.f_e_intdab) : ''}</td>
+                <td>${data.thursday_data.f_e_ferka ? toEasternArabicNumerals(data.thursday_data.f_e_ferka) : ''}</td>
+                <td>${data.thursday_data.f_e_salam ? toEasternArabicNumerals(data.thursday_data.f_e_salam) : ''}</td>
+                <td>${data.thursday_data.f_e_wafaa ? toEasternArabicNumerals(data.thursday_data.f_e_wafaa) : ''}</td>
+                <td>${data.thursday_data.f_e_raha ? toEasternArabicNumerals(data.thursday_data.f_e_raha) : ''}</td>
+                <td>${data.thursday_data.f_e_e3ara ? toEasternArabicNumerals(data.thursday_data.f_e_e3ara) : ''}</td>
+                <td>${data.thursday_data.f_e_ghyab ? toEasternArabicNumerals(data.thursday_data.f_e_ghyab) : ''}</td>
+                <td>${data.thursday_data.f_e_out ? toEasternArabicNumerals(data.thursday_data.f_e_out) : ''}</td>
+                <td>${data.thursday_data.f_e_in ? toEasternArabicNumerals(data.thursday_data.f_e_in) : ''}</td>
+            </tr>
+            <tr>
+                <td>إناث (موسيقي)</td>
+                <td>${data.thursday_data.count4 ? toEasternArabicNumerals(data.thursday_data.count4) : ''}</td>
+                <td>${data.thursday_data.f_m_dawrya ? toEasternArabicNumerals(data.thursday_data.f_m_dawrya) : ''}</td>
+                <td>${data.thursday_data.f_m_tarka ? toEasternArabicNumerals(data.thursday_data.f_m_tarka) : ''}</td>
+                <td>${data.thursday_data.f_m_sick ? toEasternArabicNumerals(data.thursday_data.f_m_sick) : ''}</td>
+                <td>${data.thursday_data.f_m_khas ? toEasternArabicNumerals(data.thursday_data.f_m_khas) : ''}</td>
+                <td>${data.thursday_data.f_m_mamrya ? toEasternArabicNumerals(data.thursday_data.f_m_mamrya) : ''}</td>
+                <td>${data.thursday_data.f_m_intdab ? toEasternArabicNumerals(data.thursday_data.f_m_intdab) : ''}</td>
+                <td>${data.thursday_data.f_m_ferka ? toEasternArabicNumerals(data.thursday_data.f_m_ferka) : ''}</td>
+                <td>${data.thursday_data.f_m_salam ? toEasternArabicNumerals(data.thursday_data.f_m_salam) : ''}</td>
+                <td>${data.thursday_data.f_m_wafaa ? toEasternArabicNumerals(data.thursday_data.f_m_wafaa) : ''}</td>
+                <td>${data.thursday_data.f_m_raha ? toEasternArabicNumerals(data.thursday_data.f_m_raha) : ''}</td>
+                <td>${data.thursday_data.f_m_e3ara ? toEasternArabicNumerals(data.thursday_data.f_m_e3ara) : ''}</td>
+                <td>${data.thursday_data.f_m_ghyab ? toEasternArabicNumerals(data.thursday_data.f_m_ghyab) : ''}</td>
+                <td>${data.thursday_data.f_m_out ? toEasternArabicNumerals(data.thursday_data.f_m_out) : ''}</td>
+                <td>${data.thursday_data.f_m_in ? toEasternArabicNumerals(data.thursday_data.f_m_in) : ''}</td>
+            </tr>
+            <tr>
+                <td>إجمالي</td>
+                <td>${data.thursday_data.count5 ? toEasternArabicNumerals(data.thursday_data.count5) : ''}</td>
+                <td>${data.thursday_data.mf_dawrya ? toEasternArabicNumerals(data.thursday_data.mf_dawrya) : ''}</td>
+                <td>${data.thursday_data.mf_tarka ? toEasternArabicNumerals(data.thursday_data.mf_tarka) : ''}</td>
+                <td>${data.thursday_data.mf_sick ? toEasternArabicNumerals(data.thursday_data.mf_sick) : ''}</td>
+                <td>${data.thursday_data.mf_khas ? toEasternArabicNumerals(data.thursday_data.mf_khas) : ''}</td>
+                <td>${data.thursday_data.mf_mamrya ? toEasternArabicNumerals(data.thursday_data.mf_mamrya) : ''}</td>
+                <td>${data.thursday_data.mf_intdab ? toEasternArabicNumerals(data.thursday_data.mf_intdab) : ''}</td>
+                <td>${data.thursday_data.mf_ferka ? toEasternArabicNumerals(data.thursday_data.mf_ferka) : ''}</td>
+                <td>${data.thursday_data.mf_salam ? toEasternArabicNumerals(data.thursday_data.mf_salam) : ''}</td>
+                <td>${data.thursday_data.mf_wafaa ? toEasternArabicNumerals(data.thursday_data.mf_wafaa) : ''}</td>
+                <td>${data.thursday_data.mf_raha ? toEasternArabicNumerals(data.thursday_data.mf_raha) : ''}</td>
+                <td>${data.thursday_data.mf_e3ara ? toEasternArabicNumerals(data.thursday_data.mf_e3ara) : ''}</td>
+                <td>${data.thursday_data.mf_ghyab ? toEasternArabicNumerals(data.thursday_data.mf_ghyab) : ''}</td>
+                <td>${data.thursday_data.mf_out ? toEasternArabicNumerals(data.thursday_data.mf_out) : ''}</td>
+                <td>${data.thursday_data.mf_in ? toEasternArabicNumerals(data.thursday_data.mf_in) : ''}</td>
+            </tr>
+        `;
+
+        if (data.is_thursday) {
+            const formattedFriday = data.formatted_friday_date.replace(/[0-9]/g, (digit) => toEasternArabicNumerals(digit));
+            fridayTitle.textContent = `يومية: ${formattedFriday}`;
+            fridayTitle.style.display = 'block';
+            fridayTable.style.display = 'table';
+
+            fridayHeader.innerHTML = thursdayHeader.innerHTML;
+            fridayBody.innerHTML = `
+                <tr>
+                    <td>ذكور (إداري)</td>
+                    <td>${data.friday_data.count1 ? toEasternArabicNumerals(data.friday_data.count1) : ''}</td>
+                    <td>${data.friday_data.m_e_dawrya ? toEasternArabicNumerals(data.friday_data.m_e_dawrya) : ''}</td>
+                    <td>${data.friday_data.m_e_tarka ? toEasternArabicNumerals(data.friday_data.m_e_tarka) : ''}</td>
+                    <td>${data.friday_data.m_e_sick ? toEasternArabicNumerals(data.friday_data.m_e_sick) : ''}</td>
+                    <td>${data.friday_data.m_e_khas ? toEasternArabicNumerals(data.friday_data.m_e_khas) : ''}</td>
+                    <td>${data.friday_data.m_e_mamrya ? toEasternArabicNumerals(data.friday_data.m_e_mamrya) : ''}</td>
+                    <td>${data.friday_data.m_e_intdab ? toEasternArabicNumerals(data.friday_data.m_e_intdab) : ''}</td>
+                    <td>${data.friday_data.m_e_ferka ? toEasternArabicNumerals(data.friday_data.m_e_ferka) : ''}</td>
+                    <td>${data.friday_data.m_e_salam ? toEasternArabicNumerals(data.friday_data.m_e_salam) : ''}</td>
+                    <td>${data.friday_data.m_e_wafaa ? toEasternArabicNumerals(data.friday_data.m_e_wafaa) : ''}</td>
+                    <td>${data.friday_data.m_e_raha ? toEasternArabicNumerals(data.friday_data.m_e_raha) : ''}</td>
+                    <td>${data.friday_data.m_e_e3ara ? toEasternArabicNumerals(data.friday_data.m_e_e3ara) : ''}</td>
+                    <td>${data.friday_data.m_e_ghyab ? toEasternArabicNumerals(data.friday_data.m_e_ghyab) : ''}</td>
+                    <td>${data.friday_data.m_e_out ? toEasternArabicNumerals(data.friday_data.m_e_out) : ''}</td>
+                    <td>${data.friday_data.m_e_in ? toEasternArabicNumerals(data.friday_data.m_e_in) : ''}</td>
+                </tr>
+                <tr>
+                    <td>ذكور (موسيقي)</td>
+                    <td>${data.friday_data.count2 ? toEasternArabicNumerals(data.friday_data.count2) : ''}</td>
+                    <td>${data.friday_data.m_m_dawrya ? toEasternArabicNumerals(data.friday_data.m_m_dawrya) : ''}</td>
+                    <td>${data.friday_data.m_m_tarka ? toEasternArabicNumerals(data.friday_data.m_m_tarka) : ''}</td>
+                    <td>${data.friday_data.m_m_sick ? toEasternArabicNumerals(data.friday_data.m_m_sick) : ''}</td>
+                    <td>${data.friday_data.m_m_khas ? toEasternArabicNumerals(data.friday_data.m_m_khas) : ''}</td>
+                    <td>${data.friday_data.m_m_mamrya ? toEasternArabicNumerals(data.friday_data.m_m_mamrya) : ''}</td>
+                    <td>${data.friday_data.m_m_intdab ? toEasternArabicNumerals(data.friday_data.m_m_intdab) : ''}</td>
+                    <td>${data.friday_data.m_m_ferka ? toEasternArabicNumerals(data.friday_data.m_m_ferka) : ''}</td>
+                    <td>${data.friday_data.m_m_salam ? toEasternArabicNumerals(data.friday_data.m_m_salam) : ''}</td>
+                    <td>${data.friday_data.m_m_wafaa ? toEasternArabicNumerals(data.friday_data.m_m_wafaa) : ''}</td>
+                    <td>${data.friday_data.m_m_raha ? toEasternArabicNumerals(data.friday_data.m_m_raha) : ''}</td>
+                    <td>${data.friday_data.m_m_e3ara ? toEasternArabicNumerals(data.friday_data.m_m_e3ara) : ''}</td>
+                    <td>${data.friday_data.m_m_ghyab ? toEasternArabicNumerals(data.friday_data.m_m_ghyab) : ''}</td>
+                    <td>${data.friday_data.m_m_out ? toEasternArabicNumerals(data.friday_data.m_m_out) : ''}</td>
+                    <td>${data.friday_data.m_m_in ? toEasternArabicNumerals(data.friday_data.m_m_in) : ''}</td>
+                </tr>
+                <tr>
+                    <td>إناث (إداري)</td>
+                    <td>${data.friday_data.count3 ? toEasternArabicNumerals(data.friday_data.count3) : ''}</td>
+                    <td>${data.friday_data.f_e_dawrya ? toEasternArabicNumerals(data.friday_data.f_e_dawrya) : ''}</td>
+                    <td>${data.friday_data.f_e_tarka ? toEasternArabicNumerals(data.friday_data.f_e_tarka) : ''}</td>
+                    <td>${data.friday_data.f_e_sick ? toEasternArabicNumerals(data.friday_data.f_e_sick) : ''}</td>
+                    <td>${data.friday_data.f_e_khas ? toEasternArabicNumerals(data.friday_data.f_e_khas) : ''}</td>
+                    <td>${data.friday_data.f_e_mamrya ? toEasternArabicNumerals(data.friday_data.f_e_mamrya) : ''}</td>
+                    <td>${data.friday_data.f_e_intdab ? toEasternArabicNumerals(data.friday_data.f_e_intdab) : ''}</td>
+                    <td>${data.friday_data.f_e_ferka ? toEasternArabicNumerals(data.friday_data.f_e_ferka) : ''}</td>
+                    <td>${data.friday_data.f_e_salam ? toEasternArabicNumerals(data.friday_data.f_e_salam) : ''}</td>
+                    <td>${data.friday_data.f_e_wafaa ? toEasternArabicNumerals(data.friday_data.f_e_wafaa) : ''}</td>
+                    <td>${data.friday_data.f_e_raha ? toEasternArabicNumerals(data.friday_data.f_e_raha) : ''}</td>
+                    <td>${data.friday_data.f_e_e3ara ? toEasternArabicNumerals(data.friday_data.f_e_e3ara) : ''}</td>
+                    <td>${data.friday_data.f_e_ghyab ? toEasternArabicNumerals(data.friday_data.f_e_ghyab) : ''}</td>
+                    <td>${data.friday_data.f_e_out ? toEasternArabicNumerals(data.friday_data.f_e_out) : ''}</td>
+                    <td>${data.friday_data.f_e_in ? toEasternArabicNumerals(data.friday_data.f_e_in) : ''}</td>
+                </tr>
+                <tr>
+                    <td>إناث (موسيقي)</td>
+                    <td>${data.friday_data.count4 ? toEasternArabicNumerals(data.friday_data.count4) : ''}</td>
+                    <td>${data.friday_data.f_m_dawrya ? toEasternArabicNumerals(data.friday_data.f_m_dawrya) : ''}</td>
+                    <td>${data.friday_data.f_m_tarka ? toEasternArabicNumerals(data.friday_data.f_m_tarka) : ''}</td>
+                    <td>${data.friday_data.f_m_sick ? toEasternArabicNumerals(data.friday_data.f_m_sick) : ''}</td>
+                    <td>${data.friday_data.f_m_khas ? toEasternArabicNumerals(data.friday_data.f_m_khas) : ''}</td>
+                    <td>${data.friday_data.f_m_mamrya ? toEasternArabicNumerals(data.friday_data.f_m_mamrya) : ''}</td>
+                    <td>${data.friday_data.f_m_intdab ? toEasternArabicNumerals(data.friday_data.f_m_intdab) : ''}</td>
+                    <td>${data.friday_data.f_m_ferka ? toEasternArabicNumerals(data.friday_data.f_m_ferka) : ''}</td>
+                    <td>${data.friday_data.f_m_salam ? toEasternArabicNumerals(data.friday_data.f_m_salam) : ''}</td>
+                    <td>${data.friday_data.f_m_wafaa ? toEasternArabicNumerals(data.friday_data.f_m_wafaa) : ''}</td>
+                    <td>${data.friday_data.f_m_raha ? toEasternArabicNumerals(data.friday_data.f_m_raha) : ''}</td>
+                    <td>${data.friday_data.f_m_e3ara ? toEasternArabicNumerals(data.friday_data.f_m_e3ara) : ''}</td>
+                    <td>${data.friday_data.f_m_ghyab ? toEasternArabicNumerals(data.friday_data.f_m_ghyab) : ''}</td>
+                    <td>${data.friday_data.f_m_out ? toEasternArabicNumerals(data.friday_data.f_m_out) : ''}</td>
+                    <td>${data.friday_data.f_m_in ? toEasternArabicNumerals(data.friday_data.f_m_in) : ''}</td>
+                </tr>
+                <tr>
+                    <td>إجمالي</td>
+                    <td>${data.friday_data.count5 ? toEasternArabicNumerals(data.friday_data.count5) : ''}</td>
+                    <td>${data.friday_data.mf_dawrya ? toEasternArabicNumerals(data.friday_data.mf_dawrya) : ''}</td>
+                    <td>${data.friday_data.mf_tarka ? toEasternArabicNumerals(data.friday_data.mf_tarka) : ''}</td>
+                    <td>${data.friday_data.mf_sick ? toEasternArabicNumerals(data.friday_data.mf_sick) : ''}</td>
+                    <td>${data.friday_data.mf_khas ? toEasternArabicNumerals(data.friday_data.mf_khas) : ''}</td>
+                    <td>${data.friday_data.mf_mamrya ? toEasternArabicNumerals(data.friday_data.mf_mamrya) : ''}</td>
+                    <td>${data.friday_data.mf_intdab ? toEasternArabicNumerals(data.friday_data.mf_intdab) : ''}</td>
+                    <td>${data.friday_data.mf_ferka ? toEasternArabicNumerals(data.friday_data.mf_ferka) : ''}</td>
+                    <td>${data.friday_data.mf_salam ? toEasternArabicNumerals(data.friday_data.mf_salam) : ''}</td>
+                    <td>${data.friday_data.mf_wafaa ? toEasternArabicNumerals(data.friday_data.mf_wafaa) : ''}</td>
+                    <td>${data.friday_data.mf_raha ? toEasternArabicNumerals(data.friday_data.mf_raha) : ''}</td>
+                    <td>${data.friday_data.mf_e3ara ? toEasternArabicNumerals(data.friday_data.mf_e3ara) : ''}</td>
+                    <td>${data.friday_data.mf_ghyab ? toEasternArabicNumerals(data.friday_data.mf_ghyab) : ''}</td>
+                    <td>${data.friday_data.mf_out ? toEasternArabicNumerals(data.friday_data.mf_out) : ''}</td>
+                    <td>${data.friday_data.mf_in ? toEasternArabicNumerals(data.friday_data.mf_in) : ''}</td>
+                </tr>
+            `;
+        } else {
+            fridayTitle.style.display = 'none';
+            fridayTable.style.display = 'none';
+        }
+    }
+
+    function getCSRFToken() {
+        const name = "csrftoken";
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== "") {
+            const cookies = document.cookie.split(";");
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === name + "=") {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock %}

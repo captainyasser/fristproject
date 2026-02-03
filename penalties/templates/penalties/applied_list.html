@@ -1,0 +1,74 @@
+<!-- F:\emapi-edit\myproject\penalties\templates\penalties\applied_list.html -->
+{% extends 'base.html' %}
+{% block title %}الجزاءات الموقعة{% endblock %}
+
+{% block content %}
+<div class="">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>الجزاءات الموقعة</h1>
+                </div>
+                 <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{% url 'penalties:dashboard' %}">الجزاءات</a></li>
+                        <li class="breadcrumb-item active">الجزاءات الموقعة</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="content">
+        <div class="container-fluid">
+            <div class="card card-primary card-outline shadow-sm">
+                <div class="card-header bg-white border-0">
+                    <h3 class="card-title">قائمة الجزاءات الموقعة</h3>
+                    <div class="card-tools">
+                        <a href="{% url 'penalties:applied_create' %}" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> إضافة جزاء موقع</a>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>الاسم</th>
+                                <th>نوع الجزاء (التصنيف)</th>
+                                <th>الوصف</th>
+                                <th>الحالة</th>
+                                <th style="width: 150px">الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in applied_penalties %}
+                            <tr>
+                                <td>{{ item.name }}</td>
+                                <td><span class="badge badge-info">{{ item.penalty_level.name }}</span></td>
+                                <td>{{ item.description|default:"-" }}</td>
+                                <td>
+                                    {% if item.is_active %}
+                                    <span class="badge badge-success">مفعل</span>
+                                    {% else %}
+                                    <span class="badge badge-secondary">غير مفعل</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="{% url 'penalties:applied_update' item.pk %}" class="btn btn-sm btn-default"><i class="fas fa-pen"></i></a>
+                                        <a href="{% url 'penalties:applied_delete' item.pk %}" class="btn btn-sm btn-default text-danger"><i class="fas fa-trash"></i></a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center">لا توجد بيانات.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

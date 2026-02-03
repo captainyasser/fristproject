@@ -1,111 +1,189 @@
-<title>
-إدارة الأقسام
-</title>
 {% extends 'base.html' %}
 
+{% block title %}إدارة الأقسام{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2 class="text-center mb-4">إدارة الأقسام</h2>
-
-    <!-- Button to Open the Add Department Modal -->
-    <button type="button" class="btn btn-success mb-3" data-toggle="modal" data-target="#addDepartmentModal">
-        إضافة قسم جديد
-    </button>
-
-    <!-- Departments Table -->
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>اسم القسم</th>
-                <th>الإجراءات</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for department in departments %}
-            <tr>
-                <td>{{ forloop.counter }}</td>
-                <td>{{ department.name }}</td>
-                <td>
-                    <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#editModal{{ department.id }}">تعديل</button>
-<!-- زر حذف يفتح المودال -->
-<button class="btn btn-danger btn-sm" data-toggle="modal" data-target="#deleteModal{{ department.id }}">حذف</button>
-
-<!-- مودال تأكيد الحذف -->
-<div class="modal fade" id="deleteModal{{ department.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ department.id }}" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title">تأكيد الحذف</h4>
-                <button type="button" class="close" data-dismiss="modal" aria-label="إغلاق">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+    <div class="container-fluid">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">قائمة الأقسام</h3>
             </div>
-            <div class="modal-body">
-                <p>هل أنت متأكد أنك تريد حذف هذا القسم؟</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">إلغاء</button>
-                <a href="{% url 'delete_department' department.id %}" class="btn btn-danger">حذف</a>
-            </div>
-        </div>
-    </div>
-</div>
-                </td>
-            </tr>
+            <div class="card-body">
+                {% if user.is_authenticated %}
+                    {% if user.is_staff %}
+                        <button class="btn btn-primary mb-3" data-toggle="modal" data-target="#addDepartmentModal">إضافة قسم</button>
+                    {% endif %}
+                    <table id="departmentsTable" class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>المعرف</th> <!-- عمود المعرف الجديد -->
+                                <th>الاسم</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="departmentsBody"></tbody>
+                    </table>
 
-            <!-- Edit Modal -->
-            <div class="modal fade" id="editModal{{ department.id }}" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-sm">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h4 class="modal-title">تعديل القسم</h4>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                        <div class="modal-body">
-                            <form method="POST" action="{% url 'edit_department' department.id %}">
-                                {% csrf_token %}
-                                <div class="mb-3">
-                                    <label class="form-label">اسم القسم</label>
-                                    <input type="text" name="name" class="form-control" value="{{ department.name }}" required>
+                    <!-- نافذة إضافة قسم -->
+                    <div class="modal fade" id="addDepartmentModal" tabindex="-1" role="dialog" aria-labelledby="addDepartmentModalLabel" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="addDepartmentModalLabel">إضافة قسم جديد</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">×</span>
+                                    </button>
                                 </div>
-                                <button type="submit" class="btn btn-primary">حفظ التعديلات</button>
-                            </form>
+                                <div class="modal-body">
+                                    <form id="addDepartmentForm">
+                                        <div class="form-group">
+                                            <label for="name">اسم القسم</label>
+                                            <input type="text" class="form-control" id="name" name="name" required>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">إضافة</button>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-<!-- Add Department Modal -->
-<div class="modal fade" id="addDepartmentModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-sm">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title">إضافة قسم</h4>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form method="POST" action="{% url 'add_department' %}">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label class="form-label">اسم القسم</label>
-                        <input type="text" name="name" class="form-control" required>
+                    <!-- نافذة تعديل قسم -->
+                    <div class="modal fade" id="editDepartmentModal" tabindex="-1" role="dialog" aria-labelledby="editDepartmentModalLabel" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="editDepartmentModalLabel">تعديل قسم</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">×</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    <form id="editDepartmentForm">
+                                        <input type="hidden" id="edit_id" name="id">
+                                        <div class="form-group">
+                                            <label for="edit_name">اسم القسم</label>
+                                            <input type="text" class="form-control" id="edit_name" name="name" required>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">حفظ التعديلات</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-success">إضافة</button>
-                </form>
+                {% else %}
+                    <p class="text-center">يرجى <a href="{% url 'login' %}">تسجيل الدخول</a> لعرض الأقسام.</p>
+                {% endif %}
             </div>
         </div>
     </div>
-</div>
+{% endblock %}
 
+{% block scripts %}
+    <script>
+        const token = "{{ token }}";
+        const API_URL = '/departments/api/departments/';
+        let table;
+
+        $(document).ready(function() {
+            {% if user.is_authenticated %}
+                // تهيئة DataTable مرة واحدة فقط
+                table = $('#departmentsTable').DataTable({
+                    "language": {
+                        "url": "//cdn.datatables.net/plug-ins/1.13.4/i18n/ar.json"
+                    }
+                });
+                fetchDepartments(); // جلب البيانات الأولية
+            {% endif %}
+        });
+
+        // جلب وعرض الأقسام
+        async function fetchDepartments() {
+            const response = await fetch(API_URL, {
+                headers: { 'Authorization': `Token ${token}` }
+            });
+            if (response.status === 401) {
+                alert('غير مصادق. يرجى تسجيل الدخول مرة أخرى.');
+                window.location.href = '{% url "login" %}';
+                return;
+            }
+            const departments = await response.json();
+
+            // تفريغ الجدول وإعادة ملؤه باستخدام DataTables API
+            table.clear();
+            departments.forEach(dept => {
+                table.row.add([
+                    dept.id, // إضافة المعرف
+                    dept.name,
+                    {% if user.is_staff %}
+                        `<button class="btn btn-sm btn-warning" onclick="editDepartment(${dept.id})">تعديل</button>
+                         <button class="btn btn-sm btn-danger" onclick="deleteDepartment(${dept.id})">حذف</button>`
+                    {% else %}
+                        ''
+                    {% endif %}
+                ]);
+            });
+            table.draw();
+        }
+
+        // إضافة قسم
+        $('#addDepartmentForm').on('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Token ${token}`
+                },
+                body: JSON.stringify(data)
+            });
+            if (response.ok) {
+                $('#addDepartmentModal').modal('hide');
+                this.reset();
+                window.location.reload(); // إعادة تحميل الصفحة بعد الإضافة
+            } else {
+                alert('حدث خطأ أثناء إضافة القسم. حاول مرة أخرى.');
+            }
+        });
+
+        // تعديل قسم
+        async function editDepartment(id) {
+            const response = await fetch(`${API_URL}${id}/`, {
+                headers: { 'Authorization': `Token ${token}` }
+            });
+            const dept = await response.json();
+            document.getElementById('edit_id').value = dept.id;
+            document.getElementById('edit_name').value = dept.name;
+            $('#editDepartmentModal').modal('show');
+        }
+
+        $('#editDepartmentForm').on('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            const id = data.id;
+            await fetch(`${API_URL}${id}/`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Token ${token}`
+                },
+                body: JSON.stringify(data)
+            });
+            $('#editDepartmentModal').modal('hide');
+            fetchDepartments();
+        });
+
+        // حذف قسم
+        async function deleteDepartment(id) {
+            if (confirm('هل أنت متأكد من حذف هذا القسم؟')) {
+                await fetch(`${API_URL}${id}/`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Token ${token}` }
+                });
+                fetchDepartments();
+            }
+        }
+    </script>
 {% endblock %}

@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block styles %}
+<style>
+.card { border-radius: 12px; box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
+.form-control, .form-select { border-radius: 8px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card p-4">
+        <h4 class="mb-3">إضافة إجازة خاصة</h4>
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">الموظف</label>
+              {{ form.employee }}
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">عدد الأيام</label>
+              {{ form.days_count }}
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">نوع المدة</label>
+              {{ form.duration_type }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">سبب الإجازة</label>
+              {{ form.leave_reason }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">تاريخ الموافقة</label>
+              {{ form.approval_date }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">تاريخ القيام</label>
+              {{ form.start_date }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">تاريخ العودة</label>
+              {{ form.return_date }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">رقم القرار</label>
+              {{ form.decision_number }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">السنة</label>
+              {{ form.year }}
+            </div>
+            <div class="col-12">
+              <label class="form-label">ملاحظات</label>
+              {{ form.notes }}
+            </div>
+          </div>
+
+          <div class="mt-3 d-flex gap-2">
+            <button class="btn btn-primary">حفظ</button>
+            <a href="{% url 'agaza_khasa_app:select_employee' %}" class="btn btn-outline-secondary">إلغاء</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+{% endblock %}

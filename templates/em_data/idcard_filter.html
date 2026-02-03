@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="p-6 bg-white shadow-md rounded-lg max-w-4xl mx-auto">
+    {% csrf_token %}
+    <h2 class="text-2xl font-bold mb-6 text-gray-800">تصفية بيانات البطاقات الشخصية غير الدقيقة</h2>
+
+    <div class="grid grid-cols-1 gap-4 mb-6">
+        <button id="filter-work" class="bg-blue-500  px-4 py-2 rounded-lg hover:bg-blue-600">عرض الأسماء (المهنة ليست درجة شرطية)</button>
+        <button id="filter-expired" class="bg-blue-500  px-4 py-2 rounded-lg hover:bg-blue-600">عرض الأسماء (بطاقة منتهية)</button>
+        <button id="filter-two-months" class="bg-blue-500  px-4 py-2 rounded-lg hover:bg-blue-600">عرض الأسماء (تنتهي خلال شهرين)</button>
+        <div class="flex items-center space-x-4">
+            <input type="date" id="custom-date" class="p-2 border rounded-lg w-full">
+            <button id="filter-custom-date" class="bg-blue-500  px-4 py-2 rounded-lg hover:bg-blue-600">عرض الأسماء (تنتهي قبل التاريخ)</button>
+        </div>
+        <button id="filter-social" class="bg-blue-500  px-4 py-2 rounded-lg hover:bg-blue-600">عرض الأسماء (الحالة الاجتماعية غير متطابقة)</button>
+        <button id="filter-all" class="bg-purple-500  px-4 py-2 rounded-lg hover:bg-purple-600">عرض كشف شامل</button>
+    </div>
+
+    <div id="results-container" class="mt-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-gray-700">النتائج</h3>
+            <button id="print-results" class="bg-green-500  px-4 py-2 rounded-lg hover:bg-green-600 hidden">طباعة الكشف</button>
+        </div>
+        <table id="results-table" class="w-full border-collapse hidden">
+            <thead>
+                <tr class="bg-gray-200">
+                    <th class="p-2 border text-right">م</th>
+                    <th class="p-2 border text-right">الاسم</th>
+                    <th class="p-2 border text-right">الرقم القومي</th>
+                    <th class="p-2 border text-right">حالة المهنة</th>
+                    <th class="p-2 border text-right">حالة الانتهاء</th>
+                    <th class="p-2 border text-right">الحالة الاجتماعية</th>
+                </tr>
+            </thead>
+            <tbody id="results-body"></tbody>
+        </table>
+        <p id="no-results" class="text-gray-500">لا توجد نتائج لعرضها</p>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const buttons = {
+        'filter-work': { filter: 'work_not_police' },
+        'filter-expired': { filter: 'expired' },
+        'filter-two-months': { filter: 'expire_two_months' },
+        'filter-custom-date': { filter: 'expire_custom', getParams: () => ({ custom_date: document.getElementById('custom-date').value }) },
+        'filter-social': { filter: 'social_mismatch' },
+        'filter-all': { filter: 'all_filters' }
+    };
+
+    const resultsTable = document.getElementById('results-table');
+    const resultsBody = document.getElementById('results-body');
+    const noResults = document.getElementById('no-results');
+    const printButton = document.getElementById('print-results');
+
+    Object.keys(buttons).forEach(buttonId => {
+        document.getElementById(buttonId).addEventListener('click', function() {
+            const config = buttons[buttonId];
+            const params = config.getParams ? config.getParams() : {};
+            if (buttonId === 'filter-custom-date' && !params.custom_date) {
+                alert('يرجى تحديد تاريخ');
+                return;
+            }
+
+            fetch('/em_data/api/idcard-filter/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({ filter: config.filter, ...params })
+            })
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return response.json();
+            })
+            .then(data => {
+                resultsBody.innerHTML = '';
+                if (data.length === 0) {
+                    resultsTable.classList.add('hidden');
+                    noResults.classList.remove('hidden');
+                    printButton.classList.add('hidden');
+                } else {
+                    data.forEach((employee, index) => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td class="p-2 border">${index + 1}</td>
+                            <td class="p-2 border">${employee.name}</td>
+                            <td class="p-2 border">${employee.id_number || ''}</td>
+                            <td class="p-2 border">
+                                <span style="color: ${employee.work_status === 'درجة شرطية' ? 'green' : 'red'}">
+                                    ${employee.work_status || ''}
+                                </span>
+                            </td>
+                            <td class="p-2 border">
+                                <span style="color: ${employee.expiry_status === 'منتهية' ? 'red' : employee.expiry_status.includes('ستنتهي قريبًا') ? 'blue' : 'green'}">
+                                    ${employee.expiry_status || ''}
+                                </span>
+                            </td>
+                            <td class="p-2 border">
+                                <span style="color: ${employee.social_status === 'غير متطابقة' ? 'red' : 'green'}">
+                                    ${employee.social_status || ''}
+                                </span>
+                            </td>
+                        `;
+                        resultsBody.appendChild(row);
+                    });
+                    resultsTable.classList.remove('hidden');
+                    noResults.classList.add('hidden');
+                    printButton.classList.remove('hidden');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('خطأ في جلب البيانات: ' + error.message);
+            });
+        });
+    });
+
+    printButton.addEventListener('click', function() {
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html dir="rtl">
+                <head>
+                    <title>كشف بيانات البطاقات الشخصية</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; }
+                        table { width: 100%; border-collapse: collapse; }
+                        th, td { border: 1px solid black; padding: 8px; text-align: right; }
+                        th { background-color: #f2f2f2; }
+                        .color-red { color: red; }
+                        .color-green { color: green; }
+                        .color-blue { color: blue; }
+                    </style>
+                </head>
+                <body>
+                    <h2>كشف بيانات البطاقات الشخصية</h2>
+                    ${resultsTable.outerHTML}
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+    });
+});
+</script>
+{% endblock %}

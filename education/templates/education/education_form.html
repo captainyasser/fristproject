@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<div class="container mt-4">
+    <h3 class="mb-3">{{ action }} مؤهل</h3>
+
+    <form method="post" enctype="multipart/form-data" class="row g-3">
+        {% csrf_token %}
+        <div class="col-md-6">
+            <label class="form-label">الموظف</label>
+            {{ form.employee }}
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">رقم قرار الموافقة</label>
+            {{ form.decision_number }}
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">اسم الجامعة</label>
+            {{ form.university_name }}
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">مستوى المؤهل</label>
+            {{ form.level }}
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">نوع المؤهل</label>
+            {{ form.qualification_type }}
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">التقدير</label>
+            {{ form.grade }}
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">تاريخ الحصول</label>
+            {{ form.obtained_date }}
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">صورة صحة المؤهل</label>
+            {% if instance and instance.degree_validation_image %}
+                <div><img src="{{ instance.degree_validation_image.url }}" style="max-width:120px; max-height:120px;" /></div>
+            {% endif %}
+            {{ form.degree_validation_image }}
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">صورة الشهادة</label>
+            {% if instance and instance.degree_image %}
+                <div><img src="{{ instance.degree_image.url }}" style="max-width:120px; max-height:120px;" /></div>
+            {% endif %}
+            {{ form.degree_image }}
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">صورة موافقة الوزارة</label>
+            {% if instance and instance.ministry_approval_image %}
+                <div><img src="{{ instance.ministry_approval_image.url }}" style="max-width:120px; max-height:120px;" /></div>
+            {% endif %}
+            {{ form.ministry_approval_image }}
+        </div>
+
+        <div class="col-12">
+            <label class="form-label">ملاحظات</label>
+            {{ form.notes }}
+        </div>
+
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary">{{ action }}</button>
+            <a href="{% url 'education:list' %}" class="btn btn-secondary">رجوع</a>
+        </div>
+    </form>
+</div>
+
+<script>
+  // عرض رسائل sweetalert2 اعتمادًا على messages
+  {% if messages %}
+    {% for m in messages %}
+      Swal.fire({
+        icon: "{% if m.tags == 'success' %}success{% elif m.tags == 'error' %}error{% else %}info{% endif %}",
+        title: "{{ m }}",
+        timer: 1800,
+        showConfirmButton: false
+      });
+    {% endfor %}
+  {% endif %}
+</script>
+{% endblock %}

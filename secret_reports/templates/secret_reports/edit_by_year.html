@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+{% block content %}
+<div class="container mt-4">
+    <h3 class="text-center mb-4">📅 تعديل الدرجات حسب العام</h3>
+    <div class="mb-3">
+        <a href="{% url 'secret_reports:index' %}" class="btn btn-secondary">⬅️ رجوع</a>
+    </div>
+
+    <div class="card p-4 shadow">
+        <form method="get" id="yearForm">
+            <label class="form-label">اختر العام:</label>
+            <select name="year" class="form-select" onchange="this.form.submit()">
+                <option value="">-- اختر --</option>
+                {% for year in all_years %}
+                    <option value="{{ year }}" {% if selected_year == year %}selected{% endif %}>{{ year }}</option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+
+    {% if selected_year %}
+    <hr>
+    <h5 class="mt-3">العام: {{ selected_year }}</h5>
+    <form method="post">
+        {% csrf_token %}
+        <table class="table table-bordered text-center align-middle mt-3">
+            <thead class="table-dark">
+                <tr>
+                    <th>الاسم</th>
+                    <th>الدرجة</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for emp in employees %}
+                <tr>
+                    <td>{{ emp.name }}</td>
+                    <td><input type="number" name="score_{{ emp.id }}" value="{{ reports|get_item:emp.id }}" class="form-control text-center"></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <button type="submit" class="btn btn-success">💾 حفظ التعديلات</button>
+    </form>
+    {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    // نتحقق إن كانت الكلمة قد أُدخلت مسبقًا في هذه الجلسة
+    if (!sessionStorage.getItem("secret_pass_ok")) {
+        Swal.fire({
+            title: "🔒 كلمة المرور مطلوبة",
+            input: "password",
+            inputLabel: "أدخل كلمة المرور للدخول إلى صفحة التعديل",
+            inputPlaceholder: "•••••",
+            confirmButtonText: "دخول",
+            allowOutsideClick: false,
+            preConfirm: (value) => {
+                if (value !== "323") {
+                    Swal.showValidationMessage("❌ كلمة مرور خاطئة");
+                    return false;
+                }
+                // حفظ التحقق داخل الجلسة
+                sessionStorage.setItem("secret_pass_ok", "true");
+            }
+        }).then((result) => {
+            // لو تم الإدخال الصحيح
+            if (result.isConfirmed && sessionStorage.getItem("secret_pass_ok") === "true") {
+                Swal.fire({
+                    icon: "success",
+                    title: "تم الدخول بنجاح ✅",
+                    timer: 1000,
+                    showConfirmButton: false
+                });
+            }
+        });
+    }
+});
+</script>
+
+
+
+{% endblock %}

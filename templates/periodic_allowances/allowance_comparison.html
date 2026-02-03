@@ -1,0 +1,479 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load allowance_tags %}
+
+{% block head %}
+    <title>مقارنة العلاوات الدورية</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            direction: rtl;
+            text-align: right;
+            background-color: #f8f9fa;
+        }
+        h1, h2 {
+            color: #0d6efd;
+        }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        .filter-bar {
+            margin: 20px 0;
+            background: #fff;
+            padding: 10px 15px;
+            border-radius: 10px;
+            box-shadow: 0 0 8px rgba(0,0,0,0.1);
+        }
+        table.dataTable thead th {
+            background-color: #e9ecef;
+        }
+        .diff {
+            background-color: #ffc107 !important;
+            color: black;
+            font-weight: bold;
+        }
+        .diff-row {
+            background-color: #fff3cd !important;
+        }
+        .single-save-btn {
+            background-color: orange;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            font-size: 12px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .save-all-btn {
+            background-color: purple;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+        .messages {
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .warning { background-color: #fff3cd; color: #856404; }
+        input[type="number"] {
+            width: 100px;
+            text-align: center;
+        }
+        input[disabled] {
+            background-color: #f0f0f0;
+            color: #666;
+        }
+        button {
+            cursor: pointer;
+        }
+        .non-matching-info {
+            background-color: #fff3cd;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .count-red { color: red; font-weight: bold; }
+        .count-green { color: green; font-weight: bold; }
+        .details-btn {
+            margin-right: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <div class="page-header">
+        <h1>مقارنة العلاوات الدورية (العام: {{ year }} - التاريخ: {{ target_date }})</h1>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="messages {% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- جدول المرجع -->
+    <table style="width:100%; border-collapse:collapse; text-align:center; font-family:'Tahoma', sans-serif; font-size:14px;">
+        <thead>
+            <tr style="background-color:#f2f2f2;">
+                <th style="border:1px solid #999; padding:6px;">البيان</th>
+                <th style="border:1px solid #999; padding:6px;">جندي</th>
+                <th style="border:1px solid #999; padding:6px;">عريف</th>
+                <th style="border:1px solid #999; padding:6px;">رقيب</th>
+                <th style="border:1px solid #999; padding:6px;">رقيب أول</th>
+                <th style="border:1px solid #999; padding:6px;">مساعد ثالث</th>
+                <th style="border:1px solid #999; padding:6px;">مساعد ثان</th>
+                <th style="border:1px solid #999; padding:6px;">مساعد أول</th>
+                <th style="border:1px solid #999; padding:6px;">مساعد ممتاز</th>
+                <th style="border:1px solid #999; padding:6px;">أ.ش ثالث</th>
+                <th style="border:1px solid #999; padding:6px;">أ.ش ثان</th>
+                <th style="border:1px solid #999; padding:6px;">أ.ش أول</th>
+                <th style="border:1px solid #999; padding:6px;">أ.ش ممتاز</th>
+                <th style="border:1px solid #999; padding:6px;">أ.ش ممتاز ثان</th>
+                <th style="border:1px solid #999; padding:6px;">أ.ش ممتاز أول</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="border:1px solid #999; padding:6px; background-color:#fafafa;">القيمة قبل 1/7/2012</td>
+                <td style="border:1px solid #999; padding:6px;">1.5</td>
+                <td style="border:1px solid #999; padding:6px;">1.5</td>
+                <td style="border:1px solid #999; padding:6px;">1.5</td>
+                <td style="border:1px solid #999; padding:6px;">2</td>
+                <td style="border:1px solid #999; padding:6px;">3</td>
+                <td style="border:1px solid #999; padding:6px;">3</td>
+                <td style="border:1px solid #999; padding:6px;">4</td>
+                <td style="border:1px solid #999; padding:6px;">5</td>
+                <td style="border:1px solid #999; padding:6px;">3</td>
+                <td style="border:1px solid #999; padding:6px;">3</td>
+                <td style="border:1px solid #999; padding:6px;">3</td>
+                <td style="border:1px solid #999; padding:6px;">4</td>
+                <td style="border:1px solid #999; padding:6px;">5</td>
+                <td style="border:1px solid #999; padding:6px;">5.5</td>
+            </tr>
+            <tr>
+                <td style="border:1px solid #999; padding:6px; background-color:#fafafa;">القيمة بعد 1/7/2012</td>
+                <td style="border:1px solid #999; padding:6px;">7</td>
+                <td style="border:1px solid #999; padding:6px;">8</td>
+                <td style="border:1px solid #999; padding:6px;">9</td>
+                <td style="border:1px solid #999; padding:6px;">10</td>
+                <td style="border:1px solid #999; padding:6px;">10</td>
+                <td style="border:1px solid #999; padding:6px;">13</td>
+                <td style="border:1px solid #999; padding:6px;">17</td>
+                <td style="border:1px solid #999; padding:6px;">25</td>
+                <td style="border:1px solid #999; padding:6px;">10</td>
+                <td style="border:1px solid #999; padding:6px;">13</td>
+                <td style="border:1px solid #999; padding:6px;">17</td>
+                <td style="border:1px solid #999; padding:6px;">20</td>
+                <td style="border:1px solid #999; padding:6px;">25</td>
+                <td style="border:1px solid #999; padding:6px;">30</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- أدوات الفلترة -->
+    <div class="filter-bar">
+        <form method="GET" class="form-inline" style="display: inline-block;">
+            <label>العام:</label>
+            <input type="number" name="year" value="{{ year }}" min="1960" max="2030">
+            <button type="submit" class="btn btn-primary">فلتر</button>
+        </form>
+
+        <label style="margin-right: 20px;">اختر فردًا:</label>
+        <select id="employee_select" onchange="updateEmployee()">
+            <option value="">جميع الأفراد</option>
+            {% for emp in employees_list %}
+                <option value="{{ emp.id }}" {% if employee_id == emp.id|stringformat:"s" %}selected{% endif %}>
+                    {{ emp.name }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- دائماً: عدد الفروق لكل الأعوام وكل الأفراد -->
+    <div class="non-matching-info">
+        {% if total_non_matching_count > 0 %}
+            <span class="count-red">عدد الفروق غير المتطابقة لكل الاعوام وكل الأفراد: {{ total_non_matching_count }}</span>
+            <button class="details-btn" onclick="showDetails('total')">عرض التفاصيل</button>
+        {% else %}
+            <span class="count-green">عدد الفروق غير المتطابقة لكل الاعوام وكل الأفراد: {{ total_non_matching_count }}</span>
+        {% endif %}
+    </div>
+
+    {% if employee_id and selected_employee %}
+        <h2>علاوات {{ selected_employee.name }} - تعيين: {{ selected_employee.date_of_appointment|date:"Y/m/d" }}</h2>
+
+        <div class="non-matching-info">
+            {% if non_matching_count > 0 %}
+                <span class="count-red">عدد الفروق غير المتطابقة للفرد المحدد: {{ non_matching_count }}</span>
+                <button class="details-btn" onclick="showDetails('employee')">عرض التفاصيل</button>
+            {% else %}
+                <span class="count-green">عدد الفروق غير المتطابقة للفرد المحدد: {{ non_matching_count }}</span>
+            {% endif %}
+        </div>
+
+        <form method="POST" style="margin-bottom:15px;">
+            {% csrf_token %}
+            <input type="hidden" name="employee_id" value="{{ employee_id }}">
+            <input type="hidden" name="year" value="{{ year }}">
+            <input type="hidden" name="target_date" value="{{ target_date }}">
+            <button type="submit" name="action" value="save_calculated" class="save-all-btn">💾 حفظ القيم المحسوبة</button>
+        </form>
+
+        <table id="allowances_table" class="display nowrap" style="width:100%">
+            <thead>
+                <tr>
+                    <th>العام</th>
+                    <th>الدرجة</th>
+                    <th>تاريخ العلاوة</th>
+                    <th>القيمة المحسوبة</th>
+                    <th>القيمة المخزنة</th>
+                    <th>الفرق</th>
+                    <th>إجراء</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in allowances_data %}
+                {% if item.has_diff %}
+                <tr class="diff-row">
+                {% else %}
+                <tr>
+                {% endif %}
+                    <td>{{ item.year }}</td>
+                    <td>{{ item.rank_name }}</td>
+                    <td>{{ item.allowance_date|date:"Y/m/d" }}</td>
+                    <td {% if item.has_diff %}class="diff"{% endif %}>{{ item.calculated }}</td>
+                    <td {% if item.has_diff and item.stored %}class="diff"{% endif %}>
+                        <input type="number" step="0.01" id="stored_input_{{ employee_id }}_{{ item.year }}" value="{{ item.stored_str }}" {% if not item.is_past_year %}disabled{% endif %}>
+                    </td>
+                    <td {% if item.has_diff %}class="diff"{% endif %}>
+                        {% if item.has_diff %}{{ item.difference }}{% else %}متطابق{% endif %}
+                    </td>
+                    <td>
+                        {% if item.is_past_year %}
+                            <form id="form_save_{{ employee_id }}_{{ item.year }}" method="POST" style="display: inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="employee_id" value="{{ employee_id }}">
+                                <input type="hidden" name="year" value="{{ year }}">
+                                <input type="hidden" name="target_date" value="{{ target_date }}">
+                                <input type="hidden" name="action" value="update_single_year">
+                                <input type="hidden" name="single_year" value="{{ item.year }}">
+                                <input type="hidden" id="hidden_stored_{{ employee_id }}_{{ item.year }}" name="stored_single" value="">
+                                <button type="button" class="single-save-btn" onclick="saveYear({{ employee_id }}, {{ item.year }})">💾 حفظ</button>
+                            </form>
+                        {% else %}
+                            <span style="color: gray;">غير متاح</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    {% else %}
+        <div class="non-matching-info">
+            {% if non_matching_count > 0 %}
+                <span class="count-red">عدد الفروق غير المتطابقة في عام ({{ year }}): {{ non_matching_count }}</span>
+                <button class="details-btn" onclick="showDetails('year')">عرض التفاصيل</button>
+            {% else %}
+                <span class="count-green">عدد الفروق غير المتطابقة في عام ({{ year }}): {{ non_matching_count }}</span>
+            {% endif %}
+        </div>
+
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="year" value="{{ year }}">
+            <input type="hidden" name="target_date" value="{{ target_date }}">
+            <button type="submit" name="action" value="save_all_calculated" class="save-all-btn">💾 حفظ القيم للجميع</button>
+        </form>
+
+        <table id="allowances_table" class="display nowrap" style="width:100%">
+            <thead>
+                <tr>
+                    <th>رقم الترتيب</th>
+                    <th>الاسم</th>
+                    <th>الدرجة</th>
+                    <th>تاريخ العلاوة</th>
+                    <th>القيمة المحسوبة</th>
+                    <th>القيمة المخزنة</th>
+                    <th>الفرق</th>
+                    <th>إجراء</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for allowance in allowances_data %}
+                {% if allowance.has_diff %}
+                <tr class="diff-row">
+                {% else %}
+                <tr>
+                {% endif %}
+                    <td>{{ allowance.sort_number }}</td>
+                    <td>{{ allowance.employee.name }}</td>
+                    <td>{{ allowance.rank_name }}</td>
+                    <td>{{ allowance.allowance_date|date:"Y/m/d" }}</td>
+                    <td {% if allowance.has_diff %}class="diff"{% endif %}>{{ allowance.calculated }}</td>
+                    <td {% if allowance.has_diff and allowance.stored %}class="diff"{% endif %}>
+                        <input type="number" step="0.01" id="stored_input_{{ allowance.employee.id }}_{{ allowance.year }}" value="{{ allowance.stored_str }}" name="stored_{{ allowance.employee.id }}_{{ allowance.year }}">
+                    </td>
+                    <td {% if allowance.has_diff %}class="diff"{% endif %}>
+                        {% if allowance.has_diff %}{{ allowance.difference }}{% else %}متطابق{% endif %}
+                    </td>
+                    <td>
+                        <form id="form_save_{{ allowance.employee.id }}_{{ allowance.year }}" method="POST" style="display: inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="employee_id" value="{{ allowance.employee.id }}">
+                            <input type="hidden" name="year" value="{{ year }}">
+                            <input type="hidden" name="target_date" value="{{ target_date }}">
+                            <input type="hidden" name="action" value="update_single_year">
+                            <input type="hidden" name="single_year" value="{{ allowance.year }}">
+                            <input type="hidden" id="hidden_stored_{{ allowance.employee.id }}_{{ allowance.year }}" name="stored_single" value="">
+                            <button type="button" class="single-save-btn" onclick="saveYear({{ allowance.employee.id }}, {{ allowance.year }})">💾 حفظ</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+
+    {% if total_non_matching_details %}
+    <script id="total-details" type="application/json">
+        {{ total_non_matching_details|json_script:"total-details" }}
+    </script>
+    {% endif %}
+
+    {% if year_non_matching_details %}
+    <script id="year-details" type="application/json">
+        {{ year_non_matching_details|json_script:"year-details" }}
+    </script>
+    {% endif %}
+
+    {% if employee_non_matching_details %}
+    <script id="employee-details" type="application/json">
+        {{ employee_non_matching_details|json_script:"employee-details" }}
+    </script>
+    {% endif %}
+
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        var table = $('#allowances_table').DataTable({
+            responsive: true,
+            dom: 'Bfrtip',
+            buttons: ['copy', 'excel', 'print'],
+            lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "الكل"]],
+            pageLength: 25,
+            language: {
+                url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/ar.json"
+            },
+            {% if not employee_id %}
+            order: [[0, 'asc']]  // ترتيب افتراضي حسب رقم الترتيب
+            {% endif %}
+        });
+    });
+
+    // Load details data from script tags
+    var totalDetails = [];
+    var totalScript = document.getElementById('total-details');
+    if (totalScript) {
+        totalDetails = JSON.parse(totalScript.textContent);
+    }
+
+    var yearDetails = [];
+    var yearScript = document.getElementById('year-details');
+    if (yearScript) {
+        yearDetails = JSON.parse(yearScript.textContent);
+    }
+
+    var employeeDetails = [];
+    var employeeScript = document.getElementById('employee-details');
+    if (employeeScript) {
+        employeeDetails = JSON.parse(employeeScript.textContent);
+    }
+
+    function showDetails(type) {
+        var details;
+        var title;
+        if (type === 'total') {
+            details = totalDetails;
+            title = 'تفاصيل الفروق لكل الأعوام وكل الأفراد';
+        } else if (type === 'year') {
+            details = yearDetails;
+            title = 'تفاصيل الفروق في عام {{ year }}';
+        } else if (type === 'employee') {
+            details = employeeDetails;
+            title = 'تفاصيل الفروق للفرد المحدد';
+        }
+
+        if (details.length === 0) {
+            alert('لا توجد فروق غير متطابقة.');
+            return;
+        }
+
+        var html = `
+            <!DOCTYPE html>
+            <html dir="rtl" lang="ar">
+            <head>
+                <meta charset="UTF-8">
+                <title>${title}</title>
+                <style>
+                    body { font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; padding: 20px; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                    th, td { border: 1px solid #ddd; padding: 8px; text-align: right; }
+                    th { background-color: #f2f2f2; }
+                    h1 { color: #0d6efd; text-align: center; }
+                </style>
+            </head>
+            <body>
+                <h1>${title}</h1>
+                <table>
+                    <thead>
+                        <tr>
+                            ${type === 'total' || type === 'year' ? '<th>الاسم</th><th>الفرق</th>' : '<th>العام</th><th>الفرق</th>'}
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        details.forEach(function(d) {
+            html += `
+                <tr>
+                    ${type === 'total' || type === 'year' ? `<td>${d.employee}</td><td>${d.difference}</td>` : `<td>${d.year}</td><td>${d.difference}</td>`}
+                </tr>
+            `;
+        });
+        html += `
+                    </tbody>
+                </table>
+            </body>
+            </html>
+        `;
+
+        var newWindow = window.open('', '_blank', 'width=800,height=600');
+        newWindow.document.write(html);
+        newWindow.document.close();
+    }
+
+    function updateEmployee() {
+        var select = document.getElementById('employee_select');
+        var selectedValue = select.value;
+        if (selectedValue) {
+            window.location.href = '?employee_id=' + selectedValue + '&year={{ year }}&target_date={{ target_date }}';
+        } else {
+            window.location.href = '?year={{ year }}&target_date={{ target_date }}';
+        }
+    }
+
+    function saveYear(emp_id, yr) {
+        var inputValue = document.getElementById('stored_input_' + emp_id + '_' + yr).value;
+        var hiddenInput = document.getElementById('hidden_stored_' + emp_id + '_' + yr);
+        hiddenInput.value = inputValue;
+        document.getElementById('form_save_' + emp_id + '_' + yr).submit();
+    }
+</script>
+{% endblock %}

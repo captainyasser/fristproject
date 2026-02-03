@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+
+
+
+{% block content %}
+<div class="container mt-4" dir="rtl">
+    <h2 class="mb-4">الفرق التأهيلية للترقي</h2>
+
+    <!-- Sorting Dropdown -->
+    <div class="mb-3">
+        <label for="sortSelect">ترتيب حسب:</label>
+        <select id="sortSelect" onchange="window.location.href='?sort_by=' + this.value">
+            <option value="sort_number" {% if sort_by == 'sort_number' %}selected{% endif %}>ترتيب الاقدمية</option>
+            <option value="name" {% if sort_by == 'name' %}selected{% endif %}>الإسم</option>
+        </select>
+    </div>
+
+    {% for data in employee_data %}
+    <!-- Employee Information Table -->
+    <table class="table table-bordered mt-3 employee-table" data-employee-name="{{ data.employee.name }}" dir="rtl">
+        <tbody>
+            <tr><th style="width: 20%;">الدرجة</th><td>{{ data.employee.rank.name|default:"" }}</td></tr>
+            <tr><th>رقم الشرطة</th><td>{{ data.employee.police_number|default:"" }}</td></tr>
+            <tr><th>تاريخ التعيين</th><td>{{ data.employee.date_of_appointment|date:"j/n/Y"|default:"" }}</td></tr>
+            <tr><th>الإسم</th><td colspan="2"><span>{{ data.employee.name }}</span> </td><td></td><td colspan="2"><span>جهة العمل: إدارة موسيقات الشرطة</span></td></tr>
+        </tbody>
+    </table>
+
+    <!-- Training Records Table -->
+    <table class="table table-bordered table-striped mt-2 training-table" dir="rtl">
+        <thead class="thead-dark">
+            <tr>
+                <th scope="col">مسلسل</th>
+                <th scope="col">الفرقة الحاصل عليها</th>
+                <th scope="col">التقدير</th>
+                <th scope="col" colspan="2">تاريخ الحصول عليه</th>
+                <th scope="col">جهة الحصول</th>
+                <th scope="col">ملاحظات</th>
+            </tr>
+            <tr>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th>من</th>
+                <th>إلى</th>
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Display valid training promotions -->
+        {% if data.valid_count > 0 %}
+            {% for promotion in data.valid_promotions %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ promotion.to_rank.name|default:"" }}</td>
+                <td>
+                    {% if promotion.training_start_date %}
+                        ناجح
+                    {% endif %}
+                </td>
+                <td>{{ promotion.training_start_date|date:"j/n/Y"|default:"" }}</td>
+                <td>{{ promotion.training_end_date|date:"j/n/Y"|default:"" }}</td>
+                <td>{{ promotion.training_location|default:"" }}</td>
+                <td>{{ promotion.notes|default:"" }}</td>
+            </tr>
+            {% endfor %}
+        {% else %}
+
+
+                <!-- If no valid training promotions, show "no data" in the first row -->
+                <tr>
+                    <td>1</td>
+                    <td colspan="6" class="text-center"></td>
+                </tr>
+            {% endif %}
+
+            <!-- Fill remaining rows to reach exactly 15 -->
+            {% if data.valid_count == 0 %}
+                {% for i in "23456789012345" %}
+                    {% if forloop.counter <= data.remaining_rows|add:-1 %}
+                    <tr>
+                        <td>{{ forloop.counter|add:1 }}</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                {% for i in "123456789012345" %}
+                    {% if forloop.counter <= data.remaining_rows %}
+                    <tr>
+                        <td>{{ forloop.counter|add:data.valid_count }}</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        </tbody>
+    </table>
+    {% empty %}
+    <p class="text-center">لا توجد بيانات موظفين</p>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block styles %}
+<style>
+.card { border-radius: 12px; box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
+.form-control, .form-select { border-radius: 8px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card p-4">
+        <h4 class="mb-3">تعديل الإجازة الخاصة</h4>
+        <form method="post" id="editForm">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">الموظف</label>
+              {{ form.employee }}
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">عدد الأيام</label>
+              {{ form.days_count }}
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">نوع المدة</label>
+              {{ form.duration_type }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">سبب الإجازة</label>
+              {{ form.leave_reason }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">تاريخ الموافقة</label>
+              {{ form.approval_date }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">تاريخ القيام</label>
+              {{ form.start_date }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">تاريخ العودة</label>
+              {{ form.return_date }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">رقم القرار</label>
+              {{ form.decision_number }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">السنة</label>
+              {{ form.year }}
+            </div>
+            <div class="col-12">
+              <label class="form-label">ملاحظات</label>
+              {{ form.notes }}
+            </div>
+
+            <div class="col-12">
+              <div class="form-check">
+                {{ form.cut_checkbox }}
+                <label class="form-check-label" for="{{ form.cut_checkbox.id_for_label }}">قطع إجازة</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-3 d-flex gap-2">
+            <button type="submit" class="btn btn-primary">حفظ التعديلات</button>
+            <a href="{% url 'agaza_khasa_app:leave_list' %}?employee_id={{ special.employee.id }}" class="btn btn-outline-secondary">إلغاء</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.getElementById('editForm').addEventListener('submit', function(e){
+  // إذا اخترت أن تضيف تأكيد عند القطع
+  const cutCheckbox = document.querySelector('input[name="cut_checkbox"]');
+  if (cutCheckbox && cutCheckbox.checked) {
+    e.preventDefault();
+    Swal.fire({
+      title: 'تأكيد قطع الإجازة',
+      text: 'هل أنت متأكد أنك تريد قطع هذه الإجازة؟ سيتم إضافة ملاحظة تلقائية.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'نعم، قطع',
+      cancelButtonText: 'إلغاء'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        e.target.submit();
+      }
+    });
+  }
+});
+</script>
+{% endblock %}

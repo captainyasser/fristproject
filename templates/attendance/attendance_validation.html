@@ -1,0 +1,896 @@
+<!-- F:\emapi-edit\myproject\templates\attendance\attendance_3w.html -->
+<title>
+    مخالفات الحضور
+</title>
+{% extends "base.html" %}
+{% comment %} attendance_3w.html {% endcomment %}
+{% load static attendance_filters %}
+
+{% block styles %}
+<style>
+    select {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background-color: white;
+        padding: 2px;
+        border: 1px solid #ccc;
+    }
+
+    option[value="_"] {
+        background-color: white;
+        color: black;
+    }
+
+    option[value="نوبتجي"] {
+        background-color: #219C90;
+        color: white;
+    }
+
+    option[value="يومي"] {
+        background-color: #A7D397;
+        color: black;
+    }
+
+    option[value="راحة"] {
+        background-color: #00A9FF;
+        color: white;
+    }
+
+    option[value="ر بديلة"] {
+        background-color: rgb(4, 136, 202);
+        color: white;
+    }
+
+    option[value="8 صباحاً"] {
+        background-color: #89CFF3;
+        color: black;
+    }
+
+    option[value="عطلة"] {
+        background-color: #CDF5FD;
+        color: black;
+    }
+
+    option[value="منحة"] {
+        background-color: #A0E9FF;
+        color: black;
+    }
+
+    option[value="دورية"] {
+        background-color: #C70039;
+        color: white;
+    }
+
+    option[value="طارئة"] {
+        background-color: #FF9130;
+        color: white;
+    }
+
+    option[value="مأمورية"] {
+        background-color: #eb5bad;
+        color: white;
+    }
+
+    option[value="مأمورية خ"] {
+        background-color: #DA0C81;
+        color: white;
+    }
+
+    option[value="فرقة"] {
+        background-color: #BCA37F;
+        color: black;
+    }
+
+    option[value="انتداب"] {
+        background-color: #713ABE;
+        color: white;
+    }
+
+    option[value="مرضي"] {
+        background-color: yellow;
+        color: black;
+    }
+
+    option[value="ج وضع"] {
+        background-color: yellow;
+        color: black;
+    }
+
+    option[value="خاصه"] {
+        background-color: yellow;
+        color: black;
+    }
+
+    option[value="ت دوري"] {
+        background-color: #FFF2D8;
+        color: black;
+    }
+
+    option[value="ت تكراري"] {
+        background-color: #EAD7BB;
+        color: black;
+    }
+
+    option[value="غياب"] {
+        background-color: black;
+        color: white;
+    }
+
+    option[value="قرار66"] {
+        background-color: yellow;
+        color: black;
+    }
+
+    .att-states {
+        margin: 0px;
+        padding: 0px;
+        font-size: 10px;
+        width: 100%;
+    }
+
+    .table-container {
+        max-height: 70vh;
+        overflow-y: auto;
+        overflow-x: auto;
+        position: relative;
+    }
+
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    thead th {
+        position: sticky;
+        top: 0;
+        background-color: #f2f2f2;
+        z-index: 10;
+    }
+
+    .inall {
+        font-size: 8px;
+    }
+
+    table th {
+        border: 1px solid #fff;
+        text-align: center;
+        font-size: 10px;
+        color: #000;
+        padding: 0px;
+    }
+
+    table td {
+        border: 1px solid #fff;
+        text-align: center;
+        font-size: 13px;
+        color: #000;
+        padding: 15px 0px;
+        font-weight: bolder;
+    }
+
+    .sorting {
+        margin: 0px;
+        padding: 0px;
+        font-size: 20px;
+    }
+
+    table tr:nth-child(odd) {
+        background-color: rgb(236, 237, 238);
+    }
+
+    table tr:nth-child(even) {
+        background-color: rgb(171, 211, 214);
+    }
+
+    input[type="checkbox"] {
+        margin-right: 5px;
+        width: 7px;
+        height: 7px;
+        accent-color: #219C90;
+    }
+
+    .today-column {
+        background-color: rgb(171, 211, 214);
+    }
+</style>
+<style>
+    .btn-xs {
+        padding: 0.15rem 0.3rem;
+        font-size: 0.75rem;
+        line-height: 1;
+        border-radius: 0.5rem;
+    }
+
+    .context-menu {
+        display: none;
+        position: absolute;
+        z-index: 1000;
+        background-color: white;
+        border: 1px solid #ccc;
+        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+        padding: 5px 0;
+        min-width: 120px;
+        text-align: right;
+    }
+
+    .context-menu-item {
+        padding: 8px 12px;
+        cursor: pointer;
+        font-size: 14px;
+        color: #333;
+    }
+
+    .context-menu-item:hover {
+        background-color: #f0f0f0;
+    }
+</style>
+
+{% endblock %}
+
+{% block content %}
+<div dir="rtl">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <!-- Undo/Redo Buttons -->
+                <div class="mb-3" style="text-align: left; margin-bottom: 15px;">
+                    <button type="button" class="btn btn-warning btn-sm" onclick="globalUndo()">
+                        <i class="fas fa-undo"></i> ↩ تراجع (Undo)
+                    </button>
+                    <button type="button" class="btn btn-info btn-sm" onclick="globalRedo()">
+                        <i class="fas fa-redo"></i> ↪ إعادة (Redo)
+                    </button>
+                </div>
+
+                <form method="get" action="{% url 'attendance_validation' %}">
+                    <label for="start_date">تاريخ البداية:</label>
+                    <input type="date" id="start_date" name="start_date" value="{{ start_date|date:'Y-m-d' }}" required>
+                    <button type="button" onclick="changeDate(-7)">- 7 أيام</button>
+                    <button type="button" onclick="changeDate(7)">+ 7 أيام</button>
+
+                    <label for="num_days">عدد الأيام :</label>
+                    <input type="number" id="num_days" name="num_days" value="{{ num_days|default:'28' }}" min="1" max="40" required>
+
+                    <label for="sort_by">ترتيب حسب:</label>
+                    <select class="sorting" name="sort_by" id="sort_by">
+                        <option value="sort_number" {% if sort_by == 'sort_number' %}selected{% endif %}>أقدمية</option>
+                        <option value="dep_sort" {% if sort_by == 'dep_sort' %}selected{% endif %}>مخصص</option>
+                        <option value="operation" {% if sort_by == 'operation' %}selected{% endif %}>التشغيل</option>
+                        <option value="department" {% if sort_by == 'department' %}selected{% endif %}>القسم</option>
+                    </select>
+
+                    <label for="departments">اختر القسم:</label>
+                    <select class="sorting" name="departments" id="departments">
+                        <option value="" {% if not department_filter %}selected{% endif %}>كل الأقسام</option>
+                        {% for department_id, department_name in department_choices %}
+                            <option value="{{ department_id }}"
+                                {% if department_id|stringformat:'s' == department_filter %}selected{% endif %}>
+                                {{ department_name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+
+                    <input type="submit" value="عرض" class="btn btn-primary">
+                </form>
+
+                <form method="post" class="mainform">
+                    {% csrf_token %}
+                    <br><br><br>
+
+                    <div class="table-responsive table-container">
+                        <table class="">
+                            <thead>
+                                <tr>
+                                    <th>م</th>
+                                    <th>الاســــــــــــــــــــــــــــــــــــــــــم</th>
+                                    <th>الراحات</th>
+                                    <th style="width: 200px;">تفاصيل الخطأ</th>
+
+                                    {% for day in week_days %}
+                                    <th style="{% if day|date:'Y-m-d' == today|date:'Y-m-d' %}background-color:rgb(228, 70, 22);{% endif %}">
+                                        {{ day|date:"l"|ar_day }}<br>
+                                        {{ day|date:'Y-m-d' }}<br>
+                                    </th>
+                                    {% endfor %}
+
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {% for employee in page_obj %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+
+                                    <td>
+                                        {{ employee.nickname }} <br>
+                                        <select class="operation-select" name="operation_{{ employee.id }}"
+                                            onchange="updateOperation('{{ employee.id }}', this.value)">
+                                            {% for value, label in operation_choices %}
+                                            <option value="{{ value }}" {% if employee.operation == value %}selected{% endif %}>
+                                                {{ label }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </td>
+
+                                    <td>
+                                        <button type="button" onclick="incrementRahatcounter('{{ employee.id }}')" class="btn btn-primary btn-xs">+</button>
+
+                                        <button type="button" onclick="confirmReset('{{ employee.id }}')"
+                                            class="btn btn-xs {% if employee.rahatcounter == 0 %}btn-success{% elif employee.rahatcounter > 0 %}btn-warning{% else %}btn-danger{% endif %}"
+                                            id="rahatcounter_btn_{{ employee.id }}">
+                                            <span id="rahatcounter_{{ employee.id }}">{{ employee.rahatcounter }}</span>
+                                        </button>
+
+                                        <button type="button" onclick="decrementRahatcounter('{{ employee.id }}')" class="btn btn-primary btn-xs">-</button>
+                                    </td>
+
+                                    <td dir="rtl" style="vertical-align: top; padding: 5px; min-width: 250px;">
+                                        {% for error in employee.validation_errors %}
+                                            <div class="alert alert-danger p-1 mb-1" style="font-size: 11px; margin-bottom: 2px;">
+                                                <i class="fas fa-exclamation-circle"></i> {{ error }}
+                                            </div>
+                                        {% endfor %}
+                                    </td>
+
+                                    {% for day in week_days %}
+                                    <td style="
+                                        {% if day|date:'Y-m-d' == today|date:'Y-m-d' %}
+                                            background-color:rgb(171, 211, 214);
+                                        {% endif %}
+                                        {% if day|date:'l'|ar_day == 'الجمعة' %}
+                                            border-left: 3px solid #F26B0F;
+                                        {% endif %}
+                                        "
+                                        data-employee-id="{{ employee.id }}"
+                                        data-date="{{ day|date:'Ymd' }}"
+                                        class="attendance-cell">
+                                        <!-- تعبئة ديناميكية عبر JavaScript -->
+                                    </td>
+                                    {% endfor %}
+
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+
+                        <div class="pagination">
+                            {% if page_obj.has_previous %}
+                                <a href="?page=1">First</a>
+                                <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                            {% endif %}
+
+                            <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+
+                            {% if page_obj.has_next %}
+                                <a href="?page={{ page_obj.next_page_number }}">Next</a>
+                                <a href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+                            {% endif %}
+                        </div>
+
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="custom-context-menu" class="context-menu">
+    <div class="context-menu-item" onclick="globalUndo()">تراجع عن آخر خطوة (Undo Last)</div>
+</div>
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+    const stateColors = {
+        '_': 'white',
+        'نوبتجي': '#219C90',
+        'يومي': '#A7D397',
+        'راحة': '#00A9FF',
+        'دورية': '#C70039',
+        'ر بديلة': '#0488CA',
+        'طارئة': '#FF9130',
+        'مأمورية': '#eb5bad',
+        'مأمورية خ': '#DA0C81',
+        'فرقة': '#BCA37F',
+        'انتداب': '#713ABE',
+        'مرضي': 'yellow',
+        'ج وضع': 'yellow',
+        'خاصه': 'yellow',
+        '8 صباحاً': '#89CFF3',
+        'ت دوري': '#FFF2D8',
+        'ت تكراري': '#EAD7BB',
+        'منحة': '#A0E9FF',
+        'عطلة': '#CDF5FD',
+        'غياب': 'black',
+        'قرار66': 'yellow'
+    };
+
+    let attendanceData = {};
+
+    function changeDate(days) {
+        const startDateInput = document.getElementById('start_date');
+        const currentDate = new Date(startDateInput.value);
+        currentDate.setDate(currentDate.getDate() + days);
+        startDateInput.value = currentDate.toISOString().split('T')[0];
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        fetchAttendanceData();
+    });
+
+    async function fetchAttendanceData() {
+        const startDate = document.getElementById('start_date').value;
+        const numDays = document.getElementById('num_days').value;
+        const page = new URLSearchParams(window.location.search).get('page') || '1';
+        const url = `{% url 'get_attendance' %}?start_date=${startDate}&num_days=${numDays}&page=${page}`;
+
+        try {
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            const data = await response.json();
+            if (data.success) {
+                attendanceData = data.attendance_data || {};
+                observeRows();
+                addEventListeners();
+            } else {
+                console.error('Error in response:', data.error);
+                alert('فشل في جلب بيانات الحضور: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Fetch error:', error);
+            alert('حدث خطأ أثناء جلب البيانات: ' + error.message);
+        }
+    }
+
+    async function updateOperation(employeeId, operationValue) {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        try {
+            const response = await fetch("{% url 'update_operation' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    employee_id: employeeId,
+                    operation: operationValue
+                })
+            });
+            const data = await response.json();
+            if (data.success) {
+                console.log(`Operation updated for employee ${employeeId} to ${data.operation}`);
+            } else {
+                console.error('Error updating operation:', data.error);
+                alert('حدث خطأ أثناء تحديث العملية: ' + data.error);
+            }
+        } catch (error) {
+            console.error('AJAX error:', error);
+            alert('حدث خطأ في الاتصال بالخادم');
+        }
+    }
+
+    function observeRows() {
+        const rows = document.querySelectorAll('tbody tr');
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const row = entry.target;
+                    const cells = row.querySelectorAll('.attendance-cell:not(.loaded)');
+                    populateAttendanceCellsForRow(cells);
+                    cells.forEach(cell => cell.classList.add('loaded'));
+                    observer.unobserve(row);
+                }
+            });
+        }, { rootMargin: '100px' });
+
+        rows.forEach(row => observer.observe(row));
+    }
+
+    function populateAttendanceCellsForRow(cells) {
+        cells.forEach(cell => {
+            const employeeId = cell.dataset.employeeId;
+            const date = cell.dataset.date;
+            const dayData = attendanceData[employeeId]?.[date] || { state: '_', comfort_adjustment: 0, food: false };
+
+            const select = document.createElement('select');
+            select.className = 'att-states';
+            select.name = `attendance_state_${employeeId}_${date}`;
+            const options = [
+                { value: '_', text: '-' },
+                { value: 'نوبتجي', text: 'نوبتجي' },
+                { value: 'يومي', text: 'يومي' },
+                { value: 'راحة', text: 'راحة' },
+                { value: 'ر بديلة', text: 'ر بديلة' },
+                { value: '8 صباحاً', text: '8 صباحاً' },
+                { value: 'منحة', text: 'منحة' },
+                { value: 'عطلة', text: 'عطلة' },
+                { value: 'دورية', text: 'دورية' },
+                { value: 'طارئة', text: 'طارئة' },
+                { value: 'مأمورية', text: 'مأمورية' },
+                { value: 'مأمورية خ', text: 'مأمورية خ' },
+                { value: 'فرقة', text: 'فرقة' },
+                { value: 'انتداب', text: 'انتداب' },
+                { value: 'مرضي', text: 'مرضي' },
+                { value: 'ج وضع', text: 'ج وضع' },
+                { value: 'خاصه', text: 'خاصه' },
+                { value: 'ت دوري', text: 'ت دوري' },
+                { value: 'ت تكراري', text: 'ت تكراري' },
+                { value: 'غياب', text: 'غياب' },
+                { value: 'قرار66', text: 'قرار66' }
+            ];
+            options.forEach(opt => {
+                const option = document.createElement('option');
+                option.value = opt.value;
+                option.text = opt.text;
+                if (opt.value === dayData.state) option.selected = true;
+                select.appendChild(option);
+            });
+            select.style.backgroundColor = stateColors[dayData.state] || 'white';
+
+            const comfortCheckbox = document.createElement('input');
+            comfortCheckbox.type = 'checkbox';
+            comfortCheckbox.name = `comfort_${employeeId}_${date}`;
+            comfortCheckbox.value = '1';
+            comfortCheckbox.checked = dayData.comfort_adjustment === 1;
+            comfortCheckbox.className = 'att-comfort-checkbox';
+            comfortCheckbox.title = 'يستحق راحة';
+            if (dayData.state === 'راحة' || dayData.state === 'ر بديلة' || dayData.state === '8 صباحاً') {
+                comfortCheckbox.disabled = true;
+            }
+
+            const foodCheckbox = document.createElement('input');
+            foodCheckbox.type = 'checkbox';
+            foodCheckbox.name = `food_${employeeId}_${date}`;
+            foodCheckbox.checked = dayData.food;
+            foodCheckbox.className = 'att-food-checkbox';
+            foodCheckbox.title = 'يحصل على تعيين';
+
+            cell.innerHTML = '';
+            cell.appendChild(select);
+            cell.appendChild(comfortCheckbox);
+            cell.appendChild(foodCheckbox);
+        });
+    }
+
+    let pendingChanges = {};
+    let debounceTimeout = null;
+
+    async function submitAttendanceForm(employeeId, selectedDate, comfortValue, foodValue, source) {
+        const key = `${employeeId}_${selectedDate}`;
+        const selectedValue = document.querySelector(`select[name="attendance_state_${employeeId}_${selectedDate}"]`)?.value || null;
+
+        pendingChanges[key] = {
+            employee_id: employeeId,
+            selected_date: selectedDate,
+            selected_value: selectedValue,
+            comfort_adjustment: comfortValue !== null && comfortValue !== undefined ? comfortValue : null,
+            food: foodValue !== null && foodValue !== undefined ? (foodValue ? '1' : '0') : null,
+            source: source
+        };
+
+        updateUI(employeeId, selectedDate, pendingChanges[key]);
+
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(async () => {
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            const formData = new FormData();
+            formData.append('changes', JSON.stringify(pendingChanges));
+
+            try {
+                const response = await fetch("{% url 'update_attendance' %}", {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': csrfToken },
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.success) {
+                    if (data.updates) {
+                        Object.entries(data.updates).forEach(([key, update]) => {
+                            const [empId, date] = key.split('_');
+                            const rahatcounterElement = document.getElementById(`rahatcounter_${empId}`);
+                            if (rahatcounterElement && update.rahatcounter !== undefined) {
+                                rahatcounterElement.textContent = update.rahatcounter;
+                                updateButtonColor(empId, update.rahatcounter);
+                            }
+                            const selectElement = document.querySelector(`select[name="attendance_state_${empId}_${date}"]`);
+                            if (selectElement && update.state) {
+                                selectElement.value = update.state;
+                                selectElement.style.backgroundColor = stateColors[update.state] || 'white';
+                            }
+                            const comfortCheckbox = document.querySelector(`input[name="comfort_${empId}_${date}"]`);
+                            if (comfortCheckbox && update.comfort_adjustment !== undefined) {
+                                comfortCheckbox.checked = update.comfort_adjustment === 1;
+                            }
+                            const foodCheckbox = document.querySelector(`input[name="food_${empId}_${date}"]`);
+                            if (foodCheckbox && update.food !== undefined) {
+                                foodCheckbox.checked = update.food;
+                            }
+                        });
+                    }
+                    pendingChanges = {};
+                } else {
+                    console.error('Error updating attendance:', data.error);
+                    alert('حدث خطأ أثناء التحديث: ' + data.error);
+                }
+            } catch (error) {
+                console.error('AJAX error:', error);
+                alert('حدث خطأ في الاتصال بالخادم');
+            }
+        }, 50);
+    }
+
+    function updateUI(employeeId, selectedDate, change) {
+        const selectElement = document.querySelector(`select[name="attendance_state_${employeeId}_${selectedDate}"]`);
+        const comfortCheckbox = document.querySelector(`input[name="comfort_${employeeId}_${selectedDate}"]`);
+        const foodCheckbox = document.querySelector(`input[name="food_${employeeId}_${selectedDate}"]`);
+
+        if (change.selected_value && selectElement) {
+            selectElement.value = change.selected_value;
+            selectElement.style.backgroundColor = stateColors[change.selected_value] || 'white';
+        }
+        if (change.comfort_adjustment !== null && comfortCheckbox) {
+            comfortCheckbox.checked = change.comfort_adjustment === 1;
+        }
+        if (change.food !== null && foodCheckbox) {
+            foodCheckbox.checked = change.food === '1';
+        }
+    }
+
+    function addEventListeners() {
+        document.querySelector('tbody').addEventListener('change', function (event) {
+            const target = event.target;
+            if (target.classList.contains('att-states')) {
+                const [_, __, employeeId, selectedDate] = target.name.split('_');
+                const newValue = target.value;
+                target.style.backgroundColor = stateColors[newValue] || 'white';
+
+                const comfortCheckbox = document.querySelector(`input[name="comfort_${employeeId}_${selectedDate}"]`);
+                const foodCheckbox = document.querySelector(`input[name="food_${employeeId}_${selectedDate}"]`);
+
+                if (newValue === 'نوبتجي') {
+                    if (foodCheckbox) foodCheckbox.checked = true;
+                    if (comfortCheckbox) {
+                        comfortCheckbox.checked = true;
+                        comfortCheckbox.disabled = false;
+                    }
+                    submitAttendanceForm(employeeId, selectedDate, 1, true, 'select');
+                } else if (newValue === 'راحة' || newValue === 'ر بديلة' || newValue === '8 صباحاً') {
+                    if (foodCheckbox) foodCheckbox.checked = false;
+                    if (comfortCheckbox) {
+                        comfortCheckbox.checked = false;
+                        comfortCheckbox.disabled = true;
+                    }
+                    submitAttendanceForm(employeeId, selectedDate, -1, false, 'select');
+                } else {
+                    if (foodCheckbox) foodCheckbox.checked = false;
+                    if (comfortCheckbox) {
+                        comfortCheckbox.checked = false;
+                        comfortCheckbox.disabled = false;
+                    }
+                    submitAttendanceForm(employeeId, selectedDate, 0, false, 'select');
+                }
+            } else if (target.name.startsWith('comfort_')) {
+                const [_, employeeId, selectedDate] = target.name.split('_');
+                if (!target.disabled) {
+                    const comfortValue = target.checked ? 1 : 0;
+                    submitAttendanceForm(employeeId, selectedDate, comfortValue, null, 'checkbox');
+                }
+            } else if (target.name.startsWith('food_')) {
+                const [_, employeeId, selectedDate] = target.name.split('_');
+                const foodValue = target.checked;
+                submitAttendanceForm(employeeId, selectedDate, null, foodValue, 'checkbox');
+            }
+        });
+    }
+
+
+    function confirmReset(employeeId) {
+        if (confirm("هل أنت متأكد من تصفير عداد الراحات للفرد المحدد فقط؟")) {
+            resetRahatcounter(employeeId);
+        }
+    }
+
+
+    async function resetRahatcounter(employeeId) {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const url = "{% url 'reset_rahatcounter' %}";
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ employee_id: employeeId })
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            const data = await response.json();
+            if (data.success) {
+                const rahatcounterElement = document.getElementById(`rahatcounter_${employeeId}`);
+                if (rahatcounterElement) {
+                    rahatcounterElement.textContent = '0';
+                    updateButtonColor(employeeId, 0);
+                }
+            } else {
+                alert('خطأ أثناء تصفير عداد الراحات: ' + data.error);
+            }
+        } catch (error) {
+            alert('حدث خطأ في الاتصال بالخادم: ' + error.message);
+        }
+    }
+
+    async function incrementRahatcounter(employeeId) {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        try {
+            const response = await fetch("{% url 'adjust_rahatcounter' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ employee_id: employeeId, adjustment: 1 })
+            });
+            const data = await response.json();
+            if (data.success) {
+                const rahatcounterElement = document.getElementById(`rahatcounter_${employeeId}`);
+                if (rahatcounterElement) {
+                    const newValue = parseInt(rahatcounterElement.textContent) + 1;
+                    rahatcounterElement.textContent = newValue;
+                    updateButtonColor(employeeId, newValue);
+                }
+            } else {
+                alert('خطأ أثناء زيادة عداد الراحات: ' + data.error);
+            }
+        } catch (error) {
+            alert('حدث خطأ في الاتصال بالخادم: ' + error.message);
+        }
+    }
+
+    async function decrementRahatcounter(employeeId) {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        try {
+            const response = await fetch("{% url 'adjust_rahatcounter' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ employee_id: employeeId, adjustment: -1 })
+            });
+            const data = await response.json();
+            if (data.success) {
+                const rahatcounterElement = document.getElementById(`rahatcounter_${employeeId}`);
+                if (rahatcounterElement) {
+                    const newValue = parseInt(rahatcounterElement.textContent) - 1;
+                    rahatcounterElement.textContent = newValue;
+                    updateButtonColor(employeeId, newValue);
+                }
+            } else {
+                alert('خطأ أثناء تقليل عداد الراحات: ' + data.error);
+            }
+        } catch (error) {
+            alert('حدث خطأ في الاتصال بالخادم: ' + error.message);
+        }
+    }
+
+    function updateButtonColor(employeeId, rahatcounter) {
+        const button = document.getElementById(`rahatcounter_btn_${employeeId}`); // استهداف الزر نفسه
+        if (button) {
+            button.classList.remove('btn-success', 'btn-warning', 'btn-danger');
+            if (rahatcounter == 0) button.classList.add('btn-success');
+            else if (rahatcounter > 0) button.classList.add('btn-warning');
+            else button.classList.add('btn-danger');
+        }
+    }
+
+    // Undo Functionality
+    let contextMenuTarget = null;
+
+    document.addEventListener('click', function (e) {
+        const menu = document.getElementById('custom-context-menu');
+        if (menu.style.display === 'block') {
+            menu.style.display = 'none';
+        }
+    });
+
+    document.querySelector('tbody').addEventListener('contextmenu', function (e) {
+        const cell = e.target.closest('.attendance-cell');
+        if (cell) {
+            e.preventDefault();
+            contextMenuTarget = cell;
+
+            const menu = document.getElementById('custom-context-menu');
+            menu.style.display = 'block';
+            menu.style.left = e.pageX + 'px';
+            menu.style.top = e.pageY + 'px';
+        }
+    });
+
+    async function globalUndo() {
+        await executeGlobalAction("{% url 'undo_last_change' %}", "فشل التراجع");
+    }
+
+    async function globalRedo() {
+        await executeGlobalAction("{% url 'redo_last_change' %}", "فشل الإعادة");
+    }
+
+    async function executeGlobalAction(url, errorMsg) {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({})
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                const update = data.updates;
+                const employeeId = update.employee_id;
+                const date = update.date;
+
+                // Update internal data
+                if (!attendanceData[employeeId]) attendanceData[employeeId] = {};
+                attendanceData[employeeId][date] = {
+                    state: update.state,
+                    comfort_adjustment: update.comfort_adjustment,
+                    food: update.food
+                };
+
+                // Update UI Elements
+                const selectElement = document.querySelector(`select[name="attendance_state_${employeeId}_${date}"]`);
+                const comfortCheckbox = document.querySelector(`input[name="comfort_${employeeId}_${date}"]`);
+                const foodCheckbox = document.querySelector(`input[name="food_${employeeId}_${date}"]`);
+
+                if (selectElement) {
+                    selectElement.value = update.state;
+                    selectElement.style.backgroundColor = stateColors[update.state] || 'white';
+                }
+                if (comfortCheckbox) {
+                    comfortCheckbox.checked = update.comfort_adjustment === 1;
+                    if (['راحة', 'ر بديلة', '8 صباحاً'].includes(update.state)) {
+                        comfortCheckbox.disabled = true;
+                    } else {
+                        comfortCheckbox.disabled = false;
+                    }
+                }
+                if (foodCheckbox) {
+                    foodCheckbox.checked = update.food;
+                }
+
+                // Update Rahat Counter
+                if (update.rahatcounter !== undefined) {
+                    const rahatcounterElement = document.getElementById(`rahatcounter_${employeeId}`);
+                    if (rahatcounterElement) {
+                        rahatcounterElement.textContent = update.rahatcounter;
+                        updateButtonColor(employeeId, update.rahatcounter);
+                    }
+                }
+
+            } else {
+                alert('تنبيه: ' + (data.error || errorMsg));
+            }
+        } catch (e) {
+            alert('خطأ في الاتصال: ' + e);
+        }
+    }
+</script>
+{% endblock %}

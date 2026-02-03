@@ -1,138 +1,152 @@
-<title>
-    ادخال حالات متعدده
-</title>
 {% extends "base.html" %}
-{% load static attendance_filters %}
-<!DOCTYPE html>
 {% load static %}
-<html lang="en">
-<head>
-    <title>ادخال حالات لمدة</title>
-    <style>
-        body {
-            font-family: 'Cairo', sans-serif;
-            background-color: #f4f6f9;
-        }
 
-        h1 {
-            text-align: center;
-            margin: 20px 0;
-            color: #333;
-        }
+{% block title %}إدخال حالات متعددة{% endblock %}
 
-        form {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            max-width: 600px;
-            margin: auto;
-        }
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <h1>إدخال نفس الحالة لأكثر من فرد لأيام متعددة</h1>
 
-        label {
-            font-weight: bold;
-            margin-bottom: 5px;
-            display: block;
-        }
+            <div id="error" style="color: red; font-weight: bold; margin-bottom: 15px; display: none;"></div>
 
-        select,
-        input[type="date"] {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 16px;
-        }
+            <form id="bulkAttendanceForm" method="POST">
+                {% csrf_token %}
+                <label for="from_date">من تاريخ:</label>
+                <input type="date" id="from_date" name="from_date" required>
 
-        button {
-            display: block;
-            width: 100%;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 4px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-        }
+                <label for="to_date">حتى تاريخ:</label>
+                <input type="date" id="to_date" name="to_date" required>
 
-        button:hover {
-            background-color: #0056b3;
-        }
+                <label for="state">الحالة:</label>
+                <select id="state" name="state" required>
+                    <option value="غير محدد">غير محدد</option>
+                    <option value="نوبتجي">نوبتجي</option>
+                    <option value="يومي">يومي</option>
+                    <option value="راحة">راحة</option>
+                    <option value="دورية">دورية</option>
+                    <option value="ر بديلة">ر بديلة</option>
+                    <option value="طارئة">طارئة</option>
+                    <option value="مأمورية">مأمورية</option>
+                    <option value="مأمورية خ">مأمورية خ</option>
+                    <option value="فرقة">فرقة</option>
+                    <option value="انتداب">انتداب</option>
+                    <option value="مرضي">مرضي</option>
+                    <option value="ج وضع">ج وضع</option>
+                    <option value="خاصه">خاصه</option>
+                    <option value="8 صباحاً">8 صباحاً</option>
+                    <option value="ت دوري">ت دوري</option>
+                    <option value="ت تكراري">ت تكراري</option>
+                    <option value="منحة">منحة</option>
+                    <option value="عطلة">عطلة</option>
+                    <option value="غياب">غياب</option>
+                    <option value="قرار66">قرار66</option>
+                </select>
 
-        .container {
-            margin-top: 30px;
-        }
-    </style>
-</head>
-<body class="hold-transition sidebar-mini layout-fixed">
-    <!-- Main content container -->
-    <div class="container">
-        <div class="content">
-            <!-- Main content block -->
-            {% block content %}
-                    <div class="container-fluid">
-                        <div class="row">
-                            <div class="col-md-12">
-                                <h1>إدخال نفس الحالة لاكثر من فرد لأيام متعددة</h1>
-                                
-                                {% if error %}
-                                <div style="color: red; font-weight: bold; margin-bottom: 15px;">
-                                    {{ error }}
-                                </div>
-                                {% endif %}
-
-                                <form method="POST">
-                                    {% csrf_token %}
-                                    <label for="from_date">من تاريخ:</label>
-                                    <input type="date" id="from_date" name="from_date" required>
-                                
-                                    <label for="to_date">حتي تاريخ:</label>
-                                    <input type="date" id="to_date" name="to_date" required>
-                                
-                                    <!-- State Dropdown -->
-                                    <label for="state">الحالة:</label>
-                                    <select id="state" name="state" required>
-                                        <option value="غير محدد" style="background-color:rgb(228, 236, 236);">غير محدد</option>
-                                        <option value="نوبتجي" style="background-color: #219C90;">نوبتجي</option>
-                                        <option value="يومي" style="background-color: #A7D397;">يومي</option>
-                                        <option value="راحة" style="background-color: #00A9FF;">راحة</option>
-                                        <option value="دورية" style="background-color: #C70039;">دورية</option>
-                                        <option value="ر بديلة" style="background-color: #0a2df5;">ر بديلة</option>
-                                        <option value="طارئة" style="background-color: #FF9130;">طارئة</option>
-                                        <option value="مأمورية" style="background-color: #eb5bad;">مأمورية</option>
-                                        <option value="مأمورية خ" style="background-color: #DA0C81;">مأمورية خ</option>
-                                        <option value="فرقة" style="background-color: #BCA37F;">فرقة</option>
-                                        <option value="انتداب" style="background-color: #713ABE;">انتداب</option>
-                                        <option value="مرضي" style="background-color: yellow;">مرضي</option>
-                                        <option value="ج وضع" style="background-color: yellow;">ج وضع</option>
-                                        <option value="خاصه" style="background-color: yellow;">خاصه</option>
-                                        <option value="8 صباحاً" style="background-color: #89CFF3;">8 صباحاً</option>
-                                        <option value="ت دوري" style="background-color: #FFF2D8;">ت دوري</option>
-                                        <option value="ت تكراري" style="background-color: #EAD7BB;">ت تكراري</option>
-                                        <option value="منحة" style="background-color: #A0E9FF;">منحة</option>
-                                        <option value="عطلة" style="background-color: #CDF5FD;">عطلة</option>
-                                        <option value="غياب" style="background-color: black; color: white;">غياب</option>
-                                        <option value="قرار66" style="background-color: yellow;">قرار66</option>
-                                    </select>
-                                
-                                    <h3>اختر الاسماء:</h3>
-                                    {% for employee in employees %}
-                                        <div>
-                                            <input type="checkbox" name="employee_ids" value="{{ employee.id }}" id="employee_{{ employee.id }}">
-                                            <label for="employee_{{ employee.id }}">{{ employee.name }}</label>
-                                        </div>
-                                    {% endfor %}
-                                
-                                    <button type="submit">تسجيل</button>
-                                </form>
-                            </div>
-                        </div>
+                <h3>اختر الأسماء:</h3>
+                {% for employee in employees %}
+                    <div>
+                        <input type="checkbox" name="employee_ids" value="{{ employee.id }}" id="employee_{{ employee.id }}">
+                        <label for="employee_{{ employee.id }}">{{ employee.name }}</label>
                     </div>
-            {% endblock %}
+                {% endfor %}
+
+                <button type="submit">تسجيل</button>
+            </form>
         </div>
     </div>
-</body>
-</html>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('bulkAttendanceForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const data = {
+            from_date: formData.get('from_date'),
+            to_date: formData.get('to_date'),
+            state: formData.get('state'),
+            employee_ids: Array.from(formData.getAll('employee_ids')).map(Number)
+        };
+
+        fetch('/attendance/api/bulk-attendance/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                document.getElementById('error').innerText = data.error;
+                document.getElementById('error').style.display = 'block';
+            } else {
+                alert(data.message);
+                window.location.reload();
+            }
+        })
+        .catch(error => {
+            console.error('Error submitting form:', error);
+            document.getElementById('error').innerText = 'خطأ في تسجيل الحالات';
+            document.getElementById('error').style.display = 'block';
+        });
+    });
+});
+</script>
+
+<style>
+body {
+    font-family: 'Cairo', sans-serif;
+    background-color: #f4f6f9;
+}
+h1 {
+    text-align: center;
+    margin: 20px 0;
+    color: #333;
+}
+form {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+    margin: auto;
+}
+label {
+    font-weight: bold;
+    margin-bottom: 5px;
+    display: block;
+}
+select, input[type="date"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+}
+button {
+    display: block;
+    width: 100%;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+}
+button:hover {
+    background-color: #0056b3;
+}
+.container {
+    margin-top: 30px;
+}
+</style>
+{% endblock %}

@@ -1,3 +1,5 @@
+{% comment %} base.html {% endcomment %}
+
 {% load static %}
 <!DOCTYPE html>
 <html lang="ar">
@@ -26,12 +28,19 @@
     <link rel="stylesheet" href="{% static 'adminlte/dist/css/custom.css' %}">
     
     <!-- DataTables CSS -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap4.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap4.min.css">
+    
+    <!-- Select2 CSS -->
+    <link rel="stylesheet" href="{% static 'adminlte/plugins/select2/css/select2.min.css' %}">
+    <link rel="stylesheet" href="{% static 'adminlte/plugins/select2-bootstrap4-theme/select2-bootstrap4.min.css' %}">
     
     {% block styles %}{% endblock %}
 </head>
 <body class="hold-transition sidebar-mini layout-fixed">
+  <!-- Notification Sound -->
+  <audio id="notification-sound" src="{% static 'adminlte/audio/notification.mp3' %}" preload="auto"></audio>
+
   <div class="wrapper">
     <!-- Navbar -->
     {% include "navbar.html" %}
@@ -39,6 +48,14 @@
     {% include "sidebar.html" %}
     <!-- Content Wrapper -->
     <div class="content-wrapper">
+      
+      <!-- Notification Marquee (Moved Here) -->
+      <div id="notification-bar" style="background-color: #f4f6f9; border-bottom: 1px solid #dcdcdc; padding: 5px 0; display: none;">
+          <marquee id="marquee-text" behavior="scroll" direction="right" scrollamount="5" style="font-weight: bold; font-size: 16px;">
+              <!-- Text will be inserted here -->
+          </marquee>
+      </div>
+
       <!-- Header -->
       {% include "header.html" %}
       <!-- Main Content -->
@@ -47,10 +64,147 @@
       </section>
     </div>
     <!-- Footer -->
-    {% include "footer.html" %}
+    {% block footer %}
+        {% include "footer.html" %}
+    {% endblock %}
   </div>
   <!-- JavaScript -->
   {% include "js.html" %}
+  <script>
+      const token = "{{ token }}";
+      
+      // Notification Logic
+      function checkNotifications() {
+          fetch('/tasks/api/notifications/')
+              .then(response => response.json())
+              .then(data => {
+                  // 1. Update Marquee
+                  const marquee = document.getElementById('marquee-text');
+                  const bar = document.getElementById('notification-bar');
+                  
+                  if (data.marquee_items && data.marquee_items.length > 0) {
+                      // Build colored HTML for marquee
+                      let marqueeHtml = '';
+                      data.marquee_items.forEach(item => {
+                          let color = '#dc3545'; // Red for overdue
+                          if (item.type === 'today') color = '#ffc107'; // Yellow/Orange for today
+                          // يمكنك إضافة المزيد من الأنواع إذا لزم الأمر
+                          
+                          marqueeHtml += `<a href="/tasks/detail/${item.id}/" style="color: ${color}; margin-left: 30px; text-decoration: none;">${item.text}</a>`;
+                      });
+                      
+                      marquee.innerHTML = marqueeHtml;
+                      bar.style.display = 'block';
+                  } else {
+                      bar.style.display = 'none';
+                  }
+                  
+                  // 2. Play Sound if needed (Local only)
+                  if (data.has_urgent_sound) {
+                      const audio = document.getElementById('notification-sound');
+                      // Ensure it's the local file
+                      if (audio) {
+                          audio.play().catch(e => console.log('Audio play failed:', e));
+                      }
+                  }
+                  
+                  
+                  // 3. Update Navbar (Badge and List)
+                  updateNavbarNotifications(data);
+              })
+              .catch(err => console.error('Error fetching notifications:', err));
+      }
+      
+      function updateNavbarNotifications(data) {
+          const badge = document.getElementById('notification-badge');
+          const header = document.getElementById('notification-header');
+          const container = document.getElementById('notification-list');
+          
+          if (!badge || !container) return; // In case elements are not found
+          
+          // Update Badge
+          if (data.unread_count > 0) {
+              badge.textContent = data.unread_count;
+              badge.style.display = 'inline-block';
+              if (header) header.textContent = data.unread_count + ' تنبيهات';
+          } else {
+              badge.style.display = 'none';
+              if (header) header.textContent = 'لا توجد تنبيهات';
+          }
+          
+          // Update List
+          let html = '';
+          if (data.notifications.length === 0) {
+              html = '<span class="dropdown-item text-center text-muted">لا توجد تنبيهات</span>';
+          } else {
+              data.notifications.forEach(notif => {
+                  const icon = notif.type === 'overdue' ? 'fa-exclamation-circle text-danger' : 
+                               (notif.type === 'today' ? 'fa-clock text-warning' : 'fa-bell text-info');
+                  
+                  const muteBtn = (notif.type === 'overdue' && !notif.is_muted) ? 
+                      `<span class="float-right text-muted text-sm" onclick="muteNotification(event, ${notif.id})" style="cursor:pointer" title="كتم التنبيه"><i class="fas fa-volume-mute"></i></span>` : '';
+                  
+                  const url = `/tasks/detail/${notif.id}/`;
+                  
+                  html += `
+                    <div class="dropdown-divider"></div>
+                    <a href="${url}" class="dropdown-item">
+                      <i class="fas ${icon} mr-2"></i> ${notif.title}
+                      ${muteBtn}
+                      <span class="float-right text-muted text-sm ml-2">${notif.due_date}</span>
+                    </a>
+                  `;
+              });
+          }
+          html += '<div class="dropdown-divider"></div><a href="/tasks/" class="dropdown-item dropdown-footer">عرض كل المهام</a>';
+          container.innerHTML = html;
+      }
+      
+      function muteNotification(event, taskId) {
+          event.preventDefault(); // Prevent opening the link
+          event.stopPropagation(); // Prevent dropdown from closing
+          
+          fetch(`/tasks/api/mute/${taskId}/`, {
+              method: 'POST',
+              headers: {
+                  'X-CSRFToken': getCookie('csrftoken')
+              }
+          })
+          .then(res => res.json())
+          .then(data => {
+              if(data.success) {
+                  checkNotifications(); // Refresh
+              }
+          });
+      }
+      
+      // Helper to get cookie
+      function getCookie(name) {
+          let cookieValue = null;
+          if (document.cookie && document.cookie !== '') {
+              const cookies = document.cookie.split(';');
+              for (let i = 0; i < cookies.length; i++) {
+                  const cookie = cookies[i].trim();
+                  if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                      cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                      break;
+                  }
+              }
+          }
+          return cookieValue;
+      }
+
+      // Initial check and periodic poll
+      document.addEventListener('DOMContentLoaded', () => {
+          checkNotifications();
+          setInterval(checkNotifications, 60000); // Every minute
+          
+          // Request user interaction permission for audio if usually blocked
+          document.body.addEventListener('click', function() {
+              // This is just to unlock audio context if needed, explicit play call is in checkNotifications
+          }, {once: true});
+      });
+  </script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

@@ -1,0 +1,1082 @@
+<!-- F:\emapi-edit\myproject\templates\attendance\musicians.html -->
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}إدارة الموسيقيين الذكية{% endblock %}
+
+{% block styles %}
+<style>
+    .filter-section {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    
+    .filter-card {
+        background: white;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .musician-row {
+        padding: 10px;
+        border-bottom: 1px solid #dee2e6;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    
+    .musician-row:hover {
+        background: #f8f9fa;
+    }
+    
+    .musician-row.selected {
+        background: #e3f2fd;
+    }
+    
+    .rahat-badge {
+        font-size: 14px;
+        padding: 5px 10px;
+        border-radius: 15px;
+    }
+    
+    .rahat-positive {
+        background: #28a745;
+        color: white;
+    }
+    
+    .rahat-negative {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .rahat-zero {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .action-btn {
+        margin: 5px;
+    }
+    
+    .date-state-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+        align-items: center;
+    }
+    
+    .period-cell {
+        min-width: 100px;
+        padding: 2px !important;
+        text-align: center;
+        vertical-align: middle;
+    }
+    
+    .period-cell select {
+        width: 100%;
+        font-size: 11px;
+        padding: 2px;
+        border: 1px solid #ddd;
+        border-radius: 3px;
+    }
+    
+    .period-cell select:focus {
+        outline: 2px solid #007bff;
+    }
+    
+    /* State colors matching attendance_3w.html */
+    .state-نوبتجي { background-color: rgb(144, 238, 144) !important; }
+    .state-يومي { background-color: rgb(255, 255, 0) !important; }
+    .state-راحة { background-color: rgb(255, 192, 203) !important; }
+    .state-ر-بديلة { background-color: rgb(255, 182, 193) !important; }
+    .state-دورية { background-color: rgb(173, 216, 230) !important; }
+    .state-طارئة { background-color: rgb(255, 165, 0) !important; }
+    .state-مأمورية { background-color: rgb(221, 160, 221) !important; }
+    .state-مأمورية-خ { background-color: rgb(218, 112, 214) !important; }
+    .state-فرقة { background-color: rgb(135, 206, 250) !important; }
+    .state-انتداب { background-color: rgb(176, 196, 222) !important; }
+    .state-مرضي { background-color: rgb(255, 228, 196) !important; }
+    .state-ج-وضع { background-color: rgb(255, 218, 185) !important; }
+    .state-خاصه { background-color: rgb(240, 230, 140) !important; }
+    .state-8-صباحاً { background-color: rgb(255, 239, 213) !important; }
+    .state-ت-دوري { background-color: rgb(230, 230, 250) !important; }
+    .state-ت-تكراري { background-color: rgb(216, 191, 216) !important; }
+    .state-منحة { background-color: rgb(255, 240, 245) !important; }
+    .state-عطلة { background-color: rgb(255, 228, 225) !important; }
+    .state-غياب { background-color: rgb(255, 99, 71) !important; }
+    .state-قرار66 { background-color: rgb(169, 169, 169) !important; }
+    
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        
+        .filter-section {
+            display: none !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div dir="rtl">
+    <div class="container-fluid">
+        <h2 class="mb-4">
+            <i class="fas fa-music"></i> إدارة الموسيقيين الذكية
+        </h2>
+        
+        <!-- قسم الفلاتر -->
+        <div class="filter-section no-print">
+            <div class="row">
+                <!-- الفلترة الأساسية -->
+                <div class="col-md-6">
+                    <div class="filter-card">
+                        <h5><i class="fas fa-filter"></i> الفلترة الأساسية</h5>
+                        
+                        <div class="form-group">
+                            <label>التشغيل:</label>
+                            <select id="operationFilter" class="form-control">
+                                <option value="all">الكل</option>
+                                {% for value, label in operation_choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>الترتيب حسب:</label>
+                            <select id="sortBy" class="form-control">
+                                <option value="dep_sort">الترتيب المخصص</option>
+                                <option value="sort_number">رقم الأقدمية</option>
+                                <option value="operation">التشغيل</option>
+                                <option value="rahatcounter">عداد الراحات</option>
+                            </select>
+                        </div>
+                        
+                        <button class="btn btn-primary" onclick="applyBasicFilter()">
+                            <i class="fas fa-search"></i> تطبيق الفلتر
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- فلترة حسب حالة وتاريخ -->
+                <div class="col-md-6">
+                    <div class="filter-card">
+                        <h5><i class="fas fa-calendar-check"></i> فلترة حسب الحالة والتاريخ</h5>
+                        
+                        <div id="stateDateFilters">
+                            <div class="date-state-row">
+                                <input type="date" class="form-control filter-date" style="width: 200px;">
+                                <select class="form-control filter-states" multiple style="width: 250px; height: 80px;">
+                                    {% for value, label in attendance_states %}
+                                    <option value="{{ value }}">{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button class="btn btn-sm btn-danger" onclick="removeFilterRow(this)">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <button class="btn btn-sm btn-success" onclick="addFilterRow()">
+                            <i class="fas fa-plus"></i> إضافة شرط
+                        </button>
+                        
+                        <button class="btn btn-primary" onclick="applyStateDateFilter()">
+                            <i class="fas fa-search"></i> تطبيق
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- فلترة بشرطين (يومين) -->
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="filter-card">
+                        <h5><i class="fas fa-filter"></i> فلترة بشرطين (يومين مختلفين)</h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label>اليوم الأول:</label>
+                                <input type="date" id="dualDate1" class="form-control mb-2">
+                                <select id="dualStates1" class="form-control" multiple style="height: 100px;">
+                                    {% for value, label in attendance_states %}
+                                    <option value="{{ value }}">{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label>اليوم الثاني:</label>
+                                <input type="date" id="dualDate2" class="form-control mb-2">
+                                <select id="dualStates2" class="form-control" multiple style="height: 100px;">
+                                    {% for value, label in attendance_states %}
+                                    <option value="{{ value }}">{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <button class="btn btn-primary mt-2" onclick="applyDualFilter()">
+                            <i class="fas fa-search"></i> تطبيق الفلتر المزدوج
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- العمليات الجماعية -->
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="filter-card">
+                        <h5><i class="fas fa-tasks"></i> العمليات الجماعية</h5>
+                        
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h6>إضافة حالة واحدة:</h6>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <input type="date" id="singleDate" class="form-control" placeholder="التاريخ">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <select id="singleState" class="form-control">
+                                            {% for value, label in attendance_states %}
+                                            <option value="{{ value }}">{{ label }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <button class="btn btn-success" onclick="addSingleState()">
+                                            <i class="fas fa-plus"></i> إضافة للمحددين
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <h6>إضافة حالات متعددة (فترة محددة):</h6>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <label>من تاريخ:</label>
+                                        <input type="date" id="periodStartDate" class="form-control">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label>إلى تاريخ:</label>
+                                        <input type="date" id="periodEndDate" class="form-control">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <button class="btn btn-info mt-4" onclick="loadPeriodGrid()">
+                                            <i class="fas fa-calendar"></i> تحميل الفترة
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div id="periodGridContainer" style="display: none;">
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle"></i> 
+                                        قم بإدخال الحالات في الصف أدناه، ثم اضغط "تطبيق على المحددين" لتطبيقها على جميع الموظفين المحددين
+                                    </div>
+                                    
+                                    <!-- أدوات التعبئة السريعة -->
+                                    <div class="card mb-3" style="background: #e8f4f8;">
+                                        <div class="card-body">
+                                            <h6><i class="fas fa-fill"></i> تعبئة سريعة</h6>
+                                            <div class="row">
+                                                <div class="col-md-4">
+                                                    <label>اختر الحالة:</label>
+                                                    <select id="bulkFillState" class="form-control">
+                                                        {% for value, label in attendance_states %}
+                                                        <option value="{{ value }}">{{ label }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label>&nbsp;</label>
+                                                    <button class="btn btn-warning btn-block" onclick="fillTemplateRow()">
+                                                        <i class="fas fa-fill-drip"></i> تعبئة كل الأيام
+                                                    </button>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label>&nbsp;</label>
+                                                    <button class="btn btn-info btn-block" onclick="fillTemplateByDay()">
+                                                        <i class="fas fa-calendar-day"></i> تعبئة حسب اليوم
+                                                    </button>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label>&nbsp;</label>
+                                                    <button class="btn btn-secondary btn-block" onclick="clearTemplateRow()">
+                                                        <i class="fas fa-eraser"></i> مسح
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- صف القالب -->
+                                    <div class="table-responsive" style="max-height: 200px; overflow-x: auto;">
+                                        <table class="table table-bordered table-sm">
+                                            <thead style="background: #f2f2f2;">
+                                                <tr id="templateHeader">
+                                                    <th style="min-width: 100px; position: sticky; right: 0; background: #f2f2f2; z-index: 10;">القالب</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr id="templateRow">
+                                                    <td style="position: sticky; right: 0; background: white; z-index: 5; font-weight: bold;">
+                                                        الحالات
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <button class="btn btn-success btn-lg" onclick="applyTemplateToSelected()">
+                                            <i class="fas fa-check-double"></i> تطبيق على المحددين (<span id="selectedCount">0</span> موظف)
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- حساب الراحات في فترة -->
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="filter-card">
+                        <h5><i class="fas fa-calculator"></i> حساب الراحات في فترة محددة</h5>
+                        
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label>من تاريخ:</label>
+                                <input type="date" id="periodStart" class="form-control">
+                            </div>
+                            <div class="col-md-3">
+                                <label>إلى تاريخ:</label>
+                                <input type="date" id="periodEnd" class="form-control">
+                            </div>
+                            <div class="col-md-3">
+                                <label>بداية العد من:</label>
+                                <input type="date" id="resetDate" class="form-control">
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-info mt-4" onclick="calculatePeriodRahat()">
+                                    <i class="fas fa-calculator"></i> حساب
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- قسم النتائج -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5>
+                                <i class="fas fa-users"></i> 
+                                النتائج (<span id="resultCount">{{ musicians.count }}</span>)
+                            </h5>
+                            <div class="no-print">
+                                <button class="btn btn-sm btn-primary" onclick="selectAll()">
+                                    <i class="fas fa-check-square"></i> تحديد الكل
+                                </button>
+                                <button class="btn btn-sm btn-secondary" onclick="deselectAll()">
+                                    <i class="fas fa-square"></i> إلغاء التحديد
+                                </button>
+                                <button class="btn btn-sm btn-success" onclick="window.print()">
+                                    <i class="fas fa-print"></i> طباعة
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="musiciansResults">
+                            {% for musician in musicians %}
+                            <div class="musician-row" data-id="{{ musician.id }}" onclick="toggleSelect(this)">
+                                <div class="row align-items-center">
+                                    <div class="col-md-1">
+                                        <input type="checkbox" class="musician-checkbox" value="{{ musician.id }}">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <strong>{{ musician.nickname }}</strong>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <span class="badge badge-info">{{ musician.get_operation_display }}</span>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <span class="rahat-badge {% if musician.rahatcounter > 0 %}rahat-positive{% elif musician.rahatcounter < 0 %}rahat-negative{% else %}rahat-zero{% endif %}">
+                                            عداد الراحات: {{ musician.rahatcounter }}
+                                        </span>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <small class="text-muted">ترتيب: {{ musician.dep_sort }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const csrfToken = '{{ csrf_token }}';
+let currentMusicians = [];
+
+// تحديد/إلغاء تحديد صف
+function toggleSelect(row) {
+    const checkbox = row.querySelector('.musician-checkbox');
+    checkbox.checked = !checkbox.checked;
+    row.classList.toggle('selected');
+}
+
+// تحديد الكل
+function selectAll() {
+    document.querySelectorAll('.musician-checkbox').forEach(cb => {
+        cb.checked = true;
+        cb.closest('.musician-row').classList.add('selected');
+    });
+}
+
+// إلغاء تحديد الكل
+function deselectAll() {
+    document.querySelectorAll('.musician-checkbox').forEach(cb => {
+        cb.checked = false;
+        cb.closest('.musician-row').classList.remove('selected');
+    });
+}
+
+// الحصول على المحددين
+function getSelectedIds() {
+    return Array.from(document.querySelectorAll('.musician-checkbox:checked'))
+        .map(cb => cb.value);
+}
+
+// الفلتر الأساسي
+async function applyBasicFilter() {
+    const operation = document.getElementById('operationFilter').value;
+    const sortBy = document.getElementById('sortBy').value;
+    
+    try {
+        const response = await fetch('{% url "filter_musicians" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                operation_filter: operation,
+                sort_by: sortBy
+            })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            updateResults(data.musicians);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('حدث خطأ في الفلترة');
+    }
+}
+
+// فلتر الحالة والتاريخ
+async function applyStateDateFilter() {
+    const filters = [];
+    document.querySelectorAll('.date-state-row').forEach(row => {
+        const date = row.querySelector('.filter-date').value;
+        const states = Array.from(row.querySelector('.filter-states').selectedOptions)
+            .map(opt => opt.value);
+        
+        if (date && states.length > 0) {
+            filters.push({ date, states });
+        }
+    });
+    
+    if (filters.length === 0) {
+        alert('الرجاء تحديد تاريخ وحالة واحدة على الأقل');
+        return;
+    }
+    
+    try {
+        const response = await fetch('{% url "filter_musicians" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                state_date_filters: filters,
+                sort_by: document.getElementById('sortBy').value
+            })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            updateResults(data.musicians);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('حدث خطأ في الفلترة');
+    }
+}
+
+// الفلتر المزدوج
+async function applyDualFilter() {
+    const date1 = document.getElementById('dualDate1').value;
+    const date2 = document.getElementById('dualDate2').value;
+    const states1 = Array.from(document.getElementById('dualStates1').selectedOptions)
+        .map(opt => opt.value);
+    const states2 = Array.from(document.getElementById('dualStates2').selectedOptions)
+        .map(opt => opt.value);
+    
+    if (!date1 || !date2 || states1.length === 0 || states2.length === 0) {
+        alert('الرجاء تحديد التواريخ والحالات للشرطين');
+        return;
+    }
+    
+    try {
+        const response = await fetch('{% url "filter_musicians" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                dual_filter: {
+                    date1, states1, date2, states2
+                },
+                sort_by: document.getElementById('sortBy').value
+            })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            updateResults(data.musicians);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('حدث خطأ في الفلترة');
+    }
+}
+
+// إضافة حالة واحدة
+async function addSingleState() {
+    const selectedIds = getSelectedIds();
+    if (selectedIds.length === 0) {
+        alert('الرجاء تحديد موظف واحد على الأقل');
+        return;
+    }
+    
+    const date = document.getElementById('singleDate').value;
+    const state = document.getElementById('singleState').value;
+    
+    if (!date) {
+        alert('الرجاء تحديد التاريخ');
+        return;
+    }
+    
+    if (!confirm(`هل تريد إضافة "${state}" بتاريخ ${date} لـ ${selectedIds.length} موظف؟`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('{% url "bulk_update_musicians" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                target_employees: selectedIds,
+                updates: [{ date, state }]
+            })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('خطأ: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('حدث خطأ في التحديث');
+    }
+}
+
+// تحميل جدول الفترة
+let periodDates = [];
+let periodGridData = {};
+
+const stateColors = {
+    'نوبتجي': 'rgb(144, 238, 144)',
+    'يومي': 'rgb(255, 255, 0)',
+    'راحة': 'rgb(255, 192, 203)',
+    'ر بديلة': 'rgb(255, 182, 193)',
+    'دورية': 'rgb(173, 216, 230)',
+    'طارئة': 'rgb(255, 165, 0)',
+    'مأمورية': 'rgb(221, 160, 221)',
+    'مأمورية خ': 'rgb(218, 112, 214)',
+    'فرقة': 'rgb(135, 206, 250)',
+    'انتداب': 'rgb(176, 196, 222)',
+    'مرضي': 'rgb(255, 228, 196)',
+    'ج وضع': 'rgb(255, 218, 185)',
+    'خاصه': 'rgb(240, 230, 140)',
+    '8 صباحاً': 'rgb(255, 239, 213)',
+    'ت دوري': 'rgb(230, 230, 250)',
+    'ت تكراري': 'rgb(216, 191, 216)',
+    'منحة': 'rgb(255, 240, 245)',
+    'عطلة': 'rgb(255, 228, 225)',
+    'غياب': 'rgb(255, 99, 71)',
+    'قرار66': 'rgb(169, 169, 169)'
+};
+
+const attendanceStates = [
+    ['_', '-'],
+    ['نوبتجي', 'نوبتجي'],
+    ['يومي', 'يومي'],
+    ['راحة', 'راحة'],
+    ['ر بديلة', 'ر بديلة'],
+    ['8 صباحاً', '8 صباحاً'],
+    ['منحة', 'منحة'],
+    ['عطلة', 'عطلة'],
+    ['دورية', 'دورية'],
+    ['طارئة', 'طارئة'],
+    ['مأمورية', 'مأمورية'],
+    ['مأمورية خ', 'مأمورية خ'],
+    ['فرقة', 'فرقة'],
+    ['انتداب', 'انتداب'],
+    ['مرضي', 'مرضي'],
+    ['ج وضع', 'ج وضع'],
+    ['خاصه', 'خاصه'],
+    ['ت دوري', 'ت دوري'],
+    ['ت تكراري', 'ت تكراري'],
+    ['غياب', 'غياب'],
+    ['قرار66', 'قرار66']
+];
+
+function loadPeriodGrid() {
+    const startDate = document.getElementById('periodStartDate').value;
+    const endDate = document.getElementById('periodEndDate').value;
+    
+    if (!startDate || !endDate) {
+        alert('الرجاء تحديد تاريخ البداية والنهاية');
+        return;
+    }
+    
+    const selectedIds = getSelectedIds();
+    if (selectedIds.length === 0) {
+        alert('الرجاء تحديد موظف واحد على الأقل');
+        return;
+    }
+    
+    // حساب الأيام
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffTime = Math.abs(end - start);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    
+    if (diffDays > 31) {
+        alert('الفترة طويلة جداً. الحد الأقصى 31 يوم');
+        return;
+    }
+    
+    // إنشاء قائمة التواريخ
+    periodDates = [];
+    for (let i = 0; i < diffDays; i++) {
+        const date = new Date(start);
+        date.setDate(date.getDate() + i);
+        periodDates.push(date);
+    }
+    
+    // إنشاء رأس الجدول
+    const header = document.getElementById('templateHeader');
+    header.innerHTML = '<th style="min-width: 100px; position: sticky; right: 0; background: #f2f2f2; z-index: 10;">القالب</th>';
+    
+    const dayNames = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+    
+    periodDates.forEach(date => {
+        const dayName = dayNames[date.getDay()];
+        const dateStr = date.toISOString().split('T')[0];
+        header.innerHTML += `<th class="period-cell">${dayName}<br>${dateStr}</th>`;
+    });
+    
+    // إنشاء صف القالب
+    const templateRow = document.getElementById('templateRow');
+    templateRow.innerHTML = '<td style="position: sticky; right: 0; background: white; z-index: 5; font-weight: bold;">الحالات</td>';
+    
+    periodDates.forEach(date => {
+        const dateStr = date.toISOString().split('T')[0];
+        
+        const td = document.createElement('td');
+        td.className = 'period-cell';
+        
+        const select = document.createElement('select');
+        select.className = 'template-select';
+        select.dataset.date = dateStr;
+        
+        attendanceStates.forEach(([value, label]) => {
+            const option = document.createElement('option');
+            option.value = value;
+            option.textContent = label;
+            select.appendChild(option);
+        });
+        
+        select.addEventListener('change', function() {
+            updateCellColor(this);
+        });
+        
+        td.appendChild(select);
+        templateRow.appendChild(td);
+    });
+    
+    // تحديث عداد الموظفين المحددين
+    document.getElementById('selectedCount').textContent = selectedIds.length;
+    
+    document.getElementById('periodGridContainer').style.display = 'block';
+}
+
+function updateCellColor(selectElement) {
+    const state = selectElement.value;
+    const color = stateColors[state] || 'white';
+    selectElement.parentElement.style.backgroundColor = color;
+}
+
+// تعبئة صف القالب بالكامل
+function fillTemplateRow() {
+    const state = document.getElementById('bulkFillState').value;
+    if (!state || state === '_') {
+        alert('الرجاء اختيار حالة');
+        return;
+    }
+    
+    if (!confirm(`هل تريد تطبيق "${state}" على جميع الأيام؟`)) {
+        return;
+    }
+    
+    const selects = document.querySelectorAll('.template-select');
+    selects.forEach(select => {
+        select.value = state;
+        updateCellColor(select);
+    });
+    
+    alert('تم تطبيق الحالة على جميع الأيام');
+}
+
+// تعبئة حسب اليوم في القالب
+function fillTemplateByDay() {
+    const state = document.getElementById('bulkFillState').value;
+    if (!state || state === '_') {
+        alert('الرجاء اختيار حالة');
+        return;
+    }
+    
+    // عرض نافذة لاختيار الأيام
+    const dayNames = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+    let html = '<div style="padding: 20px;">';
+    html += '<h6>اختر الأيام المراد تطبيق الحالة عليها:</h6>';
+    html += '<div class="form-check">';
+    
+    dayNames.forEach((day, index) => {
+        html += `
+            <label class="form-check-label" style="display: block; margin: 5px 0;">
+                <input type="checkbox" class="day-checkbox" value="${index}" checked> ${day}
+            </label>
+        `;
+    });
+    
+    html += '</div></div>';
+    
+    const modal = `
+        <div class="modal fade" id="daySelectModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">تطبيق حسب اليوم</h5>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">${html}</div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" onclick="applyTemplateBySelectedDays()">تطبيق</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">إلغاء</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // إزالة النافذة القديمة إن وجدت
+    const oldModal = document.getElementById('daySelectModal');
+    if (oldModal) oldModal.remove();
+    
+    document.body.insertAdjacentHTML('beforeend', modal);
+    $('#daySelectModal').modal('show');
+}
+
+function applyTemplateBySelectedDays() {
+    const state = document.getElementById('bulkFillState').value;
+    const selectedDays = Array.from(document.querySelectorAll('.day-checkbox:checked'))
+        .map(cb => parseInt(cb.value));
+    
+    if (selectedDays.length === 0) {
+        alert('الرجاء اختيار يوم واحد على الأقل');
+        return;
+    }
+    
+    const selects = document.querySelectorAll('.template-select');
+    let count = 0;
+    
+    selects.forEach(select => {
+        const dateStr = select.dataset.date;
+        const date = new Date(dateStr);
+        const dayOfWeek = date.getDay();
+        
+        if (selectedDays.includes(dayOfWeek)) {
+            select.value = state;
+            updateCellColor(select);
+            count++;
+        }
+    });
+    
+    $('#daySelectModal').modal('hide');
+    alert(`تم تطبيق الحالة على ${count} يوم`);
+}
+
+// مسح صف القالب
+function clearTemplateRow() {
+    if (!confirm('هل تريد مسح جميع الحالات؟')) {
+        return;
+    }
+    
+    const selects = document.querySelectorAll('.template-select');
+    selects.forEach(select => {
+        select.value = '_';
+        updateCellColor(select);
+    });
+    
+    alert('تم مسح جميع الحالات');
+}
+
+// تطبيق القالب على الموظفين المحددين
+async function applyTemplateToSelected() {
+    const selectedIds = getSelectedIds();
+    if (selectedIds.length === 0) {
+        alert('الرجاء تحديد موظف واحد على الأقل');
+        return;
+    }
+    
+    const selects = document.querySelectorAll('.template-select');
+    const templateStates = [];
+    
+    selects.forEach(select => {
+        const date = select.dataset.date;
+        const state = select.value;
+        
+        if (state && state !== '_') {
+            templateStates.push({
+                date: date,
+                state: state
+            });
+        }
+    });
+    
+    if (templateStates.length === 0) {
+        alert('لم يتم تحديد أي حالات في القالب');
+        return;
+    }
+    
+    if (!confirm(`هل تريد تطبيق ${templateStates.length} حالة على ${selectedIds.length} موظف؟`)) {
+        return;
+    }
+    
+    try {
+        for (const empId of selectedIds) {
+            const response = await fetch('{% url "bulk_update_musicians" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    target_employees: [empId],
+                    updates: templateStates
+                })
+            });
+            
+            const data = await response.json();
+            if (!data.success) {
+                console.error('Error updating employee:', empId, data.error);
+            }
+        }
+        
+        alert('تم تطبيق القالب بنجاح على جميع الموظفين المحددين');
+        location.reload();
+    } catch (error) {
+        console.error('Error:', error);
+        alert('حدث خطأ في التطبيق');
+    }
+}
+
+// حساب الراحات في فترة
+async function calculatePeriodRahat() {
+    const selectedIds = getSelectedIds();
+    if (selectedIds.length === 0) {
+        alert('الرجاء تحديد موظف واحد على الأقل');
+        return;
+    }
+    
+    const startDate = document.getElementById('periodStart').value;
+    const endDate = document.getElementById('periodEnd').value;
+    const resetDate = document.getElementById('resetDate').value;
+    
+    if (!startDate || !endDate) {
+        alert('الرجاء تحديد فترة الحساب');
+        return;
+    }
+    
+    try {
+        const response = await fetch('{% url "calculate_rahat_period" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                employee_ids: selectedIds,
+                start_date: startDate,
+                end_date: endDate,
+                reset_date: resetDate || startDate
+            })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            showPeriodResults(data.results);
+        } else {
+            alert('خطأ: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('حدث خطأ في الحساب');
+    }
+}
+
+// عرض نتائج حساب الفترة
+function showPeriodResults(results) {
+    let html = '<div class="table-responsive"><table class="table table-bordered"><thead><tr>';
+    html += '<th>الاسم</th><th>التشغيل</th><th>الراحات في الفترة</th><th>العداد الحالي</th>';
+    html += '</tr></thead><tbody>';
+    
+    results.forEach(r => {
+        html += `<tr>
+            <td>${r.nickname}</td>
+            <td>${r.operation}</td>
+            <td><span class="badge ${r.rahat_in_period > 0 ? 'badge-success' : r.rahat_in_period < 0 ? 'badge-danger' : 'badge-secondary'}">${r.rahat_in_period}</span></td>
+            <td><span class="badge ${r.current_rahatcounter > 0 ? 'badge-success' : r.current_rahatcounter < 0 ? 'badge-danger' : 'badge-secondary'}">${r.current_rahatcounter}</span></td>
+        </tr>`;
+    });
+    
+    html += '</tbody></table></div>';
+    
+    const modal = `
+        <div class="modal fade" id="periodModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">نتائج حساب الراحات</h5>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">${html}</div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" onclick="window.print()">طباعة</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">إغلاق</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modal);
+    $('#periodModal').modal('show');
+    $('#periodModal').on('hidden.bs.modal', function () {
+        this.remove();
+    });
+}
+
+// تحديث النتائج
+function updateResults(musicians) {
+    const container = document.getElementById('musiciansResults');
+    container.innerHTML = '';
+    
+    musicians.forEach(m => {
+        const rahatClass = m.rahatcounter > 0 ? 'rahat-positive' : m.rahatcounter < 0 ? 'rahat-negative' : 'rahat-zero';
+        
+        const row = `
+            <div class="musician-row" data-id="${m.id}" onclick="toggleSelect(this)">
+                <div class="row align-items-center">
+                    <div class="col-md-1">
+                        <input type="checkbox" class="musician-checkbox" value="${m.id}">
+                    </div>
+                    <div class="col-md-4">
+                        <strong>${m.nickname}</strong>
+                    </div>
+                    <div class="col-md-3">
+                        <span class="badge badge-info">${m.operation}</span>
+                    </div>
+                    <div class="col-md-2">
+                        <span class="rahat-badge ${rahatClass}">
+                            عداد الراحات: ${m.rahatcounter}
+                        </span>
+                    </div>
+                    <div class="col-md-2">
+                        <small class="text-muted">ترتيب: ${m.dep_sort}</small>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        container.insertAdjacentHTML('beforeend', row);
+    });
+    
+    document.getElementById('resultCount').textContent = musicians.length;
+}
+
+// إضافة صف فلتر جديد
+function addFilterRow() {
+    const template = document.querySelector('.date-state-row').cloneNode(true);
+    template.querySelector('.filter-date').value = '';
+    Array.from(template.querySelector('.filter-states').options).forEach(opt => opt.selected = false);
+    document.getElementById('stateDateFilters').appendChild(template);
+}
+
+// حذف صف فلتر
+function removeFilterRow(btn) {
+    const rows = document.querySelectorAll('.date-state-row');
+    if (rows.length > 1) {
+        btn.closest('.date-state-row').remove();
+    } else {
+        alert('يجب الاحتفاظ بصف واحد على الأقل');
+    }
+}
+</script>
+{% endblock %}

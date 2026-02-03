@@ -1,137 +1,230 @@
-<title>
-    بيان حالة وظيفية
-
-</title>
 {% extends "base.html" %}
 {% load static %}
 
-
-
 {% block content %}
-    <div class="container" dir="rtl">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="">
-                    <form method="GET" action="{% url 'employee_statement' %}" class="no-print">
-                        <div class="form-group">
-                            <label for="employee">اختر اسم الفرد:</label>
-                            <select id="employee" name="employee" class="form-control">
-                                <option value="">-- اختر اسم الفرد --</option>
-                                {% for emp in employees %}
-                                    <option value="{{ emp.id }}" {% if emp.id == selected_employee.id %}selected{% endif %}>{{ emp.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <button type="submit" class="btn btn-primary mt-3 no-print">عرض البيانات</button>
-                    </form>
-                    <div class="rtitle" style="display: flex; justify-content: right;">
-                        <div>
-                            <h4>وزارة الداخلية</h4>
-                            <h4>قطاع التدريب</h4>
-                            <h4>الإدارة العامة للتدريب</h4>
-                            <h4>إدارة موسيقات الشرطة</h4>
-                        </div>
-                    </div>
-                    <br><br><br><br><br>
-                    {% if selected_employee %}
-                    <table class="table mt-3">
-                        <h1>بيان حالة وظيفية للأفراد</h1>
-                        <tbody>
-                            <tr>
-                                <td><h4>اسم الفرد</h4></td>
-                                <td><h4>{{ selected_employee.name }}</h4></td>
-                            </tr>
-                            <tr>
-                                <td><h4>الدرجة</h4></td>
-                                <td><h4>
-                                    {% if selected_employee.rank %}
-                                        {{ selected_employee.rank.name }}
-                                    {% else %}
-                                        غير متوفر
-                                    {% endif %}
-                                </h4></td>
-                            </tr>
-                            <tr>
-                                <td><h4>رقم الشرطة</h4></td>
-                                <td><h4 class="police-number">{{ selected_employee.police_number|default:"-" }}</h4></td>
-                            </tr>
-                            <tr>
-                                <td><h4>جهة العمل</h4></td>
-                                <td><h4>الإدارة العامة للتدريب – إدارة موسيقات الشرطة</h4></td>
-                            </tr>
-                            <tr>
-                                <td><h4>تاريخ الميلاد</h4></td>
-                                <td><h4 class="arabic-date">{{ selected_employee.date_of_birth|date:"Y/n/j"|default:"-" }}</h4></td>
-                                                            
-                            </tr>
-                            <tr>
-                                <td><h4>تاريخ التعيين</h4></td>
-                                <td><h4 class="arabic-date">{{ selected_employee.date_of_appointment|date:"Y/n/j"|default:"-" }}</h4></td>
-                            </tr>
-                            <tr>
-                                <td><h4>العنوان</h4></td>
-                                <td><h4>{{ selected_employee.address|default:"-" }} - {{ selected_employee.district|default:"-" }} - {{ selected_employee.governorate|default:"-" }}</h4></td>
-                            </tr>
-                            <tr>
-                                <td><h4>محل العمل</h4></td>
-                                <td><h4>طريق الواحات – بجوار مساكن عثمان – قسم ثالث أكتوبر</h4></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <h3>
-                        وذلك لتقديمه إلى <span contenteditable="true" class="editable-text" style="display: inline-block; min-width: 600px; text-align: right;"></span>
-                    </h3>
-                    <h3>بناءً على طلبه دون أدنى مسئولية على الإدارة</h3>
-                    <br><br><br><br><br><br>
-                    <div style="display: flex; text-align: right; justify-content: space-around;">
-                        <div>
-                            <h3>رئيس قسم الشؤون</h3>
-                            <h3>عقيد/</h3>
-                            <br>
-                            <h3>محمد إمام</h3>
-                        </div>
-                        <div>
-                            <h3>مدير إدارة موسيقات الشرطة</h3>
-                            <h3>عميد/</h3>
-                            <br>
-                            <h3>محمد زكي قورة</h3>
-                        </div>
-                    </div>
-                    <button class="btn btn-success mt-3 no-print" onclick="window.print()">طباعة البيانات</button>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-    <br><br><br><br><br>
-    <br><br><br><br><br>
-{% endblock %}
-
-{% block extra_css %}
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بيان حالة وظيفية</title>
     <style>
-                    footer.main-footer {
-font-size: 100px;
-            }
-        body, html {
+        body {
+            font-family: Arial, sans-serif;
             direction: rtl;
+            margin: 20px;
         }
-        .container {
+        select {
+            padding: 10px;
+            margin-bottom: 20px;
+            width: 300px;
+            font-size: 16px;
+        }
+        .rtitle {
+            display: flex;
+            justify-content: right;
+        }
+        .employee-details {
+            display: none;
+            margin-top: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        td {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        h1, h1, h2 {
             text-align: right;
-            direction: rtl;
         }
-        .table th, .table td {
+        .no-data {
+            display: none;
+            color: red;
+            font-size: 18px;
+        }
+        .editable-text {
+            display: inline-block;
+            min-width: 600px;
             text-align: right;
         }
-        .no-print {
-            display: block; /* يظهر في الشاشة العادية */
+        .signatures {
+            display: flex;
+            text-align: right;
+            justify-content: space-around;
         }
-        
+        .btn {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background-color: #218838;
+        }
         @media print {
             .no-print {
-                display: none !important; /* إخفاء العناصر مثل زر الطباعة عند الطباعة */
+                display: none;
             }
-
+            select {
+                display: none;
+            }
+            .no-data {
+                display: none;
+            }
+            body {
+                border: 0px double black; 
+                padding: 10px; 
+                margin: 0px; 
+            }
+            #notification-bar {
+                display: none !important;
+            }
         }
     </style>
+</head>
+<body>
+    <select id="employee-select">
+        <option value="">اختر موظفًا</option>
+    </select>
+    <p class="no-data" id="no-data">يرجى اختيار موظف</p>
+
+    <div class="employee-details" id="employee-details">
+        <div class="rtitle">
+            <div>
+                <h2>وزارة الداخلية</h2>
+                <h2>قطاع التدريب</h2>
+                <h2>الإدارة العامة للتدريب</h2>
+                <h2>إدارة موسيقات الشرطة</h2>
+            </div>
+        </div>
+        <br><br><br>
+        <table class="table mt-3">
+            <h1>بيان حالة وظيفية للأفراد</h1>
+            <tbody id="employee-table-body">
+            </tbody>
+        </table>
+        <h1>
+             
+            <span contenteditable="true" class="editable-text">
+            وذلك لتقديمه إلى  xxxxxx دون أدنى مسئولية على الإدارة
+            </span>
+        </h1>
+        <h1></h1>
+        <br><br>
+        <div class="signatures">
+            <div>
+                <h1>مقدم/</h1>
+                <h1 style="text-align: center;">مصطفي عبد المرضي</h1>
+                <h1>رئيس قسم الشئون الإدارية</h1>
+
+
+            </div>
+            <div>
+                <h1>عميد/</h1>
+                <h1 style="text-align: center;">هيثم نصر</h1>
+                <h1>مدير إدارة موسيقات الشرطة</h1>
+
+
+            </div>
+        </div>
+        <button class="btn btn-success mt-3 no-print" onclick="window.print()">طباعة البيانات</button>
+        <br><br><br><br><br><br>
+    </div>
+
+<script>
+    // دالة لتحويل الأرقام إلى أرقام عربية
+    function toArabicNumerals(number) {
+        const arabicNumerals = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+        return number.toString().replace(/\d/g, digit => arabicNumerals[digit]);
+    }
+
+    // 🔥 هذا السطر هو السحر الذي يحل المشكلة كلها
+    const BASE_URL = window.location.origin;
+
+    const EMPLOYEE_API_URL = `${BASE_URL}/em_data/api/employee-statement/`;
+
+    const select = document.getElementById('employee-select');
+    const details = document.getElementById('employee-details');
+    const tableBody = document.getElementById('employee-table-body');
+    const noData = document.getElementById('no-data');
+
+    // جلب قائمة الموظفين لتعبئة القائمة المنسدلة
+    fetch(EMPLOYEE_API_URL)
+        .then(response => response.json())
+        .then(data => {
+            data.forEach(employee => {
+                const option = document.createElement('option');
+                option.value = employee.id;
+                option.textContent = employee.name;
+                select.appendChild(option);
+            });
+        })
+        .catch(error => console.error('Error:', error));
+
+    // عرض بيانات الموظف عند اختياره
+    select.addEventListener('change', () => {
+        const employeeId = select.value;
+        tableBody.innerHTML = '';
+
+        if (employeeId) {
+            fetch(EMPLOYEE_API_URL)
+                .then(response => response.json())
+                .then(data => {
+                    const employee = data.find(emp => emp.id == employeeId);
+                    if (employee) {
+                        tableBody.innerHTML = `
+                            <tr>
+                                <td><h2>اسم الفرد</h2></td>
+                                <td><h2>${employee.name}</h2></td>
+                            </tr>
+                            <tr>
+                                <td><h2>الدرجة</h2></td>
+                                <td><h2>${employee.rank ? employee.rank.name : '-'}</h2></td>
+                            </tr>
+                            <tr>
+                                <td><h2>رقم الشرطة</h2></td>
+                                <td><h2 class="police-number">${employee.police_number ? toArabicNumerals(employee.police_number) : '-'}</h2></td>
+                            </tr>
+                            <tr>
+                                <td><h2>جهة العمل</h2></td>
+                                <td><h2>الإدارة العامة للتدريب – إدارة موسيقات الشرطة</h2></td>
+                            </tr>
+                            <tr>
+                                <td><h2>تاريخ الميلاد</h2></td>
+                                <td><h2 class="arabic-date">${employee.date_of_birth ? new Date(employee.date_of_birth).toLocaleDateString('ar-EG', { year: 'numeric', month: 'numeric', day: 'numeric' }) : '-'}</h2></td>
+                            </tr>
+                            <tr>
+                                <td><h2>تاريخ التعيين</h2></td>
+                                <td><h2 class="arabic-date">${employee.date_of_appointment ? new Date(employee.date_of_appointment).toLocaleDateString('ar-EG', { year: 'numeric', month: 'numeric', day: 'numeric' }) : '-'}</h2></td>
+                            </tr>
+                            <tr>
+                                <td><h2>العنوان</h2></td>
+                                <td><h2>${employee.address || '-'} - ${employee.district || '-'} - ${employee.governorate || '-'}</h2></td>
+                            </tr>
+                            <tr>
+                                <td><h2>محل العمل</h2></td>
+                                <td><h2>طريق الواحات – بجوار مساكن عثمان – قسم ثالث أكتوبر</h2></td>
+                            </tr>
+                        `;
+                        details.style.display = 'block';
+                        noData.style.display = 'none';
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        } else {
+            details.style.display = 'none';
+            noData.style.display = 'block';
+        }
+    });
+</script>
+
+</body>
+</html>
 {% endblock %}
 
+{% block footer %}
+    {% include "footer2.html" %}
+{% endblock %}

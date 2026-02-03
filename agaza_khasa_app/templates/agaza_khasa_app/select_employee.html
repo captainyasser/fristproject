@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block styles %}
+<style>
+/* تصميم بسيط أنيق RTL */
+.card { border-radius: 12px; box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
+.table-responsive { overflow-x:auto; }
+.form-section { background: #fff; padding: 18px; border-radius: 10px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card p-3">
+        <h4 class="mb-3">اختيار موظف لعرض الإجازات الخاصة</h4>
+        <form method="get" action="{% url 'agaza_khasa_app:leave_list' %}">
+          <div class="mb-3">
+            <select name="employee_id" class="form-select">
+              <option value="">-- اختر موظف --</option>
+              {% for emp in employees %}
+              <option value="{{ emp.id }}">{{ emp.name }} — {{ emp.id_number }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <button class="btn btn-primary">عرض الإجازات</button>
+            <a href="{% url 'agaza_khasa_app:add_leave' %}" class="btn btn-outline-success">إضافة إجازة خاصة</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% endblock %}

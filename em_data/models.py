@@ -1,3 +1,4 @@
+# \myproject\em_data\models.py
 from django.db import models
 from departments.models import Department
 from ranks.models import Rank
@@ -18,6 +19,8 @@ class Employee(models.Model):
         ('الجمعة', 'الجمعة'),
         ('عمل يومي', 'عمل يومي'),
         ('انتداب', 'انتداب'),
+        ('خاصه', 'خاصه'),
+        ('ج وضع', 'ج وضع'),
         ('قرار66', 'قرار66'),
     ]
 
@@ -33,6 +36,14 @@ class Employee(models.Model):
         ('جيدة', 'جيدة'),
         ('عمل إداري مكتبي', 'عمل إداري مكتبي'),
         ('ممنوع من حمل السلاح', 'ممنوع من حمل السلاح'),
+    ]
+
+    # Work Choices for idcard_work
+    WORK_CHOICES = [
+        ('درجة شرطية', 'درجة شرطية'),
+        ('مهنة مدنية', 'مهنة مدنية'),
+        ('طالب/طالبة', 'طالب/طالبة'),
+        ('أخرى', 'أخرى'),
     ]
 
     id = models.BigAutoField(primary_key=True)
@@ -65,14 +76,17 @@ class Employee(models.Model):
     health_status = models.CharField(max_length=255, choices=HEALTH_STATUS_CHOICES, null=True, blank=True)
     tmamam = models.IntegerField(default=1)
     food = models.IntegerField(default=1)
-    rahatcounter = models.IntegerField(default=0)
+    rahatcounter = models.IntegerField(default=0, null=True, blank=True)
     department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True)
-    total_leave = models.IntegerField(default=0)
+    total_leave = models.IntegerField(default=0, null=True, blank=True)
     bus = models.IntegerField(default=1)
     nots = models.TextField(null=True, blank=True, verbose_name="ملاحظات")
     deleted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(null=True, auto_now_add=True)
     updated_at = models.DateTimeField(null=True, auto_now=True)
+    idcard_expir = models.DateField(null=True, blank=True, verbose_name="تاريخ انتهاء بطاقة الهوية")
+    idcard_work = models.CharField(max_length=20, choices=WORK_CHOICES, null=True, blank=True, verbose_name="المهنة")
+    idcard_social = models.CharField(max_length=20, choices=MARITAL_STATUS_CHOICES, null=True, blank=True, verbose_name="الحالة الاجتماعية")
 
     class Meta:
         db_table = 'employees'
@@ -100,7 +114,3 @@ class Employee(models.Model):
 
     def __str__(self):
         return self.name
-    
-    
-    
-    

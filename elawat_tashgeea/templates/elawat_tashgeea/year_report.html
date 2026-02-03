@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<a href="{% url 'elawat_tashgeea:index' %}" class="btn btn-secondary">
+← رجوع
+</a>
+<div class="container mt-4">
+    <h3>تقرير العلاوات التشجيعية حسب السنة</h3>
+    <form method="get" class="row g-2 align-items-center mb-3">
+        <div class="col-auto">
+            <label>السنة</label>
+            <select name="year" class="form-select" onchange="this.form.submit()">
+                <option value="">-- اختر السنة --</option>
+                {% for y in years %}
+                    <option value="{{ y }}" {% if selected_year|stringformat:"s" == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+
+    {% if selected_year %}
+        <h5>النتائج للسنة: {{ selected_year }}</h5>
+        {% if results %}
+            <table class="table table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th>الاسم</th>
+                        <th>رقم القرار</th>
+                        <th>تاريخ العلاوة</th>
+                        <th>ملاحظات</th>
+                        <th>اجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in results %}
+                    <tr>
+                        <td>{{ r.employee.name }}</td>
+                        <td>{{ r.decision_number }}</td>
+                        <td>{{ r.elawa_date }}</td>
+                        <td>{{ r.notes }}</td>
+                        <td>
+                            <a href="{% url 'elawat_tashgeea:edit_record' r.id %}" class="btn btn-sm btn-warning">تعديل</a>
+                            <form method="post" action="{% url 'elawat_tashgeea:delete_record' r.id %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="button" class="btn btn-sm btn-danger deleteBtn">حذف</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="alert alert-info">لا توجد سجلات لهذه السنة.</div>
+        {% endif %}
+    {% endif %}
+</div>
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.querySelectorAll('.deleteBtn').forEach(btn=>{
+    btn.addEventListener('click', function(e){
+        e.preventDefault();
+        const form = this.closest('form');
+        Swal.fire({
+          title: 'تأكيد حذف',
+          text: 'هل تريد حذف هذا السجل؟',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'حذف',
+          cancelButtonText: 'إلغاء'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            form.submit();
+          }
+        });
+    });
+});
+</script>
+{% endblock %}

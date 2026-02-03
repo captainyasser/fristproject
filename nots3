@@ -1,0 +1,374 @@
+git codes
+
+cd K:\myproject\myproject
+git status
+git add .
+git commit -m "update tarkyat as modals"
+git push origin master
+
+
+git add em_data/views.py
+
+
+
+
+اصنع صفحه next_tarkya.html
+
+الصفحه هتعرض اسم الفرد 
+اخر درجه to_rank
+تاريخ اخر ترقية promotion_date
+
+موعد الترقيه القادمة سيتم حسابها ديناميكيا حسب to_rank و promotion_date
+اذا كان to_rank  = اي رقم من الارقام الاتيه  2,3,4,5,6
+اضف 6 سنوات علي  promotion_date
+
+اذا كان to_rank  = 1
+لا يوجد ترقيه قادمة
+
+
+اذا كان to_rank  =  اي رقم من الارقام الاتيه  10
+اضف 4 سنوات
+
+
+اذا كان to_rank  = 9 او 8 
+اضف 5 سنوات
+
+
+اذا كان to_rank  =  7
+لا يوجد ترقيه قادمة
+
+
+اذا كان to_rank  = اي رقم من الارقام الاتيه  19,20,21,22
+اضف 4 سنوات
+
+
+اذا كان to_rank  = اي رقم من الارقام الاتيه  24,25,26,27,28
+اضف 6 سنوات
+
+
+اذا كان to_rank  = 23
+لا يوجد ترقيه قادمة
+
+
+اذا مر تاريخ الترقيه اجعل لونه احمر
+
+
+اذا كان متبقي علي الترقيه القادمة اقل من 3 شهور اجعل اللون اصفر
+
+
+
+اذا كان لا يوجد ترقيه قادمة اجعل اللون اخضر
+
+
+
+
+
+
+
+
+
+
+
+رئيسي أم لا
+تكون عباره عن اختيارين
+1 قوة اساسية
+2 منتدب
+
+نوع الرتبة
+اختيارات
+1 امناء
+2 مساعدين
+3 مراقبين
+4 مندوبين 
+5 رقيب أول
+6 رقيب
+7 عريف
+8 شرطيين
+9 معاونين
+
+
+تمام
+تكون عبارة عن radio btn 1 or 0
+
+الطعام
+تكون عبارة عن radio btn 1 or 0
+
+
+الباص
+تكون عبارة عن radio btn 1 or 0
+
+
+الرتبة
+احصل علي الاختيارات من تطبيق ranks as forgenkey
+from django.db import models
+
+class Rank(models.Model):
+    RANK_TYPES = (
+        ('primary', 'درجة أولى'),
+        ('police_officer', 'أمين شرطة'),
+        ('security_assistant', 'معاون أمن'),
+    )
+
+    name = models.CharField(max_length=255, unique=True, verbose_name="اسم الدرجة")
+    rank_type = models.CharField(
+        max_length=20,
+        choices=RANK_TYPES,
+        verbose_name="نوع الدرجة",
+        help_text="اختر نوع الدرجة (أولى، أمين شرطة، معاون أمن)"
+    )
+    order = models.PositiveIntegerField(
+        default=1,
+        verbose_name="الترتيب",
+        help_text="رقم يحدد ترتيب الدرجة (1 = درجة أدنى)"
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="نشط",
+        help_text="حدد ما إذا كانت الدرجة مستخدمة حاليًا"
+    )
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = "الدرجة"
+        verbose_name_plural = "الدرجات"
+        ordering = ["order"]
+
+    def get_next_rank(self):
+        """دالة للحصول على الدرجة التالية في نفس النوع"""
+        return Rank.objects.filter(
+            rank_type=self.rank_type,
+            order__gt=self.order,
+            is_active=True
+        ).order_by('order').first()
+
+
+
+القسم 
+احصل علي الاختيارات من تطبيق Departments as forgenkey
+
+from django.db import models
+
+class Department(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+
+    class Meta:
+        db_table = 'departments'
+
+    def __str__(self):
+        return self.name
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+كود نقل الاقسام
+UPDATE yasser.employees AS y
+JOIN em.employees AS e ON y.id = e.id
+JOIN yasser.departments AS d ON e.departments = d.name
+SET y.department_id = d.id
+WHERE e.departments IN (
+    'شئون الأفراد',
+    'شئون الدارسين',
+    'شئون المجندين',
+    'شئون الضباط',
+    'شئون المالية',
+    'الحملة',
+    'المخبز',
+    'الأمن',
+    'التحريات',
+    'السلاح',
+    'السويتش',
+    'الخدمات المعاونة',
+    'العهدة',
+    'فريق الموسيقي',
+    'قرار66',
+    'بوسته'
+);
+
+
+
+INSERT INTO yasser.attendance_attendance (date, state, food, comfort_adjustment,created_at, updated_at, employee_id, in_or_out)
+SELECT 
+    date, 
+    state, 
+    food, 
+    CASE 
+        WHEN state = 'نوبتجي' THEN 1
+        WHEN state IN ('راحة', 'ر بديلة', '8 صباحاً') THEN -1
+        ELSE 0
+    END AS comfort_adjustment,
+    NOW() AS created_at, 
+    NOW() AS updated_at,
+    employee_id, 
+    in_or_out
+FROM em.emdata_attendance;
+
+
+
+
+نقل عكسي للتشغيل
+
+INSERT INTO em.emdata_attendance (name, date, state, food, in_or_out, employee_id)
+SELECT 
+    emp.name, 
+    att.date, 
+    att.state, 
+    att.food, 
+    att.in_or_out, 
+    att.employee_id
+FROM yasser.attendance_attendance att
+JOIN em.employees emp ON att.employee_id = emp.id
+ON DUPLICATE KEY UPDATE 
+    state = VALUES(state),
+    food = VALUES(food),
+    in_or_out = VALUES(in_or_out);
+
+
+
+
+
+نقل الفرق
+
+INSERT INTO training_teams_places (id, name, description, address)
+SELECT id, name, description, '' AS address
+FROM em_db.emdata_places;
+
+INSERT INTO training_teams_trainingteam (name, description)
+SELECT name, description
+FROM em.emdata_trainingteam;
+
+عرض المكرر
+SELECT employee_id, training_team_id, start_date, end_date, COUNT(*)
+FROM em.emdata_emtrainingteams
+GROUP BY employee_id, training_team_id, start_date, end_date
+HAVING COUNT(*) > 1;
+
+
+INSERT INTO training_teams_emtrainingteams (employee_id, name, training_team_id, place_id, start_date, end_date, result, round_num)
+SELECT employee_id, name, training_team_id, place_id, start_date, end_date, result, round_num
+FROM em.emdata_emtrainingteams;
+
+
+INSERT INTO yasser.tarkyat_promotion (employee_id, promotion_date, to_rank_id, promotion_course_number)
+SELECT employee_id, gnd_date, 22, gnd_num FROM em.emdata_trkyat WHERE gnd_date IS NOT NULL
+UNION ALL
+SELECT employee_id, arf_date, 21, arf_num FROM em.emdata_trkyat WHERE arf_date IS NOT NULL
+UNION ALL
+SELECT employee_id, rqb_date, 20, rqb_num FROM em.emdata_trkyat WHERE rqb_date IS NOT NULL
+UNION ALL
+SELECT employee_id, rqb_awl_date, 19, rqb_awl_num FROM em.emdata_trkyat WHERE rqb_awl_date IS NOT NULL
+UNION ALL
+SELECT employee_id, mand_3_date, 18, mand_3_num FROM em.emdata_trkyat WHERE mand_3_date IS NOT NULL
+UNION ALL
+SELECT employee_id, mand_2_date, 17, mand_2_num FROM em.emdata_trkyat WHERE mand_2_date IS NOT NULL
+UNION ALL
+SELECT employee_id, mand_1_date, 16, mand_1_num FROM em.emdata_trkyat WHERE mand_1_date IS NOT NULL
+UNION ALL
+SELECT employee_id, mand_mom_date, 15, mand_mom_num FROM em.emdata_trkyat WHERE mand_mom_date IS NOT NULL
+UNION ALL
+SELECT employee_id, muraq_3_date, 14, muraq_3_num FROM em.emdata_trkyat WHERE muraq_3_date IS NOT NULL
+UNION ALL
+SELECT employee_id, muraq_2_date, 13, muraq_2_num FROM em.emdata_trkyat WHERE muraq_2_date IS NOT NULL
+UNION ALL
+SELECT employee_id, muraq_1_date, 12, muraq_1_num FROM em.emdata_trkyat WHERE muraq_1_date IS NOT NULL
+UNION ALL
+SELECT employee_id, muraq_mom_date, 11, muraq_mom_num FROM em.emdata_trkyat WHERE muraq_mom_date IS NOT NULL
+UNION ALL
+SELECT employee_id, musa_3_date, 10, musa_3_num FROM em.emdata_trkyat WHERE musa_3_date IS NOT NULL
+UNION ALL
+SELECT employee_id, musa_2_date, 9, musa_2_num FROM em.emdata_trkyat WHERE musa_2_date IS NOT NULL
+UNION ALL
+SELECT employee_id, musa_1_date, 8, musa_1_num FROM em.emdata_trkyat WHERE musa_1_date IS NOT NULL
+UNION ALL
+SELECT employee_id, musa_mom_date, 7, musa_mom_num FROM em.emdata_trkyat WHERE musa_mom_date IS NOT NULL
+UNION ALL
+SELECT employee_id, ameen_3_date, 6, ameen_3_num FROM em.emdata_trkyat WHERE ameen_3_date IS NOT NULL
+UNION ALL
+SELECT employee_id, ameen_2_date, 5, ameen_2_num FROM em.emdata_trkyat WHERE ameen_2_date IS NOT NULL
+UNION ALL
+SELECT employee_id, ameen_1_date, 4, ameen_1_num FROM em.emdata_trkyat WHERE ameen_1_date IS NOT NULL
+UNION ALL
+SELECT employee_id, ameen_mom_date, 3, ameen_mom_num FROM em.emdata_trkyat WHERE ameen_mom_date IS NOT NULL
+UNION ALL
+SELECT employee_id, ameen_mom_2_date, 2, ameen_mom_2_num FROM em.emdata_trkyat WHERE ameen_mom_2_date IS NOT NULL
+UNION ALL
+SELECT employee_id, ameen_mom_1_date, 1, ameen_mom_1_num FROM em.emdata_trkyat WHERE ameen_mom_1_date IS NOT NULL
+UNION ALL
+SELECT employee_id, moawan_3_date, 28, moawan_3_num FROM em.emdata_trkyat WHERE moawan_3_date IS NOT NULL
+UNION ALL
+SELECT employee_id, moawan_2_date, 27, moawan_2_num FROM em.emdata_trkyat WHERE moawan_2_date IS NOT NULL
+UNION ALL
+SELECT employee_id, moawan_1_date, 26, moawan_1_num FROM em.emdata_trkyat WHERE moawan_1_date IS NOT NULL
+UNION ALL
+SELECT employee_id, moawan_mom_date, 25, moawan_mom_num FROM em.emdata_trkyat WHERE moawan_mom_date IS NOT NULL
+UNION ALL
+SELECT employee_id, moawan_mom_2_date, 24, moawan_mom_2_num FROM em.emdata_trkyat WHERE moawan_mom_2_date IS NOT NULL
+UNION ALL
+SELECT employee_id, moawan_mom_1_date, 23, moawan_mom_1_num FROM em.emdata_trkyat WHERE moawan_mom_1_date IS NOT NULL;
+
+
+
+
+
+INSERT INTO ranks_rank (name, rank_type, `order`, is_active)
+VALUES
+    ('جندي', 'primary', 1, 1),
+    ('عريف', 'primary', 2, 1),
+    ('رقيب', 'primary', 3, 1),
+    ('رقيب أول', 'primary', 4, 1),
+    ('مندوب شرطة ثالث', 'primary', 5, 1),
+    ('مندوب شرطة ثان', 'primary', 6, 1),
+    ('مندوب شرطة أول', 'primary', 7, 1),
+    ('مندوب شرطة ممتاز', 'primary', 8, 1),
+    ('مراقب شرطة ثالث', 'primary', 9, 1),
+    ('مراقب شرطة ثان', 'primary', 10, 1),
+    ('مراقب شرطة أول', 'primary', 11, 1),
+    ('مراقب شرطة ممتاز', 'primary', 12, 1),
+    ('مساعد شرطة ثالث', 'primary', 13, 1),
+    ('مساعد شرطة ثان', 'primary', 14, 1),
+    ('مساعد شرطة أول', 'primary', 15, 1),
+    ('مساعد شرطة ممتاز', 'primary', 16, 1)
+ON DUPLICATE KEY UPDATE
+    rank_type = VALUES(rank_type),
+    `order` = VALUES(`order`),
+    is_active = VALUES(is_active);
+
+
+    INSERT INTO ranks_rank (name, rank_type, `order`, is_active)
+VALUES
+    ('أمين شرطة ثالث', 'police_officer', 1, 1),
+    ('أمين شرطة ثان', 'police_officer', 2, 1),
+    ('أمين شرطة أول', 'police_officer', 3, 1),
+    ('أمين شرطة ممتاز', 'police_officer', 4, 1),
+    ('أمين شرطة ممتاز ثان', 'police_officer', 5, 1),
+    ('أمين شرطة ممتاز أول', 'police_officer', 6, 1)
+ON DUPLICATE KEY UPDATE
+    rank_type = VALUES(rank_type),
+    `order` = VALUES(`order`),
+    is_active = VALUES(is_active);
+
+
+
+    INSERT INTO ranks_rank (name, rank_type, `order`, is_active)
+VALUES
+    ('معاون أمن ثالث', 'security_assistant', 1, 1),
+    ('معاون أمن ثان', 'security_assistant', 2, 1),
+    ('معاون أمن أول', 'security_assistant', 3, 1),
+    ('معاون أمن ممتاز', 'security_assistant', 4, 1),
+    ('معاون أمن ممتاز ثان', 'security_assistant', 5, 1),
+    ('معاون أمن ممتاز أول', 'security_assistant', 6, 1)
+ON DUPLICATE KEY UPDATE
+    rank_type = VALUES(rank_type),
+    `order` = VALUES(`order`),
+    is_active = VALUES(is_active);

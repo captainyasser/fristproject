@@ -58,13 +58,18 @@ def convert_to_arabic_numbers(value):
 @register.filter
 def format_department(department):
     mapping = {
-        "فريق الموسيقي": "موسيقي",
+        "فريق الموسيقي": "♫موسيقي",
         "شئون الأفراد": "افراد",
         "الخدمات المعاونة": "معاونة",
         "شئون المالية": "ماليه",
         "شئون الدارسين": "دارسين",
         "شئون المجندين": "مجندين",
         "شئون الضباط": "ضباط",
+        "سكرتارية المدير": "سكرتارية",
+        "ملف الجودة": "جودة",
+        "ملفات الأفراد": "ملفات",
+        "السويتش": "سويتش",
+        "السلاح": "سلاح",
     }
     # إذا كان القسم موجودًا، قم بإرجاع القيمة المختصرة من mapping أو الاسم الأصلي إذا لم يكن موجودًا في القاموس
     return mapping.get(department.name, department.name) if department else "-"
@@ -88,13 +93,15 @@ def format_state(state):
         "يومي": "✓",
         "مأمورية خ": "♫",
         "مأمورية": "♫",
-        "انتداب": "⇄",
+        "انتداب": "انتداب",
         "دورية": "☕︎",
         "راحة": "🏠︎",
         "ر بديلة": "🏠︎",
-        "فرقة": "💡",
+        "فرقة": "فرقة",
     }
     return mapping.get(state, state)
+
+
 
 
 
@@ -111,3 +118,19 @@ def subtract(value, arg):
 @register.filter
 def get_item(dictionary, key):
     return dictionary.get(key, [])
+
+
+
+
+
+
+
+@register.filter
+def dict_get(dictionary, key):
+    return dictionary.get(key)
+
+@register.filter
+def merge_dict(dictionary, new_pair):
+    new_dict = dictionary.copy()
+    new_dict.update(new_pair)
+    return new_dict

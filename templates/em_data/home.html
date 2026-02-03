@@ -1,572 +1,879 @@
-<title>
-قائمة الأفراد
-</title>
 {% extends 'base.html' %}
-{% load numbers_filters %}
-{% load static %}
 
+{% block title %}إدارة الافراد{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<div class="container-fluid">
     <div class="card">
         <div class="card-header">
-            <h2 class="text-center mb-0">قائمة الأفراد</h2>
+            <h3 class="card-title">قائمة الافراد</h3>
         </div>
         <div class="card-body">
-            {% if employees %}
-                <!-- علامات التبويب -->
-                <ul class="nav nav-tabs" id="employeeTabs" role="tablist">
+            {% if user.is_authenticated %}
+                {% if user.is_staff %}
+                    <button class="btn btn-primary mb-3" data-toggle="modal" data-target="#addEmployeeModal">إضافة فرد</button>
+                {% endif %}
+                <div id="alertContainer"></div>
+
+                <!-- Tabs لعرض البيانات -->
+                <ul class="nav nav-tabs" id="mainTabs" role="tablist">
                     <li class="nav-item">
-                        <a class="nav-link active" id="personal-tab" data-toggle="tab" href="#personal" role="tab">المعلومات الشخصية</a>
+                        <a class="nav-link active" id="list-tab" data-toggle="tab" href="#list" role="tab" aria-controls="list" aria-selected="true">قائمة الأفراد</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" id="contact-tab" data-toggle="tab" href="#contact" role="tab">معلومات الاتصال</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="dates-tab" data-toggle="tab" href="#dates" role="tab">التواريخ</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="job-tab" data-toggle="tab" href="#job" role="tab">الوظيفة والحالة</a>
+                        <a class="nav-link" id="details-tab" data-toggle="tab" href="#details" role="tab" aria-controls="details" aria-selected="false">تفاصيل الأفراد</a>
                     </li>
                 </ul>
 
-                <!-- محتوى علامات التبويب -->
-                <div class="tab-content" id="employeeTabsContent">
-                    <!-- تبويب المعلومات الشخصية -->
-                    <div class="tab-pane fade show active" id="personal" role="tabpanel">
-                        <table id="personalTable" class="table table-bordered table-striped table-hover">
-                            <thead class="thead-dark">
+                <div class="tab-content" id="mainTabsContent">
+                    <!-- تبويب قائمة الأفراد -->
+                    <div class="tab-pane fade show active" id="list" role="tabpanel" aria-labelledby="list-tab">
+                        <table id="employeesTable" class="table table-bordered table-striped">
+                            <thead>
                                 <tr>
-                                    <th>الترتيب</th>
-                                    <th>الصورة</th>
-                                    <th>الاسم</th>
-                                    <th>اللقب</th>
-                                    <th>الرقم القومي</th>
-                                    <th>الجنس</th>
-                                    <th>الحالة الاجتماعية</th>
-                                    <th>الإجراء</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for employee in employees %}
-                                    <tr>
-                                        <td>{{ employee.sort_number|default:"-" }}</td>
-                                        <td>
-                                            {% if employee.image %}
-                                                <img src="{{ employee.image.url }}" alt="{{ employee.name }}" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
-                                            {% else %}
-                                                <span class="text-muted">لا توجد صورة</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>{{ employee.name|default:"-" }}</td>
-                                        <td>{{ employee.nickname|default:"-" }}</td>
-                                        <td class="arabic-numbers">{{ employee.id_number|to_arabic_numbers|default:"-" }}</td>
-                                        <td>{{ employee.gender|default:"-" }}</td>
-                                        <td>{{ employee.marital_status|default:"-" }}</td>
-                                        <td>
-                                            <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editModal{{ employee.id }}">
-                                                <i class="fas fa-pencil-alt"></i> تعديل
-                                            </button>
-                                        </td>
-
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- تبويب معلومات الاتصال -->
-                    <div class="tab-pane fade" id="contact" role="tabpanel">
-                        <table id="contactTable" class="table table-bordered table-striped table-hover">
-                            <thead class="thead-dark">
-                                <tr>
-                                    <th>الاسم</th>
-                                    <th>رقم الهاتف</th>
-                                    <th>رقم الهاتف2</th>
-                                    <th>المحافظة</th>
-                                    <th>المركز</th>
-                                    <th>العنوان</th>
-                                    <th>الإجراء</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for employee in employees %}
-                                    <tr>
-                                        <td>{{ employee.name|default:"-" }}</td>
-                                        <td class="arabic-numbers">{{ employee.phone_number|to_arabic_numbers|default:"-" }}</td>
-                                        <td class="arabic-numbers">{{ employee.alt_phone_number|to_arabic_numbers|default:"-" }}</td>
-                                        <td>{{ employee.governorate|default:"-" }}</td>
-                                        <td>{{ employee.district|default:"-" }}</td>
-                                        <td>{{ employee.address|default:"-" }}</td>
-                                        <td>
-                                            <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editModal{{ employee.id }}">
-                                                <i class="fas fa-pencil-alt"></i> تعديل
-                                            </button>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- تبويب التواريخ -->
-                    <div class="tab-pane fade" id="dates" role="tabpanel">
-                        <table id="datesTable" class="table table-bordered table-striped table-hover">
-                            <thead class="thead-dark">
-                                <tr>
-                                    <th>الاسم</th>
-                                    <th>العمر</th>
-                                    <th> الميلاد</th>
-                                    <th> التقاعد</th>
-                                    <th> دخول الإدارة</th>
-                                    <th> التعيين</th>
-                                    <th>الإجراء</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for employee in employees %}
-                                    <tr>
-                                        <td>{{ employee.name|default:"-" }}</td>
-                                        <td class="arabic-numbers">{{ employee.age|to_arabic_numbers|default:"-" }}</td>
-                                        <td class="arabic-numbers">{{ employee.date_of_birth|date:"d/m/Y"|to_arabic_numbers|default:"-" }}</td>
-                                        <td class="arabic-numbers">{{ employee.date_of_retirement|date:"d/m/Y"|to_arabic_numbers|default:"-" }}</td>
-                                        <td class="arabic-numbers">{{ employee.date_of_edara|date:"d/m/Y"|to_arabic_numbers|default:"-" }}</td>
-                                        <td class="arabic-numbers">{{ employee.date_of_appointment|date:"d/m/Y"|to_arabic_numbers|default:"-" }}</td>
-                                        <td>
-                                            <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editModal{{ employee.id }}">
-                                                <i class="fas fa-pencil-alt"></i> تعديل
-                                            </button>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- تبويب الوظيفة والحالة -->
-                    <div class="tab-pane fade" id="job" role="tabpanel">
-                        <table id="jobTable" class="table table-bordered table-striped table-hover">
-                            <thead class="thead-dark">
-                                <tr>
-                                    <th>الاسم</th>
+                                    <th>ترتيب الاقدمية</th>
                                     <th>الدرجة</th>
                                     <th>رقم الشرطة</th>
-                                    <th>رقم التأمين</th>
-                                    <th>الحالة الصحية</th>
-                                    <th>القسم</th>
-                                    <th>التشغيل</th>
-                                    <th>ملاحظات</th>
-                                    <th>الإجراء</th>
+                                    <th>الاسم</th>
+                                    <th>رقم الهاتف</th>
+                                    <th>تاريخ الميلاد</th>
+                                    <th>تاريخ التعيين</th>
+                                    <th>الإجراءات</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                {% for employee in employees %}
-                                    <tr>
-                                        <td>{{ employee.name|default:"-" }}</td>
-                                        <td class="arabic-numbers">{{ employee.rank|to_arabic_numbers|default:"غير متوفر" }}</td>
-                                        <td class="arabic-numbers">{{ employee.police_number|to_arabic_numbers|default:"-" }}</td>
-                                        <td class="arabic-numbers">{{ employee.insurance_number|to_arabic_numbers|default:"-" }}</td>
-                                        <td>{{ employee.health_status|default:"-" }}</td>
-                                        <td>{{ employee.department|default:"-" }}</td> <!-- تصحيح من departments إلى department -->
-                                        <td>{{ employee.operation|default:"-" }}</td>
-                                        <td>{{ employee.nots|default:"-" }}</td>
-
-                                        <td>
-                                            <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editModal{{ employee.id }}">
-                                                <i class="fas fa-pencil-alt"></i> تعديل
-                                            </button>
-                                            <!-- زر الحذف الجديد -->
-                                            <button type="button" class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteModal{{ employee.id }}">
-                                                <i class="fas fa-trash"></i> حذف
-                                            </button>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
+                            <tbody id="employeesBody"></tbody>
                         </table>
                     </div>
+
+                    <!-- تبويب تفاصيل الأفراد -->
+                    <div class="tab-pane fade" id="details" role="tabpanel" aria-labelledby="details-tab">
+                        <div id="employeeDetails"></div>
+                    </div>
                 </div>
 
-        <!-- نافذة التعديل (Modal) -->
-            
-        {% for employee in employees %}
-            <div class="modal fade" id="editModal{{ employee.id }}" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-                        <!-- رأس النافذة -->
-                        <div class="modal-header">
-                            <h4 class="modal-title">تعديل بيانات {{ employee.name }}</h4>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">×</span>
-                            </button>
-                        </div>
-        
-                        <!-- جسم النافذة -->
-                        <div class="modal-body">
-                            <form method="POST" action="{% url 'edit_employee' employee.id %}" enctype="multipart/form-data">
-                                {% csrf_token %}
-                                <div class="row">
-        
-                                    <!-- 1. المعلومات الشخصية -->
-                                    <h5 class="col-12 mb-3">المعلومات الشخصية</h5>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">رقم الترتيب</label>
-                                            <input type="number" name="sort_number" class="form-control" value="{{ employee.sort_number|default:'' }}" required>
-                                        </div>
+                <!-- نافذة إضافة فرد -->
+                <div class="modal fade" id="addEmployeeModal" tabindex="-1" role="dialog" aria-labelledby="addEmployeeModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="addEmployeeModalLabel">إضافة فرد جديد</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">×</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="addEmployeeForm">
+                                    <input type="hidden" id="add_institute" name="institute" value="{{ institute_id }}">
+                                    <div class="form-group">
+                                        <label for="add_sort_number">ترتيب الاقدمية <span class="text-danger">*</span></label>
+                                        <input type="number" class="form-control" id="add_sort_number" name="sort_number" required>
+                                        <div class="invalid-feedback">يرجى إدخال ترتيب الاقدمية</div>
                                     </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">اسم الفرد</label>
-                                            <input type="text" name="name" class="form-control" value="{{ employee.name }}" required>
-                                        </div>
+                                    <div class="form-group">
+                                        <label for="add_dep_sort">ترتيب القسم</label>
+                                        <input type="number" class="form-control" id="add_dep_sort" name="dep_sort">
                                     </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">اللقب</label>
-                                            <input type="text" name="nickname" class="form-control" value="{{ employee.nickname|default:'' }}">
-                                        </div>
+                                    <div class="form-group">
+                                        <label for="add_name">الاسم <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="add_name" name="name" required>
+                                        <div class="invalid-feedback">حقل الاسم إلزامي</div>
                                     </div>
-
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">الرقم القومي</label>
-                                            <input type="text" name="id_number" class="form-control" value="{{ employee.id_number|default:'' }}">
-                                        </div>
+                                    <div class="form-group">
+                                        <label for="add_nickname">اللقب</label>
+                                        <input type="text" class="form-control" id="add_nickname" name="nickname">
                                     </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">الجنس</label>
-                                            <select name="gender" class="form-control">
-                                                <option value="" {% if not employee.gender %}selected{% endif %}>اختر الجنس</option>
-                                                <option value="أنثي" {% if employee.gender == "أنثي" %}selected{% endif %}>أنثي</option>
-                                                <option value="ذكر" {% if employee.gender == "ذكر" %}selected{% endif %}>ذكر</option>
-                                            </select>
-                                        </div>
+                                    <div class="form-group">
+                                        <label for="add_gender">الجنس</label>
+                                        <select class="form-control" id="add_gender" name="gender">
+                                            <option value="">اختر الجنس (اختياري)</option>
+                                            <option value="ذكر">ذكر</option>
+                                            <option value="أنثى">أنثى</option>
+                                        </select>
                                     </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">الحالة الاجتماعية</label>
-                                            <select name="marital_status" class="form-control">
-                                                <option value="" {% if not employee.marital_status %}selected{% endif %}>اختر الحالة</option>
-                                                {% for choice_value, choice_label in employee.MARITAL_STATUS_CHOICES %}
-                                                    <option value="{{ choice_value }}" {% if employee.marital_status == choice_value %}selected{% endif %}>
-                                                        {{ choice_label }}
-                                                    </option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
+                                    <div class="form-group">
+                                        <label for="add_rank_id">الدرجة</label>
+                                        <select class="form-control" id="add_rank_id" name="rank_id">
+                                            <option value="">اختر الدرجة (اختياري)</option>
+                                        </select>
                                     </div>
-        
-                                    <!-- 2. معلومات الاتصال -->
-                                    <h5 class="col-12 mb-3">معلومات الاتصال</h5>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">رقم الهاتف</label>
-                                            <input type="text" name="phone_number" class="form-control" value="{{ employee.phone_number|default:'' }}">
-                                        </div>
+                                    <div class="form-group">
+                                        <label for="add_department_id">القسم</label>
+                                        <select class="form-control" id="add_department_id" name="department_id">
+                                            <option value="">اختر القسم (اختياري)</option>
+                                        </select>
                                     </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">رقم الهاتف البديل</label>
-                                            <input type="text" name="alt_phone_number" class="form-control" value="{{ employee.alt_phone_number|default:'' }}">
-                                        </div>
+                                    <div class="form-group">
+                                        <label for="add_id_number">الرقم القومي</label>
+                                        <input type="text" class="form-control" id="add_id_number" name="id_number">
                                     </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">المحافظة</label>
-                                            <input type="text" name="governorate" class="form-control" value="{{ employee.governorate|default:'' }}">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">المركز</label>
-                                            <input type="text" name="district" class="form-control" value="{{ employee.district|default:'' }}">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-12">
-                                        <div class="mb-3">
-                                            <label class="form-label">العنوان</label>
-                                            <input type="text" name="address" class="form-control" value="{{ employee.address|default:'' }}">
-                                        </div>
-                                    </div>
-        
-                                    <!-- 3. التواريخ -->
-                                    <h5 class="col-12 mb-3">التواريخ</h5>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">العمر</label>
-                                            <input type="number" name="age" class="form-control" value="{{ employee.age|default:'' }}" readonly>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">تاريخ الميلاد</label>
-                                            <input type="date" name="date_of_birth" class="form-control" value="{{ employee.date_of_birth|date:'Y-m-d'|default:'' }}" readonly>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">تاريخ التقاعد</label>
-                                            <input type="date" name="date_of_retirement" class="form-control" value="{{ employee.date_of_retirement|date:'Y-m-d'|default:'' }}" readonly>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">تاريخ دخول الإدارة</label>
-                                            <input type="date" name="date_of_edara" class="form-control" value="{{ employee.date_of_edara|date:'Y-m-d'|default:'' }}">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">تاريخ التعيين</label>
-                                            <input type="date" name="date_of_appointment" class="form-control" value="{{ employee.date_of_appointment|date:'Y-m-d'|default:'' }}">
-                                        </div>
-                                    </div>
-        
-                                    <!-- 4. الوظيفة والحالة -->
-                                    <h5 class="col-12 mb-3">الوظيفة والحالة</h5>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">رقم الشرطة</label>
-                                            <input type="text" name="police_number" class="form-control" value="{{ employee.police_number|default:'' }}">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">رقم التأمين</label>
-                                            <input type="text" name="insurance_number" class="form-control" value="{{ employee.insurance_number|default:'' }}">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">الحالة الصحية</label>
-                                            <select name="health_status" class="form-control">
-                                                <option value="" {% if not employee.health_status %}selected{% endif %}>اختر الحالة</option>
-                                                {% for choice_value, choice_label in employee.HEALTH_STATUS_CHOICES %}
-                                                    <option value="{{ choice_value }}" {% if employee.health_status == choice_value %}selected{% endif %}>
-                                                        {{ choice_label }}
-                                                    </option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">الدرجة</label>
-                                            <select name="rank" class="form-control">
-                                                <option value="">اختر الدرجة</option>
-                                                {% for rank in ranks %}
-                                                    <option value="{{ rank.id }}" {% if employee.rank and employee.rank.id == rank.id %}selected{% endif %}>
-                                                        {{ rank.name }}
-                                                    </option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">القسم</label>
-                                            <select name="department" class="form-control">
-                                                <option value="">اختر القسم</option>
-                                                {% for department in departments %}
-                                                    <option value="{{ department.id }}" {% if employee.department and employee.department.id == department.id %}selected{% endif %}>
-                                                        {{ department.name }}
-                                                    </option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">ملاحظات</label>
-                                            <input type="text" name="nots" class="form-control" value="{{ employee.nots|default:'' }}">
-                                        </div>
-                                    </div>
-                                    <!-- 5. الإعدادات -->
-                                    <h5 class="col-12 mb-3">الإعدادات</h5>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">معهد أمناء / درجة أولى</label>
-                                            <select name="amen_or_ola" class="form-control">
-                                                <option value="1" {% if employee.amen_or_ola %}selected{% endif %}>معهد أمناء</option>
-                                                <option value="0" {% if not employee.amen_or_ola %}selected{% endif %}>درجة أولى</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">التشغيل</label>
-                                            <select name="operation" class="form-control">
-                                                <option value="السبت" {% if employee.operation == 'السبت' %}selected{% endif %}>السبت</option>
-                                                <option value="الأحد" {% if employee.operation == 'الأحد' %}selected{% endif %}>الأحد</option>
-                                                <option value="الاثنين" {% if employee.operation == 'الاثنين' %}selected{% endif %}>الاثنين</option>
-                                                <option value="الثلاثاء" {% if employee.operation == 'الثلاثاء' %}selected{% endif %}>الثلاثاء</option>
-                                                <option value="الأربعاء" {% if employee.operation == 'الأربعاء' %}selected{% endif %}>الأربعاء</option>
-                                                <option value="الخميس" {% if employee.operation == 'الخميس' %}selected{% endif %}>الخميس</option>
-                                                <option value="الجمعة" {% if employee.operation == 'الجمعة' %}selected{% endif %}>الجمعة</option>
-                                                <option value="عمل يومي" {% if employee.operation == 'عمل يومي' %}selected{% endif %}>عمل يومي</option>
-                                                <option value="انتداب" {% if employee.operation == 'انتداب' %}selected{% endif %}>انتداب</option>
-                                                <option value="مأمورية" {% if employee.operation == 'مأمورية' %}selected{% endif %}>مأمورية</option>
-                                                <option value="مرضي" {% if employee.operation == 'مرضي' %}selected{% endif %}>مرضي</option>
-                                                <option value="قرار66" {% if employee.operation == 'قرار66' %}selected{% endif %}>قرار66</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">نوع الدرجة</label>
-                                            <select name="rank_kind" class="form-control">
-                                                <option value="" {% if not employee.rank_kind %}selected{% endif %}>اختر نوع الدرجة</option>
-                                                <option value="1" {% if employee.rank_kind == 1 %}selected{% endif %}>أمناء</option>
-                                                <option value="2" {% if employee.rank_kind == 2 %}selected{% endif %}>مساعدين</option>
-                                                <option value="4" {% if employee.rank_kind == 4 %}selected{% endif %}>مندوبين</option>
-                                                <option value="5" {% if employee.rank_kind == 5 %}selected{% endif %}>درجة أولى</option>
-                                                <option value="6" {% if employee.rank_kind == 6 %}selected{% endif %}>معاونين</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">ترتيب مخصص</label>
-                                            <input type="number" name="dep_sort" class="form-control" value="{{ employee.dep_sort|default:'' }}">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">الوضع</label>
-                                            <select name="mainornot" class="form-control">
-                                                <option value="1" {% if employee.mainornot == 1 %}selected{% endif %}>قوة أساسية</option>
-                                                <option value="0" {% if employee.mainornot == 0 %}selected{% endif %}>منتدب</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">يستقل الأتوبيس</label>
-                                            <div class="form-check">
-                                                <input type="checkbox" name="bus" value="1" class="form-check-input" {% if employee.bus == 1 %}checked{% endif %}>
-                                                <label class="form-check-label">نعم (يستقل الأتوبيس)</label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label class="form-label">مطالب بحضور التمام</label>
-                                            <div class="form-check">
-                                                <input type="checkbox" name="tmamam" value="1" class="form-check-input" {% if employee.tmamam == 1 %}checked{% endif %}>
-                                                <label class="form-check-label">نعم (يحضر التمام)</label>
-                                            </div>
-                                        </div>
-                                    </div>
-        
-                                    <!-- 6. زر الحفظ -->
-                                    <div class="col-12">
-                                        <button type="submit" class="btn btn-primary">حفظ التعديلات</button>
-                                    </div>
-                                </div>
-                            </form>
+                                    <button type="submit" class="btn btn-primary">إضافة</button>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        <!-- نافذة تأكيد الحذف (Modal) -->
-        <div class="modal fade" id="deleteModal{{ employee.id }}" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h4 class="modal-title">تأكيد الحذف</h4>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">×</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <p>هل أنت متأكد من حذف بيانات الموظف: <strong>{{ employee.name }}</strong>؟</p>
-                        <p>هذا الإجراء لا يمكن التراجع عنه.</p>
-                        {% if employee.attendances.exists %}
-                            <p class="text-danger">تحذير 1: سيتم حذف جميع سجلات الحضور المرتبطة بهذا الموظف!</p>
-                            <p class="text-danger">تحذير 2: كافة البيانات المحذوفة لن يمكن استرجاعها لاحقًا.</p>
-                        {% else %}
-                            <p class="text-danger">تحذير 1: سيتم حذف بيانات الموظف بالكامل من النظام!</p>
-                            <p class="text-danger">تحذير 2: لا توجد سجلات حضور، لكن الحذف نهائي وغير قابل للاسترجاع.</p>
-                        {% endif %}
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">إلغاء</button>
-                        <form method="POST" action="{% url 'delete_employee' employee.id %}">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-danger">حذف</button>
-                        </form>
+
+                <!-- نافذة تعديل فرد -->
+                <div class="modal fade" id="editEmployeeModal" tabindex="-1" role="dialog" aria-labelledby="editEmployeeModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="editEmployeeModalLabel">تعديل فرد: <span id="editEmployeeName"></span></h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">×</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="editEmployeeForm" enctype="multipart/form-data">
+                                    <input type="hidden" id="edit_id" name="id">
+                                    <input type="hidden" id="edit_institute" name="institute" value="{{ institute_id }}">
+
+                                    <ul class="nav nav-tabs" id="employeeTabs" role="tablist">
+                                        <li class="nav-item">
+                                            <a class="nav-link active" id="basic-tab" data-toggle="tab" href="#basic" role="tab" aria-controls="basic" aria-selected="true">البيانات الأساسية</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" id="dates-tab" data-toggle="tab" href="#dates" role="tab" aria-controls="dates" aria-selected="false">التواريخ</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" id="personal-tab" data-toggle="tab" href="#personal" role="tab" aria-controls="personal" aria-selected="false">الحالة الشخصية</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" id="work-tab" data-toggle="tab" href="#work" role="tab" aria-controls="work" aria-selected="false">العمل</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" id="address-tab" data-toggle="tab" href="#address" role="tab" aria-controls="address" aria-selected="false">العنوان</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" id="additional-tab" data-toggle="tab" href="#additional" role="tab" aria-controls="additional" aria-selected="false">بيانات إضافية</a>
+                                        </li>
+                                    </ul>
+
+                                    <div class="tab-content" id="employeeTabsContent">
+                                        <!-- البيانات الأساسية -->
+                                        <div class="tab-pane fade show active" id="basic" role="tabpanel" aria-labelledby="basic-tab">
+                                            <div class="form-group">
+                                                <label for="edit_sort_number">ترتيب الاقدمية <span class="text-danger">*</span></label>
+                                                <input type="number" class="form-control" id="edit_sort_number" name="sort_number" required>
+                                                <div class="invalid-feedback">يرجى إدخال ترتيب الاقدمية</div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="edit_name">الاسم <span class="text-danger">*</span></label>
+                                                <input type="text" class="form-control" id="edit_name" name="name" required>
+                                                <div class="invalid-feedback">حقل الاسم إلزامي</div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="edit_id_number">الرقم القومي</label>
+                                                <input type="text" class="form-control" id="edit_id_number" name="id_number">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="edit_phone_number">رقم الهاتف</label>
+                                                <input type="text" class="form-control" id="edit_phone_number" name="phone_number">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="edit_alt_phone_number">رقم هاتف بديل</label>
+                                                <input type="text" class="form-control" id="edit_alt_phone_number" name="alt_phone_number">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="edit_nickname">اللقب</label>
+                                                <input type="text" class="form-control" id="edit_nickname" name="nickname">
+                                            </div>
+                                        </div>
+
+                                        <!-- التواريخ -->
+                                        <div class="tab-pane fade" id="dates" role="tabpanel" aria-labelledby="dates-tab">
+                                            <div class="form-group">
+                                                <label for="edit_date_of_birth">تاريخ الميلاد</label>
+                                                <input type="date" class="form-control" id="edit_date_of_birth" name="date_of_birth">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="edit_date_of_retirement">تاريخ التقاعد</label>
+                                                <input type="date" class="form-control" id="edit_date_of_retirement" name="date_of_retirement">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="edit_date_of_edara">تاريخ دخول الإدارة</label>
+                                                <input type="date" class="form-control" id="edit_date_of_edara" name="date_of_edara">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="edit_date_of_appointment">تاريخ التعيين</label>
+                                                <input type="date" class="form-control" id="edit_date_of_appointment" name="date_of_appointment">
+                                            </div>
+                                        </div>
+
+                                        <!-- الحالة الشخصية -->
+                                        <div class="tab-pane fade" id="personal" role="tabpanel" aria-labelledby="personal-tab">
+                                            <div class="form-group">
+                                                <label for="edit_gender">الجنس</label>
+                                                <select class="form-control" id="edit_gender" name="gender">
+                                                    <option value="">اختر الجنس (اختياري)</option>
+                                                    <option value="ذكر">ذكر</option>
+                                                    <option value="أنثى">أنثى</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="edit_marital_status">الحالة الاجتماعية</label>
+                                                <select class="form-control" id="edit_marital_status" name="marital_status">
+                                                    <option value="">اختر الحالة (اختياري)</option>
+                                                    <option value="أعزب">أعزب</option>
+                                                    <option value="متزوج">متزوج</option>
+                                                    <option value="مطلق">مطلق</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="edit_health_status">الحالة الصحية</label>
+                                                <select class="form-control" id="edit_health_status" name="health_status">
+                                                    <option value="">اختر الحالة (اختياري)</option>
+                                                    <option value="جيدة">جيدة</option>
+                                                    <option value="عمل إداري مكتبي">عمل إداري مكتبي</option>
+                                                    <option value="ممنوع من حمل السلاح">ممنوع من حمل السلاح</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <!-- العمل -->
+                                        <div class="tab-pane fade" id="work" role="tabpanel" aria-labelledby="work-tab">
+                                            <div class="form-group">
+                                                <label for="edit_operation">التشغيل</label>
+                                                <select class="form-control" id="edit_operation" name="operation">
+                                                    <option value="">اختر النوع (اختياري)</option>
+                                                    <option value="لم يحدد">لم يحدد</option>
+                                                    <option value="السبت">السبت</option>
+                                                    <option value="الأحد">الأحد</option>
+                                                    <option value="الاثنين">الاثنين</option>
+                                                    <option value="الثلاثاء">الثلاثاء</option>
+                                                    <option value="الأربعاء">الأربعاء</option>
+                                                    <option value="الخميس">الخميس</option>
+                                                    <option value="الجمعة">الجمعة</option>
+                                                    <option value="عمل يومي">عمل يومي</option>
+                                                    <option value="انتداب">انتداب</option>
+                                                    <option value="قرار66">قرار66</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="edit_police_number">رقم الشرطة</label>
+                                                <input type="text" class="form-control" id="edit_police_number" name="police_number">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="edit_insurance_number">رقم التأمين</label>
+                                                <input type="text" class="form-control" id="edit_insurance_number" name="insurance_number">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="edit_rank_id">الدرجة</label>
+                                                <select class="form-control" id="edit_rank_id" name="rank_id">
+                                                    <option value="">اختر الدرجة (اختياري)</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="edit_department_id">القسم</label>
+                                                <select class="form-control" id="edit_department_id" name="department_id">
+                                                    <option value="">اختر القسم (اختياري)</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>قوة اساسية / منتدب</label>
+                                                <select class="form-control" id="edit_mainornot" name="mainornot">
+                                                    <option value="">اختر (اختياري)</option>
+                                                    <option value="1">قوة أساسية</option>
+                                                    <option value="2">منتدب</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>نوع الدرجة</label>
+                                                <select class="form-control" id="edit_rank_kind" name="rank_kind">
+                                                    <option value="">اختر (اختياري)</option>
+                                                    <option value="1">أمناء</option>
+                                                    <option value="2">مساعدين</option>
+                                                    <option value="3">مراقبين</option>
+                                                    <option value="4">مندوبين</option>
+                                                    <option value="5">رقيب أول</option>
+                                                    <option value="6">رقيب</option>
+                                                    <option value="7">عريف</option>
+                                                    <option value="8">شرطيين</option>
+                                                    <option value="9">معاونين</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <!-- العنوان -->
+                                        <div class="tab-pane fade" id="address" role="tabpanel" aria-labelledby="address-tab">
+                                            <div class="form-group">
+                                                <label for="edit_governorate">المحافظة</label>
+                                                <input type="text" class="form-control" id="edit_governorate" name="governorate">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="edit_district">المركز</label>
+                                                <input type="text" class="form-control" id="edit_district" name="district">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="edit_address">العنوان</label>
+                                                <input type="text" class="form-control" id="edit_address" name="address">
+                                            </div>
+                                        </div>
+
+                                        <!-- بيانات إضافية -->
+                                        <div class="tab-pane fade" id="additional" role="tabpanel" aria-labelledby="additional-tab">
+                                            <div class="form-group">
+                                                <label>يحضر التمام</label>
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input" type="radio" name="tmamam" id="edit_tmamam_1" value="1">
+                                                    <label class="form-check-label" for="edit_tmamam_1">نعم</label>
+                                                </div>
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input" type="radio" name="tmamam" id="edit_tmamam_0" value="0">
+                                                    <label class="form-check-label" for="edit_tmamam_0">لا</label>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>يحصل علي تعيين</label>
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input" type="radio" name="food" id="edit_food_1" value="1">
+                                                    <label class="form-check-label" for="edit_food_1">نعم</label>
+                                                </div>
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input" type="radio" name="food" id="edit_food_0" value="0">
+                                                    <label class="form-check-label" for="edit_food_0">لا</label>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>يستقل الاتوبيس</label>
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input" type="radio" name="bus" id="edit_bus_1" value="1">
+                                                    <label class="form-check-label" for="edit_bus_1">نعم</label>
+                                                </div>
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input" type="radio" name="bus" id="edit_bus_0" value="0">
+                                                    <label class="form-check-label" for="edit_bus_0">لا</label>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="edit_age">العمر</label>
+                                                <input type="number" class="form-control" id="edit_age" name="age" readonly>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="edit_dep_sort">ترتيب القسم</label>
+                                                <input type="number" class="form-control" id="edit_dep_sort" name="dep_sort">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="edit_rahatcounter">عداد الراحة</label>
+                                                <input type="number" class="form-control" id="edit_rahatcounter" name="rahatcounter">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="edit_total_leave">إجمالي الإجازات</label>
+                                                <input type="number" class="form-control" id="edit_total_leave" name="total_leave">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="edit_amen_or_ola">خريج معهد أمناء</label>
+                                                <select class="form-control" id="edit_amen_or_ola" name="amen_or_ola">
+                                                    <option value="">اختر (اختياري)</option>
+                                                    <option value="0">لا</option>
+                                                    <option value="1">نعم</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="edit_image">الصورة</label>
+                                                <input type="file" class="form-control" id="edit_image" name="image">
+                                                <small class="form-text text-muted">يجب أن تكون الصورة بصيغة JPG أو PNG</small>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="edit_nots">ملاحظات</label>
+                                                <textarea class="form-control" id="edit_nots" name="nots" rows="3"></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary mt-3">حفظ التعديلات</button>
+                                </form>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
-            {% endfor %}
-
             {% else %}
-                <div class="alert alert-info text-center" role="alert">
-                    لا توجد بيانات للأفراد حاليًا.
-                </div>
+                <p class="text-center">يرجى <a href="{% url 'login' %}">تسجيل الدخول</a> لعرض الافراد.</p>
             {% endif %}
         </div>
     </div>
-
 </div>
+{% endblock %}
 
-<!-- إعدادات DataTables لكل جدول -->
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap4.min.js"></script>
+
 <script>
+    const BASE_URL = window.location.origin;
+
+    const API_URL = `${BASE_URL}/api/employees/`;
+    const RANKS_API_URL = `${BASE_URL}/api/ranks/`;
+    const DEPARTMENTS_API_URL = `${BASE_URL}/api/departments/`;
+
+    let table;
+
+    function showAlert(message, type) {
+        const alertHtml = `
+            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                ${message}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+        `;
+        $('#alertContainer').html(alertHtml);
+        setTimeout(() => $('.alert').alert('close'), 5000);
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    const csrftoken = getCookie('csrftoken');
+
     $(document).ready(function() {
-        $('#personalTable').DataTable({
-            "paging": true,
-            "searching": true,
-            "ordering": true,
-            "info": true,
-            "autoWidth": false,
-            "language": {
-                "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Arabic.json"
-            },
-            "dom": 'Bfrtip',
-            "buttons": ['copy', 'excel', 'pdf', 'print']
+        console.log('jQuery loaded:', typeof $ !== 'undefined');
+        console.log('Token:', token);
+        {% if user.is_authenticated %}
+            table = $('#employeesTable').DataTable({
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.13.4/i18n/ar.json"
+                }
+            });
+            fetchEmployees();
+            fetchRanks();
+            fetchDepartments();
+            setAutoSortNumbers();
+        {% endif %}
+
+        $('#addEmployeeForm').on('submit', async function(e) {
+            e.preventDefault();
+            const form = this;
+            if (!form.checkValidity()) {
+                e.stopPropagation();
+                form.classList.add('was-validated');
+                return;
+            }
+
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+            data.rank_id = data.rank_id === "" ? null : data.rank_id;
+            data.department_id = data.department_id === "" ? null : data.department_id;
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Token ${token}`,
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (response.ok) {
+                    $('#addEmployeeModal').modal('hide');
+                    form.reset();
+                    form.classList.remove('was-validated');
+                    showAlert('تم إضافة الفرد بنجاح', 'success');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    const errorData = await response.json();
+                    let errorMessage = 'حدث خطأ أثناء إضافة الفرد';
+                    if (errorData.name) {
+                        errorMessage = errorData.name.join(', ');
+                    }
+                    showAlert(errorMessage, 'danger');
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                showAlert('حدث خطأ في الاتصال بالخادم', 'danger');
+            }
         });
 
-        $('#contactTable').DataTable({
-            "paging": true,
-            "searching": true,
-            "ordering": true,
-            "info": true,
-            "autoWidth": false,
-            "language": {
-                "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Arabic.json"
-            },
-            "dom": 'Bfrtip',
-            "buttons": ['copy', 'excel', 'pdf', 'print']
+        $('#editEmployeeForm').on('submit', async function(e) {
+            e.preventDefault();
+            const form = this;
+            if (!form.checkValidity()) {
+                e.stopPropagation();
+                form.classList.add('was-validated');
+                return;
+            }
+
+            const formData = new FormData(form);
+            const id = formData.get('id');
+            if (formData.get('id_number') === '') {
+                formData.set('id_number', null);
+            }
+
+            try {
+                const response = await fetch(`${API_URL}${id}/`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    $('#editEmployeeModal').modal('hide');
+                    form.reset();
+                    form.classList.remove('was-validated');
+                    showAlert('تم تحديث بيانات الفرد بنجاح', 'success');
+                    fetchEmployees();
+                } else {
+                    const text = await response.text();
+                    try {
+                        const errorData = JSON.parse(text);
+                        let errorMessage = 'حدث خطأ أثناء التعديل';
+                        if (errorData.id_number) {
+                            errorMessage = errorData.id_number.join(', ');
+                        } else if (errorData.name) {
+                            errorMessage = errorData.name.join(', ');
+                        }
+                        showAlert(errorMessage, 'danger');
+                    } catch {
+                        showAlert('حدث خطأ غير متوقع: ' + text.substring(0, 100), 'danger');
+                    }
+                }
+            } catch (error) {
+                console.error('Edit fetch error:', error);
+                showAlert('خطأ في الاتصال: ' + error.message, 'danger');
+            }
         });
 
-        $('#datesTable').DataTable({
-            "paging": true,
-            "searching": true,
-            "ordering": true,
-            "info": true,
-            "autoWidth": false,
-            "language": {
-                "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Arabic.json"
-            },
-            "dom": 'Bfrtip',
-            "buttons": ['copy', 'excel', 'pdf', 'print']
+        $('#edit_id_number').on('change', async function() {
+            const idNumber = $(this).val();
+            if (idNumber) {
+                try {
+                    const response = await fetch(`${API_URL}extract_birth_date/?id_number=${idNumber}`, {
+                        headers: {
+                            'Authorization': `Token ${token}`,
+                            'X-CSRFToken': csrftoken
+                        }
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.date_of_birth) {
+                            $('#edit_date_of_birth').val(data.date_of_birth);
+                            
+                            // Calculate retirement date (60 years after birth)
+                            const birthDate = new Date(data.date_of_birth);
+                            const retirementDate = new Date(birthDate);
+                            retirementDate.setFullYear(birthDate.getFullYear() + 60);
+                            $('#edit_date_of_retirement').val(retirementDate.toISOString().split('T')[0]);
+
+                            // Calculate age
+                            const today = new Date();
+                            let age = today.getFullYear() - birthDate.getFullYear();
+                            const monthDiff = today.getMonth() - birthDate.getMonth();
+                            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                                age--;
+                            }
+                            $('#edit_age').val(age);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error fetching birth date:', error);
+                }
+            }
         });
 
-        $('#jobTable').DataTable({
-            "paging": true,
-            "searching": true,
-            "ordering": true,
-            "info": true,
-            "autoWidth": false,
-            "language": {
-                "url": "//cdn.datatables.net/plug-ins/1.10.25/i18n/Arabic.json"
-            },
-            "dom": 'Bfrtip',
-            "buttons": ['copy', 'excel', 'pdf', 'print']
+        $('#addEmployeeModal').on('show.bs.modal', function () {
+            setAutoSortNumbers();
         });
     });
+
+    async function fetchEmployees() {
+        try {
+            const response = await fetch(API_URL, {
+                headers: { 'Authorization': `Token ${token}` }
+            });
+            if (response.status === 401) {
+                showAlert('انتهت جلسة العمل، يرجى تسجيل الدخول مرة أخرى', 'warning');
+                window.location.href = '{% url "login" %}';
+                return;
+            }
+            const employees = await response.json();
+            table.clear();
+            $('#employeeDetails').empty();
+
+            employees.forEach(employee => {
+                // تحديث جدول قائمة الأفراد
+                table.row.add([
+                    employee.sort_number || '-',
+                    employee.rank ? employee.rank.name : '-', // الدرجة
+                    employee.police_number || '-', // رقم الشرطة
+                    employee.name, // الاسم
+                    employee.phone_number || '-', // رقم الهاتف
+                    employee.date_of_birth || '-', // تاريخ الميلاد
+                    employee.date_of_appointment || '-', // تاريخ التعيين
+                    {% if user.is_staff %}
+                        `<button class="btn btn-sm btn-warning" onclick="editEmployee(${employee.id}, '${employee.name}')">تعديل</button>
+                         <button class="btn btn-sm btn-danger" onclick="deleteEmployee(${employee.id})">حذف</button>`
+                    {% else %}
+                        ''
+                    {% endif %}
+                ]);
+
+                // إضافة تفاصيل الأفراد في تبويب التفاصيل
+                const detailHtml = `
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h5>${employee.name}</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="nav nav-tabs" id="employeeDetailTabs${employee.id}" role="tablist">
+                                <li class="nav-item">
+                                    <a class="nav-link active" id="basic-detail-tab-${employee.id}" data-toggle="tab" href="#basic-detail-${employee.id}" role="tab" aria-controls="basic-detail-${employee.id}" aria-selected="true">البيانات الأساسية</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="dates-detail-tab-${employee.id}" data-toggle="tab" href="#dates-detail-${employee.id}" role="tab" aria-controls="dates-detail-${employee.id}" aria-selected="false">التواريخ</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="personal-detail-tab-${employee.id}" data-toggle="tab" href="#personal-detail-${employee.id}" role="tab" aria-controls="personal-detail-${employee.id}" aria-selected="false">الحالة الشخصية</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="work-detail-tab-${employee.id}" data-toggle="tab" href="#work-detail-${employee.id}" role="tab" aria-controls="work-detail-${employee.id}" aria-selected="false">العمل</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="address-detail-tab-${employee.id}" data-toggle="tab" href="#address-detail-${employee.id}" role="tab" aria-controls="address-detail-${employee.id}" aria-selected="false">العنوان</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="additional-detail-tab-${employee.id}" data-toggle="tab" href="#additional-detail-${employee.id}" role="tab" aria-controls="additional-detail-${employee.id}" aria-selected="false">بيانات إضافية</a>
+                                </li>
+                            </ul>
+                            <div class="tab-content" id="employeeDetailTabsContent${employee.id}">
+                                <div class="tab-pane fade show active" id="basic-detail-${employee.id}" role="tabpanel" aria-labelledby="basic-detail-tab-${employee.id}">
+                                    <p><strong>ترتيب الاقدمية:</strong> ${employee.sort_number || '-'}</p>
+                                    <p><strong>الاسم:</strong> ${employee.name || '-'}</p>
+                                    <p><strong>الرقم القومي:</strong> ${employee.id_number || '-'}</p>
+                                    <p><strong>رقم الهاتف:</strong> ${employee.phone_number || '-'}</p>
+                                    <p><strong>رقم هاتف بديل:</strong> ${employee.alt_phone_number || '-'}</p>
+                                    <p><strong>اللقب:</strong> ${employee.nickname || '-'}</p>
+                                </div>
+                                <div class="tab-pane fade" id="dates-detail-${employee.id}" role="tabpanel" aria-labelledby="dates-detail-tab-${employee.id}">
+                                    <p><strong>تاريخ الميلاد:</strong> ${employee.date_of_birth || '-'}</p>
+                                    <p><strong>تاريخ التقاعد:</strong> ${employee.date_of_retirement || '-'}</p>
+                                    <p><strong>تاريخ دخول الإدارة:</strong> ${employee.date_of_edara || '-'}</p>
+                                    <p><strong>تاريخ التعيين:</strong> ${employee.date_of_appointment || '-'}</p>
+                                </div>
+                                <div class="tab-pane fade" id="personal-detail-${employee.id}" role="tabpanel" aria-labelledby="personal-detail-tab-${employee.id}">
+                                    <p><strong>الجنس:</strong> ${employee.gender || '-'}</p>
+                                    <p><strong>الحالة الاجتماعية:</strong> ${employee.marital_status || '-'}</p>
+                                    <p><strong>الحالة الصحية:</strong> ${employee.health_status || '-'}</p>
+                                </div>
+                                <div class="tab-pane fade" id="work-detail-${employee.id}" role="tabpanel" aria-labelledby="work-detail-tab-${employee.id}">
+                                    <p><strong>التشغيل:</strong> ${employee.operation || '-'}</p>
+                                    <p><strong>رقم الشرطة:</strong> ${employee.police_number || '-'}</p>
+                                    <p><strong>رقم التأمين:</strong> ${employee.insurance_number || '-'}</p>
+                                    <p><strong>الدرجة:</strong> ${employee.rank ? employee.rank.name : '-'}</p>
+                                    <p><strong>القسم:</strong> ${employee.department ? employee.department.name : '-'}</p>
+                                    <p><strong>قوة أساسية/منتدب:</strong> ${employee.mainornot == 1 ? 'قوة أساسية' : employee.mainornot == 2 ? 'منتدب' : '-'}</p>
+                                    <p><strong>نوع الدرجة:</strong> ${employee.rank_kind || '-'}</p>
+                                </div>
+                                <div class="tab-pane fade" id="address-detail-${employee.id}" role="tabpanel" aria-labelledby="address-detail-tab-${employee.id}">
+                                    <p><strong>المحافظة:</strong> ${employee.governorate || '-'}</p>
+                                    <p><strong>المركز:</strong> ${employee.district || '-'}</p>
+                                    <p><strong>العنوان:</strong> ${employee.address || '-'}</p>
+                                    <p><strong>العنوان كامل:</strong> ${employee.governorate || '-'} - ${employee.district || '-'} - ${employee.address || '-'} </p>
+                                </div>
+                                <div class="tab-pane fade" id="additional-detail-${employee.id}" role="tabpanel" aria-labelledby="additional-detail-tab-${employee.id}">
+                                    <p><strong>يحضر التمام:</strong> ${employee.tmamam ? 'نعم' : 'لا'}</p>
+                                    <p><strong>يحصل على تعيين:</strong> ${employee.food ? 'نعم' : 'لا'}</p>
+                                    <p><strong>يستقل الاتوبيس:</strong> ${employee.bus ? 'نعم' : 'لا'}</p>
+                                    <p><strong>العمر:</strong> ${employee.age || '-'}</p>
+                                    <p><strong>ترتيب القسم:</strong> ${employee.dep_sort || '-'}</p>
+                                    <p><strong>عداد الراحة:</strong> ${employee.rahatcounter || '-'}</p>
+                                    <p><strong>إجمالي الإجازات:</strong> ${employee.total_leave || '-'}</p>
+                                    <p><strong>خريج معهد أمناء:</strong> ${employee.amen_or_ola ? 'نعم' : 'لا'}</p>
+                                    <p><strong>ملاحظات:</strong> ${employee.nots || '-'}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                $('#employeeDetails').append(detailHtml);
+            });
+
+            table.draw();
+        } catch (error) {
+            console.error('Fetch employees error:', error);
+            showAlert('حدث خطأ أثناء جلب بيانات الفردين', 'danger');
+        }
+    }
+
+    async function fetchRanks() {
+        try {
+            const response = await fetch(RANKS_API_URL, {
+                headers: { 'Authorization': `Token ${token}` }
+            });
+            if (response.ok) {
+                const ranks = await response.json();
+                const rankSelect = document.getElementById('edit_rank_id');
+                const addRankSelect = document.getElementById('add_rank_id');
+                rankSelect.innerHTML = '<option value="">اختر الدرجة (اختياري)</option>';
+                addRankSelect.innerHTML = '<option value="">اختر الدرجة (اختياري)</option>';
+                ranks.forEach(rank => {
+                    const option = document.createElement('option');
+                    const addOption = document.createElement('option');
+                    option.value = rank.id;
+                    option.text = rank.name;
+                    addOption.value = rank.id;
+                    addOption.text = rank.name;
+                    rankSelect.appendChild(option);
+                    addRankSelect.appendChild(addOption);
+                });
+            } else {
+                console.error('Failed to fetch ranks:', response.status);
+                showAlert('حدث خطأ أثناء جلب بيانات الرتب', 'warning');
+            }
+        } catch (error) {
+            console.error('Fetch ranks error:', error);
+            showAlert('حدث خطأ في الاتصال أثناء جلب الرتب', 'danger');
+        }
+    }
+
+    async function fetchDepartments() {
+        try {
+            const response = await fetch(DEPARTMENTS_API_URL, {
+                headers: { 'Authorization': `Token ${token}` }
+            });
+            if (response.ok) {
+                const departments = await response.json();
+                const deptSelect = document.getElementById('edit_department_id');
+                const addDeptSelect = document.getElementById('add_department_id');
+                deptSelect.innerHTML = '<option value="">اختر القسم (اختياري)</option>';
+                addDeptSelect.innerHTML = '<option value="">اختر القسم (اختياري)</option>';
+                departments.forEach(dept => {
+                    const option = document.createElement('option');
+                    const addOption = document.createElement('option');
+                    option.value = dept.id;
+                    option.text = dept.name;
+                    addOption.value = dept.id;
+                    addOption.text = dept.name;
+                    deptSelect.appendChild(option);
+                    addDeptSelect.appendChild(addOption);
+                });
+            } else {
+                console.error('Failed to fetch departments:', response.status);
+                showAlert('حدث خطأ أثناء جلب بيانات الأقسام', 'warning');
+            }
+        } catch (error) {
+            console.error('Fetch departments error:', error);
+            showAlert('حدث خطأ في الاتصال أثناء جلب الأقسام', 'danger');
+        }
+    }
+
+    async function editEmployee(id, name) {
+        try {
+            const response = await fetch(`${API_URL}${id}/`, {
+                headers: { 'Authorization': `Token ${token}` }
+            });
+            if (response.ok) {
+                const employee = await response.json();
+                console.log('Employee data fetched:', employee);
+                
+                document.getElementById('editEmployeeName').textContent = name;
+                document.getElementById('edit_id').value = employee.id || '';
+                document.getElementById('edit_sort_number').value = employee.sort_number || '';
+                document.getElementById('edit_name').value = employee.name || '';
+                document.getElementById('edit_id_number').value = employee.id_number || '';
+                document.getElementById('edit_phone_number').value = employee.phone_number || '';
+                document.getElementById('edit_alt_phone_number').value = employee.alt_phone_number || '';
+                document.getElementById('edit_nickname').value = employee.nickname || '';
+                document.getElementById('edit_date_of_birth').value = employee.date_of_birth || '';
+                document.getElementById('edit_date_of_retirement').value = employee.date_of_retirement || '';
+                document.getElementById('edit_date_of_edara').value = employee.date_of_edara || '';
+                document.getElementById('edit_date_of_appointment').value = employee.date_of_appointment || '';
+                document.getElementById('edit_gender').value = employee.gender || '';
+                document.getElementById('edit_marital_status').value = employee.marital_status || '';
+                document.getElementById('edit_health_status').value = employee.health_status || '';
+                document.getElementById('edit_operation').value = employee.operation || '';
+                document.getElementById('edit_police_number').value = employee.police_number || '';
+                document.getElementById('edit_insurance_number').value = employee.insurance_number || '';
+                document.getElementById('edit_governorate').value = employee.governorate || '';
+                document.getElementById('edit_district').value = employee.district || '';
+                document.getElementById('edit_address').value = employee.address || '';
+                document.getElementById('edit_age').value = employee.age || '';
+                document.getElementById('edit_mainornot').value = employee.mainornot || '';
+                document.getElementById('edit_rank_kind').value = employee.rank_kind || '';
+                document.getElementById('edit_tmamam_1').checked = employee.tmamam === 1 || employee.tmamam === true;
+                document.getElementById('edit_tmamam_0').checked = employee.tmamam === 0 || employee.tmamam === false;
+                document.getElementById('edit_food_1').checked = employee.food === 1 || employee.food === true;
+                document.getElementById('edit_food_0').checked = employee.food === 0 || employee.food === false;
+                document.getElementById('edit_bus_1').checked = employee.bus === 1 || employee.bus === true;
+                document.getElementById('edit_bus_0').checked = employee.bus === 0 || employee.bus === false;
+                document.getElementById('edit_rank_id').value = employee.rank ? employee.rank.id : '';
+                document.getElementById('edit_department_id').value = employee.department ? employee.department.id : '';
+                document.getElementById('edit_dep_sort').value = employee.dep_sort || '';
+                document.getElementById('edit_rahatcounter').value = employee.rahatcounter || '';
+                document.getElementById('edit_total_leave').value = employee.total_leave || '';
+                document.getElementById('edit_amen_or_ola').value = employee.amen_or_ola ? '1' : '0';
+                document.getElementById('edit_nots').value = employee.nots || '';
+
+                $('#editEmployeeModal').modal('show');
+            } else {
+                console.error('Failed to fetch employee:', response.status);
+                showAlert('حدث خطأ أثناء جلب بيانات الفرد', 'danger');
+            }
+        } catch (error) {
+            console.error('Edit employee error:', error);
+            showAlert('حدث خطأ أثناء تحميل بيانات الفرد', 'danger');
+        }
+    }
+
+    async function deleteEmployee(id) {
+        if (confirm('هل أنت متأكد من حذف هذا الفرد؟ لا يمكن التراجع عن هذه العملية.')) {
+            try {
+                const response = await fetch(`${API_URL}${id}/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'X-CSRFToken': csrftoken
+                    }
+                });
+                
+                if (response.ok) {
+                    showAlert('تم حذف الفرد بنجاح', 'success');
+                    fetchEmployees();
+                } else {
+                    showAlert('حدث خطأ أثناء حذف الفرد', 'danger');
+                }
+            } catch (error) {
+                console.error('Delete error:', error);
+                showAlert('حدث خطأ في الاتصال أثناء محاولة الحذف', 'danger');
+            }
+        }
+    }
+
+    async function setAutoSortNumbers() {
+        try {
+            const response = await fetch(API_URL, {
+                headers: { 'Authorization': `Token ${token}` }
+            });
+            const employees = await response.json();
+            const maxSortNumber = Math.max(...employees.map(e => e.sort_number || 0), 0) + 1;
+            const maxDepSort = Math.max(...employees.map(e => e.dep_sort || 0), 0) + 1;
+            document.getElementById('add_sort_number').value = maxSortNumber;
+            document.getElementById('add_dep_sort').value = maxDepSort;
+        } catch (error) {
+            console.error('Error fetching max sort numbers:', error);
+            document.getElementById('add_sort_number').value = 1;
+            document.getElementById('add_dep_sort').value = 1;
+        }
+    }
 </script>
 {% endblock %}

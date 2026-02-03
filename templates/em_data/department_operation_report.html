@@ -1,0 +1,489 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}كشف تشغيل الاقسام{% endblock %}
+
+{% block styles %}
+<style>
+    /* Print Styles */
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        .card {
+            box-shadow: none !important;
+            border: none !important;
+            margin-bottom: 20px !important; /* Spacing between continuous tables */
+            page-break-inside: avoid; /* Try to keep a department on one page if possible */
+        }
+        body {
+            background-color: white !important;
+            font-size: 14pt;
+        }
+        .content-wrapper {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            page-break-inside: auto;
+        }
+        th, td {
+            border: 1px solid black !important;
+            padding: 5px !important;
+        }
+        tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+        /* Page Margins for Footer Space */
+        @page {
+            margin-bottom: 0px;
+        }
+        /* Force Footer to Print */
+        footer.main-footer, footer {
+            display: block !important;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            background: white !important;
+            border-top: 1px solid #ccc;
+            text-align: center;
+            z-index: 9999;
+            padding-top: 5px;
+        }
+        body.no-footer footer, body.no-footer footer.main-footer {
+            display: none !important;
+        }
+    }
+
+    /* Screen Styles */
+    .controls-container {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        border: 1px solid #ddd;
+    }
+    
+    .editable-header {
+        border: 1px dashed #ccc;
+        padding: 5px;
+        cursor: text;
+        display: inline-block;
+        min-width: 200px;
+        text-align: center;
+    }
+    .editable-header:focus {
+        border-color: #007bff;
+        outline: none;
+    }
+
+    .report-table th {
+        background-color: #f4f4f4;
+        text-align: center;
+    }
+    .report-table td {
+        text-align: center;
+        vertical-align: middle;
+    }
+    
+    /* Dynamic adjustments */
+    .report-table {
+        width: 100%;
+    }
+    
+    .signatures-section {
+        margin-top: 30px;
+        display: flex;
+        justify-content: space-around;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card no-print">
+            <div class="card-header">
+                <h3 class="card-title">إعدادات التقرير</h3>
+            </div>
+            <div class="card-body">
+                <form id="report-form">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>اختر الأقسام</label>
+                                <select class="select2" multiple="multiple" data-placeholder="حدد الأقسام" style="width: 100%;" id="department-select" name="departments">
+                                    {% for dept in departments %}
+                                    <option value="{{ dept.id }}">{{ dept.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>اختر التشغيل</label>
+                                <select class="select2" multiple="multiple" data-placeholder="حدد التشغيل (افتراضي: الكل)" style="width: 100%;" id="operation-select">
+                                    {% for val, label in operation_choices %}
+                                    <option value="{{ val }}" selected>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                             <div class="form-group">
+                                <label>النوع</label>
+                                <select class="form-control" id="gender-select">
+                                    <option value="all">الكل (ذكر وأنثي)</option>
+                                    <option value="male">ذكور فقط</option>
+                                    <option value="female">أنثي فقط</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                             <div class="form-group">
+                                <label>الترتيب حسب</label>
+                                <select class="form-control" id="sort-select">
+                                    <option value="operation">التشغيل</option>
+                                    <option value="sort_number">ترتيب الأقدمية</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2" style="display: flex; align-items: flex-end;">
+                            <button type="button" class="btn btn-primary btn-block" onclick="generateReport()">عرض الكشف</button>
+                        </div>
+                        <div class="col-md-2" style="display: flex; align-items: flex-end;">
+                            <button type="button" class="btn btn-secondary btn-block" onclick="window.print()">طباعة</button>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>حجم الخط (px)</label>
+                                <input type="number" class="form-control" id="font-size-input" value="22" onchange="updateStyles()">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>ارتفاع الصف (px)</label>
+                                <input type="number" class="form-control" id="row-height-input" value="30" onchange="updateStyles()">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>عرض الأعمدة</label>
+                                <div>
+                                    <input type="checkbox" id="auto-width" checked onchange="toggleAutoWidth()"> تلقائي
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>المسافة بين الجداول (px)</label>
+                                <input type="number" class="form-control" id="margin-input" value="1" onchange="updateStyles()">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>التوقيعات</label>
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox" class="custom-control-input" id="show-signatures" checked onchange="toggleSignatures()">
+                                    <label class="custom-control-label" for="show-signatures">إظهار</label>
+                                </div>
+                                <div class="custom-control custom-switch mt-2">
+                                    <input type="checkbox" class="custom-control-input" id="signatures-end-only" checked onchange="toggleSignatures()">
+                                    <label class="custom-control-label" for="signatures-end-only">في النهاية فقط</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                             <div class="form-group">
+                                <label>الفوتر</label>
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox" class="custom-control-input" id="show-footer" checked onchange="toggleFooter()">
+                                    <label class="custom-control-label" for="show-footer">إظهار</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-2">
+                            <label>نسبة عرض الأعمدة % (عند الغاء التلقائي)</label>
+                        </div>
+                         <div class="col-md-1">
+                             <input type="number" class="form-control" id="width-serial" value="5" placeholder="م" onchange="updateColumnWidths()">
+                             <small class="text-muted">م</small>
+                        </div>
+                        <div class="col-md-2">
+                             <input type="number" class="form-control" id="width-rank" value="10" placeholder="الدرجة" onchange="updateColumnWidths()">
+                             <small class="text-muted">الدرجة</small>
+                        </div>
+                        <div class="col-md-3">
+                             <input type="number" class="form-control" id="width-name" value="35" placeholder="الاسم" onchange="updateColumnWidths()">
+                             <small class="text-muted">الاسم</small>
+                        </div>
+                         <div class="col-md-2">
+                             <input type="number" class="form-control" id="width-op" value="25" placeholder="التشغيل" onchange="updateColumnWidths()">
+                             <small class="text-muted">التشغيل</small>
+                        </div>
+                         <div class="col-md-2">
+                             <input type="number" class="form-control" id="width-dept" value="25" placeholder="القسم" onchange="updateColumnWidths()">
+                             <small class="text-muted">القسم</small>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="report-container">
+    <!-- Reports will be injected here -->
+</div>
+
+<style>
+    /* Dynamic Column Widths Style Block */
+    #dynamic-column-styles {
+        display: none; /* Just a placeholder for style injection */
+    }
+</style>
+
+<script>
+    // Store CSRF token for AJAX
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    function generateReport() {
+        const selectedDepts = $('#department-select').val();
+        
+        if (selectedDepts.length === 0) {
+            alert('يرجى اختيار قسم واحد على الأقل');
+            return;
+        }
+
+        const gender = $('#gender-select').val();
+        const sortBy = $('#sort-select').val();
+        const operations = $('#operation-select').val();
+
+        $.ajax({
+            url: '{% url "department_operation_report_api" %}', 
+            method: 'POST',
+            headers: {'X-CSRFToken': csrfToken},
+            data: JSON.stringify({
+                department_ids: selectedDepts,
+                gender: gender,
+                sort_by: sortBy,
+                operations: operations
+            }),
+            contentType: 'application/json',
+            success: function(data) {
+                renderReports(data);
+            },
+            error: function(err) {
+                alert('حدث خطأ أثناء جلب البيانات');
+                console.error(err);
+            }
+        });
+    }
+
+    function renderReports(data) {
+        const container = document.getElementById('report-container');
+        container.innerHTML = '';
+
+        data.forEach(deptData => {
+            const section = document.createElement('div');
+            section.className = 'card report-section mb-4'; // mb-4 for print spacing if needed
+            
+            // Header
+            const headerHTML = `
+                <div class="text-center mb-3">
+                    <h3 class="editable-header" contenteditable="true" spellcheck="false">${deptData.department_name}</h3>
+                </div>
+            `;
+
+            // Table
+            let tableHTML = `
+                <div class="table-responsive">
+                    <table class="table table-bordered report-table">
+                        <thead>
+                            <tr>
+                                <th class="col-serial">م</th>
+                                <th class="col-rank">الدرجة</th>
+                                <th class="col-name">الاسم</th>
+                                <th class="col-operation">التشغيل</th>
+                                <th class="col-dept">القسم</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            deptData.employees.forEach((emp, index) => {
+                tableHTML += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${emp.rank}</td>
+                        <td>${emp.name}</td>
+                        <td>${emp.operation || '-'}</td>
+                        <td>${emp.department}</td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            // Signatures
+            const signaturesHTML = `
+                <div class="signatures-section">
+                    <div class="signature-box" contenteditable="true">
+                        <p>رئيس القسم</p>
+                        <br><br>
+                        <p></p>
+                    </div>
+                    <div class="signature-box" contenteditable="true">
+                        <p>مدير إدارة موسيقات الشرطة</p>
+                        <br><br>
+                        <p></p>
+                    </div>
+                </div>
+            `;
+
+            section.innerHTML = `
+                <div class="card-body">
+                    ${headerHTML}
+                    ${tableHTML}
+                    ${signaturesHTML}
+                </div>
+                <!-- Removed forced page break for continuous printing -->
+            `;
+            
+            container.appendChild(section);
+        });
+
+        updateStyles();
+        toggleSignatures();
+        toggleAutoWidth(); // Apply current layout settings
+    }
+
+    function updateStyles() {
+        const fontSize = document.getElementById('font-size-input').value + 'px';
+        const rowHeight = document.getElementById('row-height-input').value + 'px';
+        const margin = document.getElementById('margin-input').value + 'px';
+        
+        document.querySelectorAll('.report-table td, .report-table th').forEach(el => {
+            el.style.fontSize = fontSize;
+            el.style.height = rowHeight;
+        });
+
+        document.querySelectorAll('.report-table tr').forEach(el => {
+            el.style.height = rowHeight;
+        });
+        
+        document.querySelectorAll('.report-section').forEach(el => {
+            el.style.setProperty('margin-bottom', margin, 'important');
+        });
+
+        document.querySelectorAll('.report-table').forEach(el => {
+            el.style.marginBottom = margin;
+        });
+    }
+    
+    function toggleAutoWidth() {
+        const auto = document.getElementById('auto-width').checked;
+        
+        // Disable/Enable inputs
+        document.getElementById('width-serial').disabled = auto;
+        document.getElementById('width-rank').disabled = auto;
+        document.getElementById('width-name').disabled = auto;
+        document.getElementById('width-op').disabled = auto;
+        document.getElementById('width-dept').disabled = auto;
+
+        const tables = document.querySelectorAll('.report-table');
+        tables.forEach(table => {
+            table.style.tableLayout = auto ? 'auto' : 'fixed';
+        });
+
+        if (!auto) {
+            updateColumnWidths();
+        }
+    }
+
+    function updateColumnWidths() {
+        if (document.getElementById('auto-width').checked) return;
+
+        const serial = document.getElementById('width-serial').value;
+        const rank = document.getElementById('width-rank').value;
+        const name = document.getElementById('width-name').value;
+        const op = document.getElementById('width-op').value;
+        const dept = document.getElementById('width-dept').value;
+
+        // Create or update dynamic style for columns
+        let styleEl = document.getElementById('custom-col-widths');
+        if (!styleEl) {
+            styleEl = document.createElement('style');
+            styleEl.id = 'custom-col-widths';
+            document.head.appendChild(styleEl);
+        }
+
+        styleEl.innerHTML = `
+            @media print, screen {
+                .col-serial { width: ${serial}% !important; }
+                .col-rank { width: ${rank}% !important; }
+                .col-name { width: ${name}% !important; }
+                .col-operation { width: ${op}% !important; }
+                .col-dept { width: ${dept}% !important; }
+            }
+        `;
+    }
+
+    function toggleSignatures() {
+        const show = document.getElementById('show-signatures').checked;
+        const endOnly = document.getElementById('signatures-end-only').checked;
+        const sections = document.querySelectorAll('.signatures-section');
+        
+        sections.forEach((el, index) => {
+            if (!show) {
+                el.style.display = 'none';
+            } else {
+                if (endOnly) {
+                    if (index === sections.length - 1) {
+                        el.style.display = 'flex';
+                    } else {
+                        el.style.display = 'none';
+                    }
+                } else {
+                    el.style.display = 'flex';
+                }
+            }
+        });
+    }
+
+    function toggleFooter() {
+        const show = document.getElementById('show-footer').checked;
+        if (show) {
+            document.body.classList.remove('no-footer');
+        } else {
+            document.body.classList.add('no-footer');
+        }
+    }
+
+    // Initialize Select2
+    $(document).ready(function() {
+        $('.select2').select2({
+            theme: 'bootstrap4'
+        });
+        toggleAutoWidth(); // Initialize controls state
+        toggleFooter(); // Initialize footer state
+    });
+</script>
+{% endblock %}

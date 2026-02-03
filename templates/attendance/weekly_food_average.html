@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}يومية متوسط التعيينات{% endblock %}
+
+{% block styles %}
+<style>
+    .table-container {
+        width: 100%;
+        overflow-x: auto;
+        margin: 20px 0;
+    }
+    .content-wrapper .table-container .styled-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: 'Arial', sans-serif;
+        font-size: 16px;
+        background-color: #fff;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    .content-wrapper .table-container .styled-table thead th {
+        background-color: #2c3e50;
+        color: #ffffff;
+        font-weight: bold;
+        padding: 12px;
+        text-align: center;
+        border-bottom: 2px solid #1a252f;
+    }
+    .content-wrapper .table-container .styled-table th,
+    .content-wrapper .table-container .styled-table td {
+        padding: 10px;
+        font-size: 18px;
+        border: 1px solid #ddd;
+        text-align: center;
+    }
+    .content-wrapper .table-container .styled-table tbody tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+    .content-wrapper .table-container .styled-table tbody tr:hover {
+        background-color: #f1f1f1;
+    }
+    .content-wrapper button {
+        padding: 8px 16px;
+        background-color: #3498db;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+    .content-wrapper button:hover {
+        background-color: #2980b9;
+    }
+    .date-input-container {
+        margin-bottom: 20px;
+    }
+    .date-input-container input[type="date"] {
+        padding: 8px;
+        font-size: 14px;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+    }
+    .total-row {
+        background-color: #3498db !important;
+        color: white;
+        font-weight: bold;
+    }
+    .total-row:hover {
+        background-color: #2980b9 !important;
+    }
+    @media print {
+        .date-input-container,
+        .print-btn-container {
+            display: none !important;
+        }
+        .content-wrapper .table-container .styled-table {
+            box-shadow: none;
+        }
+        .content-wrapper .table-container .styled-table thead th {
+            background-color: #fff !important;
+            color: #000 !important;
+            border-bottom: 2px solid #000;
+        }
+        .content-wrapper .table-container .styled-table tbody tr:nth-child(even) {
+            background-color: #fff;
+        }
+        .total-row {
+            background-color: #ddd !important;
+            color: #000 !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" dir="rtl">
+    <div class="content">
+        <h2 style="text-align: center; margin-bottom: 20px;">يومية متوسط التعيينات الأسبوعية</h2>
+        
+        <div class="date-input-container">
+            <form method="GET" action="{% url 'weekly_food_average' %}">
+                <label for="selected_date">اختر تاريخ في الأسبوع: </label>
+                <input type="date" id="selected_date" name="selected_date" value="{{ selected_date|date:'Y-m-d' }}">
+                <button type="submit">عرض</button>
+            </form>
+        </div>
+        
+        <div class="print-btn-container">
+            <button onclick="window.print()">طباعة</button>
+        </div>
+        
+        <h5 style="margin: 10px 0;">
+            الأسبوع من {{ week_start|date:"d/m/Y" }} إلى {{ week_end|date:"d/m/Y" }}
+        </h5>
+        
+        <div class="table-container">
+            <!-- الجدول الأول: الحساب العادي -->
+            <h3 style="text-align: center; margin-bottom: 15px;">يومية تعيينات (متغير بناء علي الحضور)</h3>
+            <table class="styled-table">
+                <thead>
+                    <tr>
+                        <th>اليوم</th>
+                        <th>التاريخ</th>
+                        <th>عدد الحاصلين على تعيين</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for day in first_week_days %}
+                    <tr>
+                        <td>{{ day.day_name }}</td>
+                        <td>{{ day.date|date:"d/m/Y" }}</td>
+                        <td>{{ day.count }}</td>
+                    </tr>
+                    {% endfor %}
+                    <tr class="total-row">
+                        <td colspan="2">المجموع الكلي</td>
+                        <td>{{ first_total_assignments }}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- فاصل خط -->
+            <hr style="border: 2px solid #34495e; margin: 40px 0;">
+
+            <!-- الجدول الثاني: الحساب التراكمي -->
+            <h3 style="text-align: center; margin-bottom: 15px;">يومية التعيينات (حساب ثابت)</h3>
+            <table class="styled-table">
+                <thead>
+                    <tr>
+                        <th>اليوم</th>
+                        <th>عدد الحاصلين على تعيين</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for day in second_week_days %}
+                    <tr>
+                        <td>{{ day.day_name }}</td>
+                        <td>{{ day.count }}</td>
+                    </tr>
+                    {% endfor %}
+                    <tr class="total-row">
+                        <td colspan="1">المجموع الكلي</td>
+                        <td>{{ second_total_assignments }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; text-align: right; margin-top: 40px;">
+            <div>
+                <h4>بلوكامين الشئون</h4>
+                <h4>أ.ش / </h4>
+                <h4></h4>
+            </div>
+            <div>
+                <h4>رئيس قسم الشئون</h4>
+                <h4>مقدم / </h4>
+                <h4></h4>
+            </div>
+            <div>
+                <h4>مدير إدارة موسيقات الشرطة</h4>
+                <h4>عميد / </h4>
+                <h4></h4>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+<footer class="main-footer">
+    <p>معا نحو التحول الرقمي - برمجة وتصميم كابتن ياسر أبو دراع</p>
+</footer>
+{% endblock %}

@@ -1,4 +1,557 @@
-<title>
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+    بيانات فرد واحد
+{% endblock %}
+
+{% block styles %}
+    <style>
+        .employee-list-container { height: 100%; }
+        .employee-list { list-style: none; padding: 0; margin: 0; max-height: 500px; overflow-y: auto; border: 1px solid #ccc; background-color: #f8f9fa; position: sticky; top: 0; }
+        .employee-list li { padding: 10px; cursor: pointer; font-size: 14px; text-align: right; border-bottom: 1px solid #eee; }
+        .employee-list li:hover { background-color: #e9ecef; }
+        .employee-list li.selected { background-color: #219C90; color: white; font-weight: bold; }
+        select { -webkit-appearance: none; -moz-appearance: none; appearance: none; background-color: white; padding: 2px; border: 1px solid #ccc; }
+        option[value="_"] { background-color: white; color: black; }
+        option[value="نوبتجي"] { background-color: #219C90; color: white; }
+        option[value="يومي"] { background-color: #A7D397; color: black; }
+        option[value="راحة"] { background-color: #00A9FF; color: white; }
+        option[value="دورية"] { background-color: #C70039; color: white; }
+        option[value="ر بديلة"] { background-color: #0a2df5; color: white; }
+        option[value="طارئة"] { background-color: #FF9130; color: white; }
+        option[value="مأمورية"] { background-color: #eb5bad; color: white; }
+        option[value="مأمورية خ"] { background-color: #DA0C81; color: white; }
+        option[value="فرقة"] { background-color: #BCA37F; color: black; }
+        option[value="انتداب"] { background-color: #713ABE; color: white; }
+        option[value="مرضي"] { background-color: yellow; color: black; }
+        option[value="ج وضع"] { background-color: yellow; color: black; }
+        option[value="خاصه"] { background-color: yellow; color: black; }
+        option[value="8 صباحاً"] { background-color: #89CFF3; color: black; }
+        option[value="ت دوري"] { background-color: #FFF2D8; color: black; }
+        option[value="ت تكراري"] { background-color: #EAD7BB; color: black; }
+        option[value="منحة"] { background-color: #A0E9FF; color: black; }
+        option[value="عطلة"] { background-color: #CDF5FD; color: black; }
+        option[value="غياب"] { background-color: black; color: white; }
+        option[value="قرار66"] { background-color: yellow; color: black; }
+        .att-states { margin: 0px; padding: 0px; font-size: 10px; width: 100%; }
+        table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+        thead th { position: sticky; top: 0; background-color: #f2f2f2; z-index: 10; }
+        table th { border: 1px solid #fff; text-align: center; font-size: 10px; color: #000; padding: 0px; }
+        table td { border: 1px solid #fff; text-align: center; font-size: 13px; color: #000; padding: 15px 0px; font-weight: bolder; }
+        table tr:nth-child(odd) { background-color: rgb(236, 237, 238); }
+        table tr:nth-child(even) { background-color: rgb(171, 211, 214); }
+        input[type="checkbox"] { margin-right: 5px; width: 7px; height: 7px; accent-color: #219C90; }
+        .employee-info { margin-bottom: 20px; font-size: 16px; font-weight: bold; display: flex; align-items: center; gap: 10px; }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div dir="rtl">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="employee-list-container">
+                        <label for="employee-list">اختر الفرد:</label>
+                        <ul class="employee-list" id="employee-list"></ul>
+                    </div>
+                </div>
+                <div class="col-md-9">
+                    <div id="date-form">
+                        <label for="start_date">تاريخ البداية:</label>
+                        <input type="date" id="start_date" name="start_date" required>
+                        <label for="end_date">تاريخ النهاية:</label>
+                        <input type="date" id="end_date" name="end_date" required>
+                        <button type="button" onclick="fetchEmployeeData()" class="btn btn-primary">عرض</button>
+                        <button type="button" onclick="resetDefaultDates()" class="btn btn-secondary">إعادة التواريخ الافتراضية</button>
+                    </div>
+                    <div class="employee-info" id="employee-info">
+                        <span>يرجى اختيار فرد لعرض المعلومات</span>
+                    </div>
+                    <form method="post" class="mainform" id="attendance-form">
+                        {% csrf_token %}
+                        <div id="attendance-tables"></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        const stateColors = {
+            '_': 'white', 'نوبتجي': '#219C90', 'يومي': '#A7D397', 'راحة': '#00A9FF', 'دورية': '#C70039',
+            'ر بديلة': '#0a2df5', 'طارئة': '#FF9130', 'مأمورية': '#eb5bad', 'مأمورية خ': '#DA0C81',
+            'فرقة': '#BCA37F', 'انتداب': '#713ABE', 'مرضي': 'yellow', 'ج وضع': 'yellow', 'خاصه': 'yellow',
+            '8 صباحاً': '#89CFF3', 'ت دوري': '#FFF2D8', 'ت تكراري': '#EAD7BB', 'منحة': '#A0E9FF',
+            'عطلة': '#CDF5FD', 'غياب': 'black', 'قرار66': 'yellow'
+        };
+
+        let attendanceData = {};
+        let selectedEmployeeId = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchInitialData();
+        });
+
+        async function fetchInitialData() {
+            try {
+                const response = await fetch("{% url 'one_employee' %}");
+                const data = await response.json();
+                populateEmployeeList(data.employees, data.selected_employee);
+                document.getElementById('start_date').value = data.start_date;
+                document.getElementById('end_date').value = data.end_date;
+                if (data.selected_employee && data.employee) {
+                    selectedEmployeeId = data.selected_employee;
+                    populateEmployeeInfo(data.employee);
+                    populateTables(data.week_days_chunked, data.today);
+                    fetchAttendanceData();
+                }
+            } catch (error) {
+                console.error('Error fetching initial data:', error);
+            }
+        }
+
+        async function fetchEmployeeData() {
+            const startDate = document.getElementById('start_date').value;
+            const endDate = document.getElementById('end_date').value;
+            if (!selectedEmployeeId || !startDate || !endDate) {
+                alert('يرجى اختيار فرد وتحديد التواريخ');
+                return;
+            }
+            console.log('Fetching data for employee:', selectedEmployeeId, 'from', startDate, 'to', endDate);
+            try {
+                const response = await fetch(`{% url 'one_employee' %}?employee=${selectedEmployeeId}&start_date=${startDate}&end_date=${endDate}`);
+                const data = await response.json();
+                console.log('API response:', data);
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                populateEmployeeInfo(data.employee);
+                populateTables(data.week_days_chunked, data.today);
+                fetchAttendanceData();
+            } catch (error) {
+                console.error('Error fetching employee data:', error);
+            }
+        }
+
+        async function resetDefaultDates() {
+            if (!selectedEmployeeId) {
+                alert('يرجى اختيار فرد أولاً');
+                return;
+            }
+            try {
+                const response = await fetch(`{% url 'one_employee' %}?employee=${selectedEmployeeId}`);
+                const data = await response.json();
+                console.log('Reset default dates response:', data);
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                document.getElementById('start_date').value = data.start_date;
+                document.getElementById('end_date').value = data.end_date;
+                populateEmployeeInfo(data.employee);
+                populateTables(data.week_days_chunked, data.today);
+                fetchAttendanceData();
+            } catch (error) {
+                console.error('Error resetting default dates:', error);
+            }
+        }
+
+        function populateEmployeeList(employees, selectedEmployee) {
+            const employeeList = document.getElementById('employee-list');
+            employeeList.innerHTML = '<li data-value="" ' + (!selectedEmployee ? 'class="selected"' : '') + '>-- اختر فرد --</li>';
+            employees.forEach(emp => {
+                const li = document.createElement('li');
+                li.dataset.value = emp.id;
+                li.textContent = `${emp.nickname} (${emp.operation})`;
+                if (emp.id == selectedEmployee) li.classList.add('selected');
+                employeeList.appendChild(li);
+            });
+            setupEmployeeList();
+            scrollToSelectedEmployee();
+        }
+
+        function populateEmployeeInfo(employee) {
+            console.log('Employee data:', employee);
+            const infoDiv = document.getElementById('employee-info');
+            const nickname = employee && employee.nickname ? employee.nickname : 'غير محدد';
+            const operation = employee && employee.operation ? employee.operation : 'غير محدد';
+            infoDiv.innerHTML = `
+                <span>الاسم: ${nickname} (${operation})</span>
+                <span style="margin-right: 20px;"> | الراحات: </span>
+                <span id="rahatcounter_${employee ? employee.id : ''}">${employee && employee.rahatcounter !== undefined ? employee.rahatcounter : '0'}</span>
+                <button type="button" onclick="incrementRahatcounter('${employee ? employee.id : ''}')" class="btn btn-sm btn-primary">+</button>
+                <button type="button" onclick="decrementRahatcounter('${employee ? employee.id : ''}')" class="btn btn-sm btn-primary">-</button>
+                <button type="button" onclick="confirmReset('${employee ? employee.id : ''}')" class="btn btn-sm ${employee && employee.rahatcounter == 0 ? 'btn-success' : employee && employee.rahatcounter > 0 ? 'btn-warning' : 'btn-danger'}">تصفير عداد الراحات</button>
+            `;
+        }
+
+        function populateTables(weekDaysChunked, today) {
+            const container = document.getElementById('attendance-tables');
+            let html = '';
+            weekDaysChunked.forEach(week => {
+                html += '<table class="attendance-table"><thead><tr>';
+                week.forEach(day => {
+                    const dateObj = new Date(day);
+                    html += `<th style="${day == today ? 'background-color: #F0E68C;' : ''}${dateObj.getDate() == 1 ? 'background-color:rgb(233, 147, 147); color: white;' : ''}">${formatDay(dateObj)}<br>${day}</th>`;
+                });
+                html += '</tr></thead><tbody><tr>';
+                week.forEach(day => {
+                    html += `<td style="${day == today ? 'background-color:rgb(171, 211, 214);' : ''}${formatDay(new Date(day)) == 'الجمعة' ? 'border-left: 3px solid #F26B0F;' : ''}" data-employee-id="${selectedEmployeeId}" data-date="${day.replace(/-/g, '')}" class="attendance-cell"></td>`;
+                });
+                html += '</tr></tbody></table>';
+            });
+            container.innerHTML = html;
+        }
+
+        function formatDay(date) {
+            const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+            return days[date.getDay()];
+        }
+
+        function setupEmployeeList() {
+            const employeeList = document.getElementById('employee-list');
+            const items = employeeList.querySelectorAll('li');
+            items.forEach(item => {
+                item.addEventListener('click', () => {
+                    items.forEach(i => i.classList.remove('selected'));
+                    item.classList.add('selected');
+                    selectedEmployeeId = item.dataset.value;
+                    console.log('Selected employee ID:', selectedEmployeeId);
+                    resetDefaultDates();
+                });
+            });
+        }
+
+        function scrollToSelectedEmployee() {
+            const employeeList = document.getElementById('employee-list');
+            const selectedItem = employeeList.querySelector('li.selected');
+            if (selectedItem) {
+                selectedItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        async function fetchAttendanceData() {
+            if (!selectedEmployeeId) return;
+            const startDate = document.getElementById('start_date').value;
+            const endDate = document.getElementById('end_date').value;
+            const numDays = Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)) + 1;
+            try {
+                const response = await fetch(`{% url 'get_attendance' %}?start_date=${startDate}&num_days=${numDays}&page=1`);
+                const data = await response.json();
+                console.log('Attendance data:', data);
+                if (data.success) {
+                    attendanceData = data.attendance_data;
+                    console.log('Populating tables with:', attendanceData);
+                    populateAllTables();
+                    setupEventListeners();
+                } else {
+                    console.error('Error fetching attendance data:', data.error);
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+            }
+        }
+
+        function populateAllTables() {
+            console.log('Filling tables for employee:', selectedEmployeeId);
+            document.querySelectorAll('.attendance-cell').forEach(cell => {
+                const employeeId = cell.dataset.employeeId;
+                const date = cell.dataset.date;
+                const dayData = attendanceData[employeeId] && attendanceData[employeeId][date] 
+                    ? attendanceData[employeeId][date] 
+                    : { state: '_', comfort_adjustment: 0, food: false };
+                console.log(`Cell data for ${employeeId} on ${date}:`, dayData);
+
+                cell.innerHTML = '';
+
+                const select = document.createElement('select');
+                select.className = 'att-states';
+                select.name = `attendance_state_${employeeId}_${date}`;
+                const options = [
+                    '_', 'نوبتجي', 'يومي', 'راحة', 'دورية', 'ر بديلة', 'طارئة', 'مأمورية', 'مأمورية خ', 
+                    'فرقة', 'انتداب', 'مرضي', 'ج وضع', 'خاصه', '8 صباحاً', 'ت دوري', 'ت تكراري', 'منحة', 
+                    'عطلة', 'غياب', 'قرار66'
+                ].map(value => ({
+                    value,
+                    text: value === '_' ? '-' : value
+                }));
+                options.forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt.value;
+                    option.text = opt.text;
+                    if (opt.value === dayData.state) option.selected = true;
+                    select.appendChild(option);
+                });
+                select.style.backgroundColor = stateColors[dayData.state] || 'white';
+
+                const comfortCheckbox = document.createElement('input');
+                comfortCheckbox.type = 'checkbox';
+                comfortCheckbox.name = `comfort_${employeeId}_${date}`;
+                comfortCheckbox.value = '1';
+                comfortCheckbox.checked = dayData.comfort_adjustment === 1;
+                comfortCheckbox.className = 'att-comfort-checkbox';
+                comfortCheckbox.title = 'يستحق راحة';
+                if (['راحة', 'ر بديلة', '8 صباحاً'].includes(dayData.state)) {
+                    comfortCheckbox.disabled = true;
+                }
+
+                const foodCheckbox = document.createElement('input');
+                foodCheckbox.type = 'checkbox';
+                foodCheckbox.name = `food_${employeeId}_${date}`;
+                foodCheckbox.checked = dayData.food;
+                foodCheckbox.className = 'att-food-checkbox';
+                foodCheckbox.title = 'يحصل على تعيين';
+
+                cell.appendChild(select);
+                cell.appendChild(comfortCheckbox);
+                cell.appendChild(foodCheckbox);
+            });
+        }
+
+        function setupEventListeners() {
+            document.querySelectorAll('.mainform').forEach(form => {
+                form.addEventListener('change', event => {
+                    const target = event.target;
+                    const cell = target.closest('.attendance-cell');
+                    if (!cell) return;
+
+                    const employeeId = cell.dataset.employeeId;
+                    const selectedDate = cell.dataset.date;
+
+                    if (target.classList.contains('att-states')) {
+                        const newValue = target.value;
+                        target.style.backgroundColor = stateColors[newValue] || 'white';
+
+                        const comfortCheckbox = cell.querySelector('.att-comfort-checkbox');
+                        const foodCheckbox = cell.querySelector('.att-food-checkbox');
+
+                        if (newValue === 'نوبتجي') {
+                            if (foodCheckbox) foodCheckbox.checked = true;
+                            if (comfortCheckbox) {
+                                comfortCheckbox.checked = true;
+                                comfortCheckbox.disabled = false;
+                            }
+                            submitAttendanceForm(employeeId, selectedDate, 1, true, 'select');
+                        } else if (['راحة', 'ر بديلة', '8 صباحاً'].includes(newValue)) {
+                            if (foodCheckbox) foodCheckbox.checked = false;
+                            if (comfortCheckbox) {
+                                comfortCheckbox.checked = false;
+                                comfortCheckbox.disabled = true;
+                            }
+                            submitAttendanceForm(employeeId, selectedDate, -1, false, 'select');
+                        } else {
+                            if (foodCheckbox) foodCheckbox.checked = false;
+                            if (comfortCheckbox) {
+                                comfortCheckbox.checked = false;
+                                comfortCheckbox.disabled = false;
+                            }
+                            submitAttendanceForm(employeeId, selectedDate, 0, false, 'select');
+                        }
+                    } else if (target.classList.contains('att-comfort-checkbox') && !target.disabled) {
+                        const comfortValue = target.checked ? 1 : 0;
+                        submitAttendanceForm(employeeId, selectedDate, comfortValue, null, 'checkbox');
+                    } else if (target.classList.contains('att-food-checkbox')) {
+                        const foodValue = target.checked;
+                        submitAttendanceForm(employeeId, selectedDate, null, foodValue, 'checkbox');
+                    }
+                });
+            });
+        }
+
+        let pendingChanges = {};
+        let debounceTimeout = null;
+
+        async function submitAttendanceForm(employeeId, selectedDate, comfortValue, foodValue, source) {
+            const key = `${employeeId}_${selectedDate}`;
+            pendingChanges[key] = {
+                employee_id: employeeId,
+                selected_date: selectedDate,
+                selected_value: document.querySelector(`select[name="attendance_state_${employeeId}_${selectedDate}"]`)?.value || null,
+                comfort_adjustment: comfortValue,
+                food: foodValue !== null ? (foodValue ? '1' : '0') : null,
+                source: source
+            };
+
+            updateUI(employeeId, selectedDate, pendingChanges[key]);
+
+            clearTimeout(debounceTimeout);
+            debounceTimeout = setTimeout(async () => {
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                const formData = new FormData();
+                formData.append('changes', JSON.stringify(pendingChanges));
+
+                try {
+                    const response = await fetch("{% url 'update_attendance' %}", {
+                        method: 'POST',
+                        headers: { 'X-CSRFToken': csrfToken },
+                        body: formData
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        console.log('Updates applied:', data.updates);
+                        Object.entries(data.updates).forEach(([key, update]) => {
+                            const [empId, date] = key.split('_');
+                            const rahatcounterElement = document.getElementById(`rahatcounter_${empId}`);
+                            if (rahatcounterElement && update.rahatcounter !== undefined) {
+                                rahatcounterElement.textContent = update.rahatcounter;
+                                updateButtonColor(empId, update.rahatcounter);
+                            }
+                            updateUI(empId, date, {
+                                selected_value: update.state,
+                                comfort_adjustment: update.comfort_adjustment,
+                                food: update.food ? '1' : '0'
+                            });
+                        });
+                        pendingChanges = {};
+                    } else {
+                        console.error('Update failed:', data.error);
+                        alert('حدث خطأ أثناء التحديث: ' + data.error);
+                    }
+                } catch (error) {
+                    console.error('AJAX error:', error);
+                    alert('حدث خطأ في الاتصال بالخادم');
+                }
+            }, 50);
+        }
+
+        function updateUI(employeeId, selectedDate, change) {
+            const selectElement = document.querySelector(`select[name="attendance_state_${employeeId}_${selectedDate}"]`);
+            const comfortCheckbox = document.querySelector(`input[name="comfort_${employeeId}_${selectedDate}"]`);
+            const foodCheckbox = document.querySelector(`input[name="food_${employeeId}_${selectedDate}"]`);
+
+            if (change.selected_value && selectElement) {
+                selectElement.value = change.selected_value;
+                selectElement.style.backgroundColor = stateColors[change.selected_value] || 'white';
+            }
+            if (change.comfort_adjustment !== null && comfortCheckbox) {
+                comfortCheckbox.checked = change.comfort_adjustment === 1;
+            }
+            if (change.food !== null && foodCheckbox) {
+                foodCheckbox.checked = change.food === '1';
+            }
+        }
+
+        function updateButtonColor(employeeId, rahatcounter) {
+            const button = document.getElementById(`rahatcounter_${employeeId}`).nextElementSibling.nextElementSibling.nextElementSibling; // زر التصفير بعد زري + و-
+            if (button) {
+                button.classList.remove('btn-success', 'btn-warning', 'btn-danger');
+                if (rahatcounter == 0) button.classList.add('btn-success');
+                else if (rahatcounter > 0) button.classList.add('btn-warning');
+                else button.classList.add('btn-danger');
+            }
+        }
+
+        function confirmReset(employeeId) {
+            if (confirm("هل أنت متأكد من تصفير عداد الراحات للفرد المحدد؟")) {
+                resetRahatcounter(employeeId);
+            }
+        }
+
+        async function resetRahatcounter(employeeId) {
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            try {
+                const response = await fetch("{% url 'reset_rahatcounter' %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ employee_id: employeeId })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    const rahatcounterElement = document.getElementById(`rahatcounter_${employeeId}`);
+                    if (rahatcounterElement) {
+                        rahatcounterElement.textContent = '0';
+                        updateButtonColor(employeeId, 0);
+                    }
+                } else {
+                    alert('خطأ أثناء تصفير عداد الراحات: ' + data.error);
+                }
+            } catch (error) {
+                alert('حدث خطأ في الاتصال بالخادم: ' + error.message);
+            }
+        }
+
+        async function incrementRahatcounter(employeeId) {
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            try {
+                const response = await fetch("{% url 'adjust_rahatcounter' %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ employee_id: employeeId, adjustment: 1 })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    const rahatcounterElement = document.getElementById(`rahatcounter_${employeeId}`);
+                    if (rahatcounterElement) {
+                        const newValue = parseInt(rahatcounterElement.textContent) + 1;
+                        rahatcounterElement.textContent = newValue;
+                        updateButtonColor(employeeId, newValue);
+                    }
+                } else {
+                    alert('خطأ أثناء زيادة عداد الراحات: ' + data.error);
+                }
+            } catch (error) {
+                alert('حدث خطأ في الاتصال بالخادم: ' + error.message);
+            }
+        }
+
+        async function decrementRahatcounter(employeeId) {
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            try {
+                const response = await fetch("{% url 'adjust_rahatcounter' %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ employee_id: employeeId, adjustment: -1 })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    const rahatcounterElement = document.getElementById(`rahatcounter_${employeeId}`);
+                    if (rahatcounterElement) {
+                        const newValue = parseInt(rahatcounterElement.textContent) - 1;
+                        rahatcounterElement.textContent = newValue;
+                        updateButtonColor(employeeId, newValue);
+                    }
+                } else {
+                    alert('خطأ أثناء تقليل عداد الراحات: ' + data.error);
+                }
+            } catch (error) {
+                alert('حدث خطأ في الاتصال بالخادم: ' + error.message);
+            }
+        }
+    </script>
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{% comment %} <title>
 تشغيل فرد واحد
 </title>
 {% extends "base.html" %}
@@ -561,4 +1114,4 @@
             }
         }
     </script>
-{% endblock %}
+{% endblock %} {% endcomment %}

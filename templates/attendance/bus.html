@@ -1,170 +1,193 @@
-<title>
-    يومية الاتوبيس
-</title>
-
 {% extends "base.html" %}
-{% load static attendance_filters %}
-<!DOCTYPE html>
 {% load static %}
-<html lang="en">
-    <body class="hold-transition sidebar-mini layout-fixed">
 
-        
-        <!-- Main content container -->
-        <div class="container">
-            <div class="content">
-        
-                <!-- Main content block (this is where child templates will inject content) -->
-                {% block content %}
-                        <div class="container-fluid">
-                            <div class="row">
-                                <div class="col-md-12">
-                                    <!-- Your content will be inserted here -->
-                                    {% block inner_content %}
+{% block styles %}
+<style>
+    .names-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .names-column {
+        flex: 1;
+        min-width: 30%;
+    }
+    .names-column p {
+        margin: 5px 0;
+        font-size: 16px;
+    }
+    .print-button {
+        margin: 20px 0;
+        padding: 10px 20px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+    }
+    .print-button:hover {
+        background-color: #45a049;
+    }
+    h2 {
+        margin-top: 20px;
+    }
+    @media print {
+        .print-button, .form-container {
+            display: none;
+        }
+        h1, h2 {
+            color: black;
+        }
+    }
+</style>
+{% endblock %}
 
-
-
-                                    <!DOCTYPE html>
-                                    <html lang="ar">
-                                    <head>
-                                        <meta charset="UTF-8">
-                                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                                        <title>الأفراد المنصرفين اليوم والحضور غدًا</title>
-                                        <style>
-                                            /* تنسيق الجداول */
-                                            table {
-                                                width: 100%;
-                                                border-collapse: collapse;
-                                                margin-bottom: 20px;
-                                            }
-                                            th, td {
-                                                border: 1px solid #ddd;
-                                                padding: 8px;
-                                                text-align: center;
-                                            }
-                                            th {
-                                                background-color: #f2f2f2;
-                                            }
-                                    
-                                            /* تنسيق الأسماء في ثلاثة أعمدة */
-                                            .names-container {
-                                                display: flex;
-                                                flex-wrap: wrap;
-                                                gap: 10px;
-                                            }
-                                            .names-column {
-                                                flex: 1;
-                                                min-width: 30%;
-                                            }
-                                            .names-column p {
-                                                margin: 5px 0;
-                                            }
-                                    
-                                            /* تنسيق زر الطباعة */
-                                            .print-button {
-                                                margin: 20px 0;
-                                                padding: 10px 20px;
-                                                background-color: #4CAF50;
-                                                color: white;
-                                                border: none;
-                                                cursor: pointer;
-                                                font-size: 16px;
-                                            }
-                                            .print-button:hover {
-                                                background-color: #45a049;
-                                            }
-                                    
-                                            /* تنسيقات الطباعة */
-                                            @media print {
-                                                .print-button {
-                                                    display: none;
-                                                }
-                                                h1, h2 {
-                                                    color: black;
-                                                }
-                                            }
-                                        </style>
-                                    </head>
-                                    <body>
-                                        <h1>اختر التاريخ لعرض الأسماء</h1>
-                                        <form method="get">
-                                            <label for="date">اختر التاريخ:</label>
-                                            <input type="date" id="date" name="date" required>
-                                            <button type="submit">عرض الأسماء</button>
-                                        </form>
-                                    
-                                        {% if selected_date %}
-                                            <!-- زر الطباعة -->
-                                            <button class="print-button" onclick="window.print()">طباعة الصفحة</button>
-                                    
-                                            <!-- جدول الأفراد المنصرفين اليوم -->
-                                            <h2>الأفراد المنصرفين اليوم ({{ selected_date|date:"l d/m/Y" }})</h2>                                            <p><strong>العدد: {{ departing_today|length }}</strong></p>
-
-                                            {% if departing_today %}
-                                                <div class="names-container">
-                                                    <div class="names-column">
-                                                        {% for employee in departing_today|slice:":20" %}
-                                                            <p>{{ forloop.counter }}. {{ employee.employee__name }}</p>
-                                                        {% endfor %}
-                                                    </div>
-                                                    <div class="names-column">
-                                                        {% for employee in departing_today|slice:"20:40" %}
-                                                            <p>{{ forloop.counter|add:20 }}. {{ employee.employee__name }}</p>
-                                                        {% endfor %}
-                                                    </div>
-                                                    <div class="names-column">
-                                                        {% for employee in departing_today|slice:"40:60" %}
-                                                            <p>{{ forloop.counter|add:40 }}. {{ employee.employee__name }}</p>
-                                                        {% endfor %}
-                                                    </div>
-                                                </div>
-                                            {% else %}
-                                                <p>لا يوجد أفراد منصرفين اليوم.</p>
-                                            {% endif %}
-                                    
-                                            <!-- جدول الأفراد الذين سيستقلون الاتوبيس غدًا -->
-                                            <h2>حضور غدا بالاتوبيس ({{ tomorrow|date:"l d/m/Y" }})</h2>                                            <p><strong>العدد: {{ attending_tomorrow|length }}</strong></p>
-
-                                            {% if attending_tomorrow %}
-                                                <div class="names-container">
-                                                    <div class="names-column">
-                                                        {% for employee in attending_tomorrow|slice:":20" %}
-                                                            <p>{{ forloop.counter }}. {{ employee.employee__name }}</p>
-                                                        {% endfor %}
-                                                    </div>
-                                                    <div class="names-column">
-                                                        {% for employee in attending_tomorrow|slice:"20:40" %}
-                                                            <p>{{ forloop.counter|add:20 }}. {{ employee.employee__name }}</p>
-                                                        {% endfor %}
-                                                    </div>
-                                                    <div class="names-column">
-                                                        {% for employee in attending_tomorrow|slice:"40:60" %}
-                                                            <p>{{ forloop.counter|add:40 }}. {{ employee.employee__name }}</p>
-                                                        {% endfor %}
-                                                    </div>
-                                                </div>
-                                            {% else %}
-                                                <p>لا يوجد أفراد سيستقلون الاتوبيس غدًا.</p>
-                                            {% endif %}
-                                        {% endif %}
-                                    
-                                        <script>
-                                            // يمكنك إضافة أي وظائف إضافية هنا إذا لزم الأمر
-                                        </script>
-                                    </body>
-                                    </html>
-
-
-
-                                          
-                                    {% endblock %}
-                                </div>
-                            </div>
-                        </div>
-                {% endblock %}
-            </div>
+{% block content %}
+<div class="container" dir="rtl">
+    <div class="content">
+        <h1>يومية الأتوبيس</h1>
+        <div class="form-container">
+            <form id="date-form">
+                <label for="date">اختر التاريخ:</label>
+                <input type="date" id="date" name="date" value="">
+                <button type="submit">عرض الأسماء</button>
+            </form>
         </div>
-        
+        <button class="print-button" onclick="window.print()">طباعة الصفحة</button>
 
-    </body>
-</html>
+        <!-- Departing Today -->
+        <h2 id="departing-title"></h2>
+        <p><strong>العدد: <span id="departing-count"></span></strong></p>
+        <div class="names-container" id="departing-container"></div>
+
+        <!-- Attending Tomorrow -->
+        <h2 id="attending-title"></h2>
+        <p><strong>العدد: <span id="attending-count"></span></strong></p>
+        <div class="names-container" id="attending-container"></div>
+    </div>
+</div>
+
+<script>
+    // Convert to Eastern Arabic numerals
+    function toEasternArabicNumerals(number) {
+        const easternNumerals = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+        return String(number).replace(/[0-9]/g, digit => easternNumerals[digit]);
+    }
+
+    // Format date with Eastern Arabic numerals
+    function formatDateWithEasternNumerals(dateStr) {
+        return dateStr.replace(/\d+/g, num => toEasternArabicNumerals(num));
+    }
+
+    // Handle form submission
+    document.getElementById('date-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const date = document.getElementById('date').value;
+        fetchData(date);
+    });
+
+    // Fetch data from API
+    function fetchData(date) {
+        const url = date ? `/attendance/api/bus/?date=${date}&_=${new Date().getTime()}` : `/attendance/api/bus/?_=${new Date().getTime()}`;
+        fetch(url, {
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('token'), // Adjust based on your auth method
+                'Content-Type': 'application/json'
+            },
+            cache: 'no-store'
+        })
+        .then(response => response.json())
+        .then(data => {
+            renderData(data);
+        })
+        .catch(error => {
+            console.error('Error fetching data:', error);
+            alert('حدث خطأ أثناء جلب البيانات');
+        });
+    }
+
+    // Render data
+    function renderData(data) {
+        // Departing Today
+        const departingTitle = document.getElementById('departing-title');
+        const departingCount = document.getElementById('departing-count');
+        const departingContainer = document.getElementById('departing-container');
+
+        departingTitle.textContent = `الأفراد المنصرفين اليوم (${formatDateWithEasternNumerals(data.formatted_date)})`;
+        departingCount.textContent = toEasternArabicNumerals(data.departing_today_count);
+
+        departingContainer.innerHTML = '';
+        if (data.departing_today.length > 0) {
+            const col1 = document.createElement('div');
+            col1.className = 'names-column';
+            const col2 = document.createElement('div');
+            col2.className = 'names-column';
+            const col3 = document.createElement('div');
+            col3.className = 'names-column';
+
+            data.departing_today.forEach((employee, index) => {
+                const p = document.createElement('p');
+                p.textContent = `${toEasternArabicNumerals(index + 1)}. ${employee.employee__name}`;
+                if (index < 20) {
+                    col1.appendChild(p);
+                } else if (index < 40) {
+                    col2.appendChild(p);
+                } else {
+                    col3.appendChild(p);
+                }
+            });
+
+            departingContainer.appendChild(col1);
+            departingContainer.appendChild(col2);
+            departingContainer.appendChild(col3);
+        } else {
+            departingContainer.innerHTML = '<p>لا يوجد أفراد منصرفين اليوم.</p>';
+        }
+
+        // Attending Tomorrow
+        const attendingTitle = document.getElementById('attending-title');
+        const attendingCount = document.getElementById('attending-count');
+        const attendingContainer = document.getElementById('attending-container');
+
+        attendingTitle.textContent = `حضور غدًا بالأتوبيس (${formatDateWithEasternNumerals(data.formatted_tomorrow)})`;
+        attendingCount.textContent = toEasternArabicNumerals(data.attending_tomorrow_count);
+
+        attendingContainer.innerHTML = '';
+        if (data.attending_tomorrow.length > 0) {
+            const col1 = document.createElement('div');
+            col1.className = 'names-column';
+            const col2 = document.createElement('div');
+            col2.className = 'names-column';
+            const col3 = document.createElement('div');
+            col3.className = 'names-column';
+
+            data.attending_tomorrow.forEach((employee, index) => {
+                const p = document.createElement('p');
+                p.textContent = `${toEasternArabicNumerals(index + 1)}. ${employee.employee__name}`;
+                if (index < 20) {
+                    col1.appendChild(p);
+                } else if (index < 40) {
+                    col2.appendChild(p);
+                } else {
+                    col3.appendChild(p);
+                }
+            });
+
+            attendingContainer.appendChild(col1);
+            attendingContainer.appendChild(col2);
+            attendingContainer.appendChild(col3);
+        } else {
+            attendingContainer.innerHTML = '<p>لا يوجد أفراد سيستقلون الأتوبيس غدًا.</p>';
+        }
+    }
+
+    // Load default data (today's date)
+    window.onload = function() {
+        const today = new Date();
+        const localDate = new Date(today.toLocaleString('en-US', { timeZone: 'Asia/Riyadh' }));
+        const formattedDate = localDate.toISOString().split('T')[0];
+        document.getElementById('date').value = formattedDate;
+        fetchData(formattedDate);
+    };
+</script>
+{% endblock %}

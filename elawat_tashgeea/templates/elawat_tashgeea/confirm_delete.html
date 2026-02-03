@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h3>تأكيد حذف</h3>
+    <p>هل تريد حذف: {{ record.employee.name }} — {{ record.decision_number }} ({{ record.elawa_date }}) ؟</p>
+    <form method="post">{% csrf_token %}
+        <button type="submit" class="btn btn-danger">حذف</button>
+        <a href="{% url 'elawat_tashgeea:employee_elawat' record.employee.id %}" class="btn btn-secondary">إلغاء</a>
+    </form>
+</div>
+{% endblock %}
