@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'agaza_khasa_app',
     'hasr_app',
     'penalties',
+    'system_settings',
 ]
 
 
@@ -142,7 +143,7 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'yasser',
+        'NAME': 'yasser2',
         'USER': 'root',
         'PASSWORD': '',
         'HOST': 'localhost',

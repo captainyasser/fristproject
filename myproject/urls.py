@@ -58,6 +58,5 @@ urlpatterns = [
     path('agaza-khasa/', include('agaza_khasa_app.urls', namespace='agaza_khasa_app')),
     path(    'hasr/', include('hasr_app.urls')),
     path('penalties/', include('penalties.urls')),
-
-
+    path('settings/', include('system_settings.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

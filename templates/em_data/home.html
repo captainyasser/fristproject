@@ -97,10 +97,15 @@
                                         </select>
                                     </div>
                                     <div class="form-group">
-                                        <label for="add_department_id">القسم</label>
                                         <select class="form-control" id="add_department_id" name="department_id">
                                             <option value="">اختر القسم (اختياري)</option>
                                         </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="add_is_driver" name="is_driver">
+                                            <label class="form-check-label" for="add_is_driver">سائق</label>
+                                        </div>
                                     </div>
                                     <div class="form-group">
                                         <label for="add_id_number">الرقم القومي</label>
@@ -292,6 +297,12 @@
                                                     <option value="9">معاونين</option>
                                                 </select>
                                             </div>
+                                            <div class="form-group">
+                                                <div class="form-check">
+                                                    <input type="checkbox" class="form-check-input" id="edit_is_driver" name="is_driver">
+                                                    <label class="form-check-label" for="edit_is_driver">سائق</label>
+                                                </div>
+                                            </div>
                                         </div>
 
                                         <!-- العنوان -->
@@ -466,6 +477,7 @@
 
             const formData = new FormData(form);
             const data = Object.fromEntries(formData);
+            data.is_driver = $('#add_is_driver').is(':checked'); // تعيين قيمة boolean صريحة
             data.rank_id = data.rank_id === "" ? null : data.rank_id;
             data.department_id = data.department_id === "" ? null : data.department_id;
             
@@ -516,6 +528,8 @@
             if (formData.get('id_number') === '') {
                 formData.set('id_number', null);
             }
+            // التعامل مع is_driver بشكل صريح
+            formData.set('is_driver', $('#edit_is_driver').is(':checked') ? 'True' : 'False');
 
             try {
                 const response = await fetch(`${API_URL}${id}/`, {
@@ -683,6 +697,7 @@
                                     <p><strong>القسم:</strong> ${employee.department ? employee.department.name : '-'}</p>
                                     <p><strong>قوة أساسية/منتدب:</strong> ${employee.mainornot == 1 ? 'قوة أساسية' : employee.mainornot == 2 ? 'منتدب' : '-'}</p>
                                     <p><strong>نوع الدرجة:</strong> ${employee.rank_kind || '-'}</p>
+                                    <p><strong>سائق:</strong> ${employee.is_driver ? 'نعم' : 'لا'}</p>
                                 </div>
                                 <div class="tab-pane fade" id="address-detail-${employee.id}" role="tabpanel" aria-labelledby="address-detail-tab-${employee.id}">
                                     <p><strong>المحافظة:</strong> ${employee.governorate || '-'}</p>
@@ -823,6 +838,7 @@
                 document.getElementById('edit_total_leave').value = employee.total_leave || '';
                 document.getElementById('edit_amen_or_ola').value = employee.amen_or_ola ? '1' : '0';
                 document.getElementById('edit_nots').value = employee.nots || '';
+                document.getElementById('edit_is_driver').checked = employee.is_driver || false;
 
                 $('#editEmployeeModal').modal('show');
             } else {

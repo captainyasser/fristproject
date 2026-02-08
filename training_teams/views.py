@@ -5,7 +5,9 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 from collections import defaultdict
 import json
+from datetime import datetime, timedelta
 from .models import Employee, TrainingTeam, Places, EmTrainingTeams
+from attendance.models import Attendance
 
 # 1. عرض صفحة الفرق التدريبية الرئيسية (training.html)
 @login_required(login_url='/login/')
@@ -107,24 +109,60 @@ def insert_training(request):
         start_date = request.POST['start_date']
         end_date = request.POST['end_date']
         result = request.POST.get('result', 'ناجح')
+        note = request.POST.get('note', '')
         round_num = request.POST.get('round_num')
         if round_num == '':
             round_num = None
 
-        for emp_id in employees:
-            employee = Employee.objects.get(id=emp_id)
-            EmTrainingTeams.objects.create(
-                employee=employee,
-                name=employee.name,  # اسم الموظف كـ Training Name
-                training_team=training_team,
-                place=place,
-                start_date=start_date,
-                end_date=end_date,
-                result=result,
-                round_num=round_num
-            )
+        if not employees:
+            messages.error(request, "يجب اختيار موظف واحد على الأقل")
+            return redirect('insert_training')
 
-        messages.success(request, "تمت إضافة التدريب بنجاح!")
+        try:
+            for emp_id in employees:
+                employee = Employee.objects.get(id=emp_id)
+                # Check for existing record to avoid crash due to UniqueConstraint
+                if EmTrainingTeams.objects.filter(
+                    employee=employee,
+                    training_team=training_team,
+                    start_date=start_date,
+                    end_date=end_date
+                ).exists():
+                    messages.warning(request, f"التدريب موجود مسبقاً للموظف: {employee.name}")
+                    continue
+
+                EmTrainingTeams.objects.create(
+                    employee=employee,
+                    name=employee.name,
+                    training_team=training_team,
+                    place=place,
+                    start_date=start_date,
+                    end_date=end_date,
+                    result=result,
+                    round_num=round_num,
+                    note=note
+                )
+
+                # Add Attendance records for the duration of the training
+                start = datetime.strptime(start_date, "%Y-%m-%d").date()
+                end = datetime.strptime(end_date, "%Y-%m-%d").date()
+                delta = end - start
+
+                for i in range(delta.days + 1):
+                    day = start + timedelta(days=i)
+                    Attendance.objects.update_or_create(
+                        employee=employee,
+                        date=day,
+                        defaults={
+                            'state': 'فرقة',
+                            'note': note
+                        }
+                    )
+            
+            messages.success(request, "تمت عملية الإضافة وتحديث سجل الحضور.")
+        except Exception as e:
+            messages.error(request, f"حدث خطأ أثناء الحفظ: {str(e)}")
+            
         return redirect('insert_training')
 
     employees = Employee.objects.all().order_by('sort_number')
@@ -172,7 +210,7 @@ def delete_training_record(request, training_id):
 def get_employee_training_data(request, employee_id):
     """Fetch training data for a selected employee and return as JSON."""
     training_data = EmTrainingTeams.objects.filter(employee_id=employee_id).select_related('place', 'training_team').values(
-        'id', 'employee__name', 'start_date', 'end_date', 'result', 'round_num', 'place_id', 'training_team_id'
+        'id', 'employee__name', 'start_date', 'end_date', 'result', 'round_num', 'place_id', 'training_team_id', 'note'
     ).order_by('start_date')
     
     places = list(Places.objects.values('id', 'name'))  # Fetch available places
@@ -198,6 +236,7 @@ def update_training_record(request):
             training_record.round_num = data.get('round_num', None)
             training_record.place_id = data['place_id']
             training_record.training_team_id = data['training_team_id']
+            training_record.note = data.get('note', '')
             training_record.save()
 
             return JsonResponse({"success": True})

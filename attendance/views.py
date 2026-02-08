@@ -382,7 +382,8 @@ def get_attendance(request):
             record.date.strftime('%Y%m%d'): {
                 'state': record.state,
                 'comfort_adjustment': record.comfort_adjustment,
-                'food': record.food
+                'food': record.food,
+                'note': record.note
             } for record in records
         }
 
@@ -4062,6 +4063,64 @@ def weekly_food_average(request):
 #         'years': years,
 #     }
 #     return render(request, 'attendance/monthlyDiscount.html', context)
+
+
+@login_required(login_url='/login/')
+def names_index_view(request):
+    # Get parameters with defaults
+    columns = request.GET.get('columns', '5')
+    font_size = request.GET.get('font_size', '10')
+    row_height = request.GET.get('row_height', '20')
+    orientation = request.GET.get('orientation', 'landscape')
+    rows_per_column = request.GET.get('rows_per_column', '0')
+    serial_width = request.GET.get('serial_width', '20')
+    name_width = request.GET.get('name_width', '300')
+    
+    # Validation/Conversion
+    try: columns = int(columns)
+    except: columns = 5
+        
+    try: font_size = int(font_size)
+    except: font_size = 10
+        
+    try: row_height = int(row_height)
+    except: row_height = 20
+    
+    try: rows_per_column = int(rows_per_column)
+    except: rows_per_column = 0
+
+    try: serial_width = int(serial_width)
+    except: serial_width = 20
+
+    # name_width can be 'auto' or int
+    if name_width != 'auto':
+        try: name_width = int(name_width)
+        except: name_width = 300
+        
+    employees = list(Employee.objects.filter(mainornot=1).order_by('sort_number'))
+    
+    # Fill last column if rows_per_column is set
+    if rows_per_column > 0:
+        current_count = len(employees)
+        remainder = current_count % rows_per_column
+        if remainder > 0:
+            entries_needed = rows_per_column - remainder
+            # Creates dummy entries to fill the rest of the column
+            for _ in range(entries_needed):
+                employees.append(None)
+
+    context = {
+        'employees': employees,
+        'columns': columns,
+        'font_size': font_size,
+        'row_height': row_height,
+        'orientation': orientation,
+        'rows_per_column': rows_per_column,
+        'serial_width': serial_width,
+        'name_width': name_width
+    }
+    
+    return render(request, 'attendance/names_index.html', context)
 
 
 

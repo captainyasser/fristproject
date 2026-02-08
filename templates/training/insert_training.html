@@ -57,6 +57,10 @@
                         <input class="form-control" type="number" name="round_num" id="round_num">
                     </div>
                     <div class="mb-3">
+                        <label for="note">ملاحظات (للفرقة):</label>
+                        <textarea class="form-control" name="note" id="note" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
                         <label>اختر الأفراد : (يمكنك تحديد أكثر من فرد في حال حصولهم جميعا علي نفس الفرقة في نفس الدورة)</label>
                         <div class="checkbox-group">
                             {% for employee in employees %}
@@ -90,4 +94,19 @@ function validateDates() {
     return true; // السماح بإرسال النموذج
 }
 </script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+{% if messages %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        {% for message in messages %}
+            Swal.fire({
+                icon: "{% if message.tags == 'error' %}error{% elif message.tags == 'warning' %}warning{% elif message.tags == 'success' %}success{% else %}info{% endif %}",
+                title: "{{ message }}",
+                confirmButtonText: "حسناً",
+                confirmButtonColor: "#3085d6"
+            });
+        {% endfor %}
+    });
+</script>
+{% endif %}
 {% endblock %}

@@ -537,6 +537,11 @@
                 select.appendChild(option);
             });
             select.style.backgroundColor = stateColors[dayData.state] || 'white';
+            
+            // إضافة الملاحظة كعنوان (Tooltip) للقائمة المنسدلة
+            if (dayData.note) {
+                select.title = dayData.note;
+            }
 
             const comfortCheckbox = document.createElement('input');
             comfortCheckbox.type = 'checkbox';

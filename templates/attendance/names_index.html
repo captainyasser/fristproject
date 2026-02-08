@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}فهرس الأسماء{% endblock %}
+
+{% block styles %}
+<style>
+    /* Default Setup */
+    body {
+        background-color: #f4f6f9;
+        font-family: 'Cairo', sans-serif;
+    }
+
+    /* Control Panel (Hidden on Print) */
+    .control-panel {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        direction: rtl;
+    }
+
+    /* Print Setup */
+    @media print {
+        @page {
+            size: {{ orientation|default:'auto' }};
+            margin: 0; /* Removing margin hides browser default headers/footers */
+        }
+        
+        /* Hide everything by default except content */
+        body * {
+            visibility: hidden;
+        }
+        
+        /* Show content and specific children */
+        .content-wrapper, .content-wrapper * {
+            visibility: visible;
+        }
+
+        /* Hide specific distracting elements */
+        .control-panel, .main-header, .main-sidebar, .main-footer, footer, #notification-bar {
+            display: none !important;
+        }
+        
+        /* Reset positioning */
+        .content-wrapper {
+            margin: 0 !important;
+            padding: 1cm !important; /* Add padding to compensate for @page margin 0 */
+            background: white !important;
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            box-sizing: border-box; /* Ensure padding doesn't overflow width */
+        }
+
+        body {
+            background: white;
+        }
+        
+        .card {
+            box-shadow: none !important;
+            border: none !important;
+        }
+        
+        .names-container {
+             height: auto !important;
+        }
+        
+        /* Show print title if added */
+        .print-title {
+            display: block !important;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+    }
+
+    /* The Index Container */
+    .names-container {
+        width: 100%;
+        column-count: {{ columns|default:1 }};
+        column-gap: 20px;
+        column-rule: 1px solid #ccc;
+        direction: rtl;
+        font-size: {{ font_size|default:14 }}px;
+        
+        /* If rows_per_column is set, force height to trigger column breaking */
+        {% if rows_per_column > 0 %}
+            /* Calculation: rows * height. We add a small buffer for borders if slightly off */
+            height: calc({{ rows_per_column }} * {{ row_height }}px); 
+            column-fill: auto; /* Fill columns sequentially */
+        {% endif %}
+    }
+    
+    .name-item {
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid #eee;
+        padding: 0 5px;
+        height: {{ row_height|default:30 }}px;
+        line-height: {{ row_height|default:30 }}px;
+        break-inside: avoid;
+        overflow: hidden; /* Ensure content stays in */
+    }
+
+    .serial {
+        width: {{ serial_width }}px;
+        min-width: {{ serial_width }}px;
+        font-weight: bold;
+        color: #555;
+        border-left: 1px solid #eee;
+        margin-left: 5px;
+        text-align: center;
+        flex-shrink: 0; 
+    }
+
+    .name-text {
+        white-space: nowrap;
+        overflow: hidden;
+        /* Width control */
+        {% if name_width != 'auto' %}
+            width: {{ name_width }}px;
+            min-width: {{ name_width }}px;
+        {% else %}
+            flex-grow: 1;
+        {% endif %}
+    }
+    
+    .name-inner {
+        display: inline-block;
+        white-space: nowrap;
+        transform-origin: right center; /* scale from right since RTL */
+        width: 100%;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Control Panel -->
+        <div class="control-panel no-print">
+            <h3 class="mb-4 text-center">إعدادات فهرس الأسماء</h3>
+            <form method="get" class="row">
+                <div class="col-md-2 form-group">
+                    <label>عدد الأعمدة</label>
+                    <input type="number" name="columns" class="form-control" value="{{ columns|default:5 }}" min="1" max="10">
+                </div>
+                <div class="col-md-2 form-group">
+                    <label>حجم الخط (px)</label>
+                    <input type="number" name="font_size" class="form-control" value="{{ font_size|default:10 }}">
+                </div>
+                <div class="col-md-2 form-group">
+                    <label>ارتفاع الصف (px)</label>
+                    <input type="number" name="row_height" class="form-control" value="{{ row_height|default:20 }}">
+                </div>
+                <div class="col-md-2 form-group">
+                    <label>عدد الصفوف/عمود</label>
+                    <input type="number" name="rows_per_column" class="form-control" value="{{ rows_per_column }}" min="0" placeholder="0 = تلقائي">
+                    <small class="text-muted">0 = تلقائي (ملء الصفحة)</small>
+                </div>
+                <div class="col-md-2 form-group">
+                    <label>عرض المسلسل (px)</label>
+                    <input type="number" name="serial_width" class="form-control" value="{{ serial_width|default:20 }}">
+                </div>
+                <div class="col-md-2 form-group">
+                    <label>عرض الاسم (px)</label>
+                    <input type="text" name="name_width" class="form-control" value="{{ name_width|default:300 }}">
+                </div>
+                
+                <div class="col-md-3 form-group">
+                    <label>اتجاه الطباعة</label>
+                    <select name="orientation" class="form-control">
+                        <option value="portrait" {% if orientation == 'portrait' %}selected{% endif %}>رأسي (Portrait)</option>
+                        <option value="landscape" {% if orientation == 'landscape' %}selected{% endif %}>أفقي (Landscape)</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-3 form-group align-self-end">
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <i class="fas fa-sync"></i> تحديث العرض
+                    </button>
+                    <button type="button" onclick="window.print()" class="btn btn-success btn-block mt-2">
+                        <i class="fas fa-print"></i> طباعة
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- The List -->
+        <div class="card">
+            <div class="card-body">
+                <div class="names-container">
+                    {% for employee in employees %}
+                    <div class="name-item">
+                        <div class="serial">{{ forloop.counter }}</div>
+                        <div class="name-text" id="name-{{ employee.id }}">
+                            <span class="name-inner">{{ employee.name }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Auto-scale long names
+        const nameContainers = document.querySelectorAll('.name-text');
+        
+        nameContainers.forEach(container => {
+            const inner = container.querySelector('.name-inner');
+            if(!inner) return;
+            
+            let containerWidth = container.clientWidth;
+            let contentWidth = inner.scrollWidth;
+            
+            // Basic shrinking logic
+            if (contentWidth > containerWidth) {
+                let ratio = containerWidth / contentWidth;
+                // Cap strictness slightly to avoid over-shrinking too much, or set min font size equivalent
+                if (ratio < 0.5) ratio = 0.5; // Don't shrink below 50%
+                
+                // Use transform scale for smooth rendering or fontSize reduction?
+                // Scale is often better for "fitting" exact width without changing line height layout issues
+                // but might look squished. Let's try font-size reduction first loop
+                
+                let currentSize = parseInt(window.getComputedStyle(container).fontSize);
+                let newSize = Math.floor(currentSize * ratio);
+                
+                // container.style.fontSize = newSize + 'px';
+                
+                // Using transform scale allows it to fit EXACTLY pixel perfect
+                inner.style.transform = `scaleX(${ratio})`;
+                inner.style.width = `${(1/ratio) * 100}%`; // compenstate width so it takes up space? No, transform doesn't affect flow.
+                // Actually, if we scale down, the visual width decreases. 
+                // We want visual width = container width.
+                // Original Width = contentWidth. Target = containerWidth.
+                // Scale = containerWidth / contentWidth.
+                
+                // But simplified approach: just reduce font size iteratively?
+                // iterative is safer for flow.
+                
+                container.style.fontSize = Math.max(8, newSize) + "px";
+                
+                // If still overflow after font resize (e.g. really long), use overflow hidden (already set in CSS)
+            }
+        });
+    });
+</script>
+{% endblock %}

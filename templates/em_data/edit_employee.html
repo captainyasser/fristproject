@@ -85,6 +85,11 @@
                     <input type="text" id="not" name="not" class="form-control" value="{{ employee.not|date:'Y-m-d' }}">
                 </div>
 
+                <div class="mb-3 form-check">
+                    <input type="checkbox" id="is_driver" name="is_driver" class="form-check-input" {% if employee.is_driver %}checked{% endif %}>
+                    <label for="is_driver" class="form-check-label">سائق</label>
+                </div>
+ 
                 <button type="submit" class="btn btn-primary w-100">حفظ التعديلات</button>
             </form>
         </div>

@@ -87,6 +87,7 @@ class Employee(models.Model):
     idcard_expir = models.DateField(null=True, blank=True, verbose_name="تاريخ انتهاء بطاقة الهوية")
     idcard_work = models.CharField(max_length=20, choices=WORK_CHOICES, null=True, blank=True, verbose_name="المهنة")
     idcard_social = models.CharField(max_length=20, choices=MARITAL_STATUS_CHOICES, null=True, blank=True, verbose_name="الحالة الاجتماعية")
+    is_driver = models.BooleanField(default=False, verbose_name="سائق")
 
     class Meta:
         db_table = 'employees'

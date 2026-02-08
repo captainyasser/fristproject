@@ -54,7 +54,7 @@
             {% for task in tasks %}
             <div class="col-md-4 col-sm-6 col-12">
                 {% now "Y-m-d" as today_str %}
-                <div class="card card-outline {% if task.is_completed %}card-success{% else %}card-primary{% endif %} task-card" data-due-date="{{ task.due_date|date:'Y-m-d' }}" data-id="{{ task.id }}">
+                <div class="card card-outline {% if task.is_completed %}card-success{% else %}card-primary{% endif %} task-card" data-due-date="{{ task.due_date|date:'Y-m-d' }}" data-id="{{ task.id }}" data-reminder-days="{{ task.reminder_days }}">
                     <div class="card-header">
                         <h3 class="card-title">{{ task.title }}</h3>
                         <div class="card-tools">
@@ -169,22 +169,39 @@
 <script src="{% static 'adminlte/plugins/bs-custom-file-input/bs-custom-file-input.min.js' %}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const today = new Date().toISOString().split('T')[0];
+        // Get local date string YYYY-MM-DD
+        const d = new Date();
+        const today = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
+        
         const cards = document.querySelectorAll('.task-card');
         let urgentCount = 0;
 
         cards.forEach(card => {
-            const dueDate = card.dataset.dueDate;
+            const dueDateStr = card.dataset.dueDate;
+            const reminderDays = parseInt(card.dataset.reminderDays || 0);
+
+            // Calculate dates using timestamps (set to midnight to avoid time issues)
+            const dueTime = new Date(dueDateStr).setHours(0,0,0,0);
+            const nowTime = new Date(today).setHours(0,0,0,0);
+            
+            // Difference in days
+            const diffTime = dueTime - nowTime;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
             // إزالة الكلاسات الافتراضية
             card.classList.remove('card-primary', 'card-danger', 'card-warning', 'card-success');
             
-            if (dueDate < today) {
+            if (diffDays < 0) {
                 // متأخرة
                 card.classList.add('card-danger'); // أحمر
                 urgentCount++;
-            } else if (dueDate === today) {
+            } else if (diffDays === 0) {
                 // مستحقة اليوم
                 card.classList.add('card-warning'); // أصفر
+                urgentCount++;
+            } else if (reminderDays > 0 && diffDays <= reminderDays) {
+                // اقترب الموعد
+                card.classList.add('card-warning'); // أصفر أيضا للتنبيه
                 urgentCount++;
             } else {
                 // قادمة
@@ -197,7 +214,7 @@
             const alertBox = document.getElementById('urgent-tasks-alert');
             const alertMsg = document.getElementById('urgent-tasks-msg');
             if (alertBox && alertMsg) {
-                alertMsg.textContent = `لديك ${urgentCount} مهام متأخرة أو مستحقة اليوم يجب الانتباه لها!`;
+                alertMsg.textContent = `لديك ${urgentCount} مهام متأخرة أو مستحقة (اليوم أو قريباً) يجب الانتباه لها!`;
                 alertBox.style.display = 'block';
             }
         }

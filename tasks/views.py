@@ -165,9 +165,15 @@ def get_notifications(request):
                 'type': notif_type
             })
             
-            # الشريط المتحرك يعرض فقط المستحقة للتنفيذ (اليوم أو متأخرة)
-            if (is_overdue or is_due_today) and not task.is_completed:
-                status_text = "متأخرة" if is_overdue else "مستحقة اليوم"
+            # الشريط المتحرك يعرض المستحقة للتنفيذ (اليوم أو متأخرة أو اقترب موعدها)
+            if (is_overdue or is_due_today or is_due_soon) and not task.is_completed:
+                if is_overdue:
+                    status_text = "متأخرة"
+                elif is_due_today:
+                    status_text = "مستحقة اليوم"
+                else:
+                    status_text = "اقترب موعدها"
+                    
                 marquee_messages.append({
                     'text': f"{task.title} ({status_text})",
                     'type': notif_type,

@@ -41,7 +41,7 @@
                     
                     <div class="col-md-2">
                         <label for="end">إلى رقم:</label>
-                        <input type="number" id="end" name="end" class="form-control" min="1" value="47">
+                        <input type="number" id="end" name="end" class="form-control" min="1" value="38">
                     </div>
                     
                     <div class="col-md-2">
@@ -59,10 +59,11 @@
             </form>
 
             <div class="my-3">
-                <button class="btn btn-info" onclick="fetchData(1, 47, 1)">الصفحة 1 (1-47)</button>
-                <button class="btn btn-info" onclick="fetchData(48, 94, 1)">الصفحة 2 (48-94)</button>
-                <button class="btn btn-info" onclick="fetchData(95, 133, 3)">الصفحة 3 (95-133)</button>
-                <button class="btn btn-info" onclick="fetchData(134, 168, 6)">الصفحة 4 (134-168)</button>
+                <button class="btn btn-info" onclick="fetchData(1, 38, 1)">الصفحة 1 (1-38)</button>
+                <button class="btn btn-info" onclick="fetchData(39, 75, 1)">الصفحة 2 (39-75)</button>
+                <button class="btn btn-info" onclick="fetchData(76, 113, 3)">الصفحة 3 (76-113)</button>
+                <button class="btn btn-info" onclick="fetchData(114, 147, 6)">الصفحة 4 (114-147)</button>
+                <button class="btn btn-info" onclick="fetchData(148, 222, 6)">الصفحة 5 (148-222)</button>
             </div>
 
             <table class="table table-bordered" dir="rtl" id="attendance-table" style="display: none;">
@@ -263,7 +264,7 @@
                 <input type="number" id="start" name="start" min="1" value="1">
                 
                 <label for="end">إلى رقم:</label>
-                <input type="number" id="end" name="end" min="1" value="47">
+                <input type="number" id="end" name="end" min="1" value="38">
                 <br>
                 <label for="padding_size">التباعد الداخلي:</label>
                 <input type="number" id="padding_size" name="padding_size" min="1" max="20" value="1">
@@ -274,9 +275,9 @@
 
             <!-- الأزرار الأربعة لفتح الصفحات مع التباعد الداخلي -->
             <div style="margin-top: 10px;">
-                <button class="btn btn-info" onclick="openPage(1, 47, 1)">الصفحة 1 (1-47)</button>
-                <button class="btn btn-info" onclick="openPage(48, 94, 1)">الصفحة 2 (48-94)</button>
-                <button class="btn btn-info" onclick="openPage(95, 135, 3)">الصفحة 3 (95-135)</button>
+                <button class="btn btn-info" onclick="openPage(1, 38, 1)">الصفحة 1 (1-38)</button>
+                <button class="btn btn-info" onclick="openPage(39, 75, 1)">الصفحة 2 (39-75)</button>
+                <button class="btn btn-info" onclick="openPage(76, 135, 3)">الصفحة 3 (76-135)</button>
                 <button class="btn btn-info" onclick="openPage(136, 170, 6)">الصفحة 4 (136-170)</button>
             </div>
 

@@ -41,6 +41,7 @@ urlpatterns = [
     path('api/namesreport/', views.NamesReportAPIView.as_view(), name='namesreport-api'),
     path('namesreport/', views.namesreport_page, name='namesreport_page'),
     path('weekly-food-average/', views.weekly_food_average, name='weekly_food_average'),
+    path('names-index/', views.names_index_view, name='names_index'),
     
     ]
 

@@ -63,6 +63,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
     idcard_expir = serializers.DateField(required=False, allow_null=True)
     idcard_work = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     idcard_social = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    is_driver = serializers.BooleanField(required=False, default=False)
 
     class Meta:
         model = Employee
@@ -74,7 +75,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
             'insurance_number', 'health_status', 'rank', 'department', 
             'operation', 'image', 'amen_or_ola', 'rank_kind', 
             'dep_sort', 'mainornot', 'bus', 'tmamam', 'food', 'rahatcounter', 'institute_id',
-            'total_leave', 'rank_id', 'nots', 'department_id', 'idcard_expir', 'idcard_work', 'idcard_social'
+            'total_leave', 'rank_id', 'nots', 'department_id', 'idcard_expir', 'idcard_work', 'idcard_social', 'is_driver'
         ]
         read_only_fields = ['age']
 

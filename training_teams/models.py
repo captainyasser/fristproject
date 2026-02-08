@@ -42,6 +42,7 @@ class EmTrainingTeams(models.Model):
         max_length=10, choices=RESULT_CHOICES, 
         blank=True, null=True, verbose_name="النتيجة"
     )
+    note = models.TextField(verbose_name="ملاحظات", default="")
     round_num = models.IntegerField(blank=True, null=True, verbose_name="رقم الدورة")
 
     class Meta:
