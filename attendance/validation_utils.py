@@ -5,25 +5,27 @@ def validate_attendance(employee, attendance_map, start_date, num_days):
     """
     Validates attendance for a single employee based on 7 rules.
     attendance_map: dict { date_obj: attendance_obj } containing history relative to check period.
-    Returns: list of error strings.
+    Returns: list of error dicts with 'date' and 'message'.
     """
-    errors = set()
+    errors = []
     
     # Define codes based on rules
     REST_CODES = ['راحة', 'ر بديلة'] # Rule 3 specific
-    VACATION_CODES = ['راحة', 'ر بديلة', 'عطلة', 'منحة', 'اجازه'] # Rule 4 - assuming comprehensive list
-    MISSION_CODES = ['مأمورية', 'مأمورية خ', 'فرقة', 'انتداب', 'خاصه', 'مرضي', 'ج وضع'] # Rule 4 triggers (plus Absence handled separately) - Adding 'خاصه', 'مرضي'
+    PATROL_CODES = ['دورية'] # Rule 4 - Patrol codes
+    MISSION_CODES = ['مأمورية', 'مأمورية خ', 'فرقة', 'انتداب', 'خاصه', 'مرضي', 'ج وضع'] # Rule 4 triggers
     ABSENCE_CODES = ['غياب']
     EMERGENCY_CODES = ['طارئة']
     SHIFT_CODES = ['نوبتجي']
     DAILY_CODES = ['يومي']
-    ALLOWED_AFTER_ABSENCE = SHIFT_CODES + DAILY_CODES # Rule 5: Shift or "Two Days"(Daily)
-    ALLOWED_AFTER_EMERGENCY = EMERGENCY_CODES + DAILY_CODES + SHIFT_CODES # Rule 6: Emergency, Daily, Attendance(Shift)
+    ALLOWED_AFTER_ABSENCE = SHIFT_CODES + DAILY_CODES + ABSENCE_CODES # Rule 5: Shift, Daily, or Absence
+    ALLOWED_AFTER_EMERGENCY = EMERGENCY_CODES + DAILY_CODES + SHIFT_CODES + ABSENCE_CODES # Rule 6: Emergency, Daily, Shift, or Absence
+
     
     date_list = [start_date + timedelta(days=i) for i in range(num_days)]
     
     # State tracking for cumulative error reporting
     max_consecutive_rest = 0
+    max_consecutive_rest_date = None
     
     for current_date in date_list:
         if current_date not in attendance_map:
@@ -45,12 +47,18 @@ def validate_attendance(employee, attendance_map, start_date, num_days):
                 before_prev_att = attendance_map.get(before_prev_date)
                 before_prev_state = before_prev_att.state if before_prev_att else '_'
                 if before_prev_state in EMERGENCY_CODES:
-                    errors.add("لا يجوز أكثر من يومين طارئة متتالية")
+                    errors.append({
+                        'date': current_date,
+                        'message': "لا يجوز أكثر من يومين طارئة متتالية"
+                    })
 
         # Rule 2: No Rest/Alt Rest after Patrol ('دورية') or Emergency
         if state in REST_CODES:
-            if prev_state in ['دورية'] + EMERGENCY_CODES:
-               errors.add("لا يجوز راحة بعد دورية أو طارئة")
+            if prev_state in PATROL_CODES + EMERGENCY_CODES:
+                errors.append({
+                    'date': current_date,
+                    'message': "لا يجوز راحة بعد دورية أو طارئة"
+                })
 
         # Rule 3: No more than 4 days Rest (Rest + Alt Rest)
         if state in REST_CODES:
@@ -69,25 +77,32 @@ def validate_attendance(employee, attendance_map, start_date, num_days):
                 # Update global max for this period
                 if consecutive_rest > max_consecutive_rest:
                     max_consecutive_rest = consecutive_rest
+                    max_consecutive_rest_date = current_date
+                    max_consecutive_rest_date = current_date
 
-        # Rule 4: No Vacation after Mission/Delegation/Special/Sick/Absence
-        # Note: Rule 5 handles Absence more strictly. Rule 4 applies to others.
-        # "Special" = 'خاصه', "Sick" = 'مرضي'
-        if state in VACATION_CODES:
+        # Rule 4: No Patrol after Mission/Delegation/Special/Sick
+        if state in PATROL_CODES:
             if prev_state in MISSION_CODES:
-                 errors.add("لا يجوز أجازة بعد فرقة/انتداب/خاصة/مرضي") # Combined msg or specific?
-            elif prev_state in ABSENCE_CODES:
-                 # Rule 5 covers this generally, but let's add specific Rule 4 msg if needed
-                 pass 
+                errors.append({
+                    'date': current_date,
+                    'message': "لا يجوز دورية بعد فرقة/انتداب/خاصة/مرضي"
+                })
+ 
 
         # Rule 5: After Absence, only Shift or 'Two Days'(Daily) allowed
         if prev_state in ABSENCE_CODES:
             if state not in ALLOWED_AFTER_ABSENCE:
-                 errors.add("لا يجوز بعد الغياب إلا حضور")
+                errors.append({
+                    'date': current_date,
+                    'message': "لا يجوز بعد الغياب إلا حضور"
+                })
 
         # Rule 6: Emergency followed only by Emergency (max 2), Daily, or Attendance(Shift)
         if prev_state in EMERGENCY_CODES and state not in ALLOWED_AFTER_EMERGENCY:
-             errors.add("الطارئة لا يعقبها إلا حضور أو غياب")
+            errors.append({
+                'date': current_date,
+                'message': "الطارئة لا يعقبها إلا حضور أو غياب"
+            })
 
         # Rule 7: If operation is Daily, Friday cannot be Rest if worked < 4 Daily days in week (Sat-Thu)
         # Check if today is Friday
@@ -112,10 +127,122 @@ def validate_attendance(employee, attendance_map, start_date, num_days):
                         dw_count += 1
                 
                 if dw_count < 4:
-                     errors.add(f"لا يجوز راحة الجمعة (العمل اليومي أقل من 4 أيام هذا الأسبوع)") # Removed count from message to uniqueness
+                    errors.append({
+                        'date': current_date,
+                        'message': f"لا يجوز راحة الجمعة (العمل اليومي أقل من 4 أيام هذا الأسبوع)"
+                    })
 
     # Post loop: Add max violation for rest
-    if max_consecutive_rest > 4:
-         errors.add(f"لا يجوز أكثر من 4 أيام راحة متتالية (العدد الحالي: {max_consecutive_rest})")
+    if max_consecutive_rest > 4 and max_consecutive_rest_date:
+        errors.append({
+            'date': max_consecutive_rest_date,
+            'message': f"لا يجوز أكثر من 4 أيام راحة متتالية (العدد الحالي: {max_consecutive_rest})"
+        })
 
-    return sorted(list(errors))
+    return errors
+
+
+def check_operation_compliance(employee, attendance_map, start_date, num_days):
+    """
+    Checks if attendance state matches the expected state based on employee operation.
+    Returns: list of error dicts with 'date' and 'message'.
+    """
+    errors = []
+    
+    # Define rules
+    # Operation 'السبت'
+    op_sat_rules = {
+        5: 'نوبتجي', 6: 'نوبتجي', 0: 'نوبتجي',
+        1: 'يومي',
+        2: 'راحة', 3: 'راحة', 4: 'راحة'
+    }
+    # Operation 'الأحد'
+    op_sun_rules = {
+        6: 'نوبتجي', 0: 'نوبتجي', 1: 'نوبتجي',
+        2: 'يومي',
+        3: 'راحة', 4: 'راحة', 5: 'راحة'
+    }
+    # Operation 'الاثنين'
+    op_mon_rules = {
+        0: 'نوبتجي', 1: 'نوبتجي', 2: 'نوبتجي',
+        3: 'يومي',
+        4: 'راحة', 5: 'راحة', 6: 'راحة'
+    }
+    # Operation 'الثلاثاء'
+    op_tue_rules = {
+        1: 'نوبتجي', 2: 'نوبتجي', 3: 'نوبتجي',
+        4: 'يومي',
+        5: 'راحة', 6: 'راحة', 0: 'راحة'
+    }
+    # Operation 'الأربعاء'
+    op_wed_rules = {
+        2: 'نوبتجي', 3: 'نوبتجي', 4: 'نوبتجي',
+        5: 'يومي',
+        6: 'راحة', 0: 'راحة', 1: 'راحة'
+    }
+    # Operation 'الخميس'
+    op_thu_rules = {
+        3: 'نوبتجي', 4: 'نوبتجي', 5: 'نوبتجي',
+        6: 'يومي',
+        0: 'راحة', 1: 'راحة', 2: 'راحة'
+    }
+    # Operation 'الجمعة'
+    op_fri_rules = {
+        4: 'نوبتجي', 5: 'نوبتجي', 6: 'نوبتجي',
+        0: 'يومي',
+        1: 'راحة', 2: 'راحة', 3: 'راحة'
+    }
+    
+    rules_map = {
+        'السبت': op_sat_rules,
+        'الأحد': op_sun_rules,
+        'الاثنين': op_mon_rules,
+        'الثلاثاء': op_tue_rules,
+        'الأربعاء': op_wed_rules,
+        'الخميس': op_thu_rules,
+        'الجمعة': op_fri_rules,
+        'انتداب': 'انتداب',
+        'خاصه': 'خاصه',
+        'ج وضع': 'ج وضع',
+        'قرار66': 'قرار66',
+        'مرضي': 'مرضي',
+    }
+    
+    date_list = [start_date + timedelta(days=i) for i in range(num_days)]
+    
+    rule = rules_map.get(employee.operation)
+    if not rule:
+        return [] # No rule for this operation
+        
+    for current_date in date_list:
+        if current_date not in attendance_map:
+            continue
+            
+        current_att = attendance_map[current_date]
+        actual_state = current_att.state
+        
+        day_of_week = current_date.weekday()
+        expected_state = None
+        
+        if isinstance(rule, dict):
+            expected_state = rule.get(day_of_week)
+        elif isinstance(rule, str):
+            expected_state = rule
+            
+        if not expected_state:
+            continue
+            
+        if actual_state != expected_state:
+            # Special case: 'قرار66' and 'مرضي' are treated as equivalent (Sick)
+            is_sick_equivalent_expected = expected_state in ['قرار66', 'مرضي']
+            is_sick_equivalent_actual = actual_state in ['قرار66', 'مرضي']
+            
+            if is_sick_equivalent_expected and is_sick_equivalent_actual:
+                continue # Treated as valid match
+                
+            errors.append({
+                'date': current_date,
+                'message': f"({expected_state})"
+            })
+            
+    return errors

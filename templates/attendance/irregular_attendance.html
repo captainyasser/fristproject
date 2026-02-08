@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid mt-4" dir="rtl">
+    <div class="card">
+        <div class="card-header bg-warning text-dark">
+            <h3 class="mb-0">
+                <i class="fas fa-exclamation-triangle ms-2"></i>
+                أفراد في تشغيل مختلف عن المعتاد
+            </h3>
+        </div>
+        <div class="card-body">
+            <!-- Filter Form -->
+            <form method="get" class="row g-3 mb-4 border p-3 rounded bg-light">
+                <div class="col-md-3">
+                    <label for="date" class="form-label fw-bold">التاريخ</label>
+                    <input type="date" class="form-control" id="date" name="date" value="{{ selected_date|date:'Y-m-d' }}">
+                </div>
+                
+                <div class="col-md-3">
+                    <label for="department" class="form-label fw-bold">القسم</label>
+                    <select class="form-select" id="department" name="department">
+                        <option value="0">كل الأقسام</option>
+                        {% for dept in departments %}
+                        <option value="{{ dept.id }}" {% if dept_id == dept.id %}selected{% endif %}>{{ dept.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-3">
+                    <label for="operation" class="form-label fw-bold">التشغيل</label>
+                    <select class="form-select" id="operation" name="operation">
+                        <option value="0">الكل</option>
+                        {% for op_val, op_label in operation_choices %}
+                        <option value="{{ op_val }}" {% if operation_filter == op_val %}selected{% endif %}>{{ op_label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label for="gender" class="form-label fw-bold">النوع</label>
+                    <select class="form-select" id="gender" name="gender">
+                        <option value="0">الكل</option>
+                        <option value="ذكر" {% if gender_filter == 'ذكر' %}selected{% endif %}>ذكر</option>
+                        <option value="أنثي" {% if gender_filter == 'أنثي' %}selected{% endif %}>أنثي</option>
+                    </select>
+                </div>
+
+                <div class="col-12 text-center mt-3">
+                    <button type="submit" class="btn btn-primary px-5">
+                        <i class="fas fa-filter ms-2"></i> عرض
+                    </button>
+                    <a href="{% url 'irregular_attendance' %}" class="btn btn-secondary px-5">
+                        <i class="fas fa-undo ms-2"></i> إعادة تعيين
+                    </a>
+                </div>
+            </form>
+
+            <!-- Results Table -->
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped table-hover text-center align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>#</th>
+                            <th>الاسم</th>
+                            <th>القسم</th>
+                            <th>النوع</th>
+                            <th>التشغيل المحدد</th>
+                            <th>التاريخ</th>
+                            <th>الحالة المتوقعة</th>
+                            <th>الحالة الفعلية</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in irregular_employees %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td class="fw-bold">{{ item.employee.name }}</td>
+                            <td>{{ item.employee.department.name|default:"-" }}</td>
+                            <td>{{ item.employee.gender|default:"-" }}</td>
+                            <td>
+                                <span class="badge bg-info text-dark">{{ item.employee.operation }}</span>
+                            </td>
+                            <td>{{ selected_date|date:'Y-m-d' }}</td>
+                            <td>
+                                <span class="badge bg-success">{{ item.expected }}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-danger">{{ item.actual }}</span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4 text-muted">
+                                <i class="fas fa-check-circle fa-3x mb-3 text-success"></i>
+                                <br>
+                                لا توجد اختلافات عن القواعد لهذا التاريخ
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="mt-3">
+                <p class="text-muted small">
+                    <i class="fas fa-info-circle ms-1"></i>
+                    يتم عرض الأفراد الذين تختلف حالة حضورهم المسجلة عن القواعد المحددة لتشغيلهم في يوم الأسبوع المختار.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

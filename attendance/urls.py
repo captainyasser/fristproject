@@ -42,7 +42,8 @@ urlpatterns = [
     path('namesreport/', views.namesreport_page, name='namesreport_page'),
     path('weekly-food-average/', views.weekly_food_average, name='weekly_food_average'),
     path('names-index/', views.names_index_view, name='names_index'),
-    
+    path('irregular/', views.irregular_attendance, name='irregular_attendance'),
+    path('irregular/validation/', validation_views.irregular_validation_view, name='irregular_validation'),
     ]
 
 

@@ -1,6 +1,6 @@
 <!-- F:\emapi-edit\myproject\templates\attendance\attendance_3w.html -->
 <title>
-    مخالفات الحضور
+    مخالفات التشغيل المعتاد
 </title>
 {% extends "base.html" %}
 {% comment %} attendance_3w.html {% endcomment %}
@@ -243,7 +243,7 @@
                     </button>
                 </div>
 
-                <form method="get" action="{% url 'attendance_validation' %}">
+                <form method="get" action="{% url 'irregular_validation' %}">
                     <label for="start_date">تاريخ البداية:</label>
                     <input type="date" id="start_date" name="start_date" value="{{ start_date|date:'Y-m-d' }}" required>
                     <button type="button" onclick="changeDate(-7)">- 7 أيام</button>
@@ -285,7 +285,7 @@
                                     <th>م</th>
                                     <th>الاســــــــــــــــــــــــــــــــــــــــــم</th>
                                     <th>الراحات</th>
-                                    <th style="width: 200px;">تفاصيل الخطأ</th>
+                                    <th>الراحات</th>
 
                                     {% for day in week_days %}
                                     <th style="{% if day|date:'Y-m-d' == today|date:'Y-m-d' %}background-color:rgb(228, 70, 22);{% endif %}">
@@ -326,14 +326,7 @@
                                         <button type="button" onclick="decrementRahatcounter('{{ employee.id }}')" class="btn btn-primary btn-xs">-</button>
                                     </td>
 
-                                    <td dir="rtl" style="vertical-align: top; padding: 5px; min-width: 250px;">
-                                        {% for error in employee.validation_errors %}
-                                            <div class="alert alert-danger p-1 mb-1" style="font-size: 11px; margin-bottom: 2px;">
-                                                <i class="fas fa-exclamation-circle"></i> 
-                                                <strong>{{ error.date|date:"Y-m-d" }}:</strong> {{ error.message }}
-                                            </div>
-                                        {% endfor %}
-                                    </td>
+
 
                                     {% for day in week_days %}
                                     <td style="
@@ -411,6 +404,8 @@
     };
 
     let attendanceData = {};
+    const validationErrors = JSON.parse('{{ validation_errors_dict|escapejs }}' || '{}');
+    console.log("Validation Errors:", validationErrors);
 
     function changeDate(days) {
         const startDateInput = document.getElementById('start_date');
@@ -504,6 +499,24 @@
             const employeeId = cell.dataset.employeeId;
             const date = cell.dataset.date;
             const dayData = attendanceData[employeeId]?.[date] || { state: '_', comfort_adjustment: 0, food: false };
+            
+            // Check for validation error
+            const errorMsg = validationErrors[employeeId]?.[date];
+            if (errorMsg) {
+                cell.style.border = "3px solid red";
+                cell.title = errorMsg; // Tooltip
+                cell.setAttribute('data-bs-toggle', 'tooltip'); // Enhance if using bootstrap tooltips
+                cell.setAttribute('data-bs-placement', 'top');
+            } else {
+                 // Reset if no error (though populate usually runs once per cell load)
+                 // Keep Friday border if intended, but otherwise reset.
+                 // The Friday border is set via inline style in HTML. 
+                 // We should be careful not to overwrite inline styles completely if we don't have to.
+                 // But simply setting style.border might check conflict. 
+                 // The HTML has `border-left: 3px solid ...`. `style.border` sets all borders.
+                 // To maintain Friday left border, we should maybe use `style.boxShadow` or specific border.
+                 // User asked for "Red color around the cell". border usually means all sides.
+            }
 
             const select = document.createElement('select');
             select.className = 'att-states';
@@ -559,6 +572,17 @@
             foodCheckbox.title = 'يحصل على تعيين';
 
             cell.innerHTML = '';
+            
+            if (errorMsg) {
+                const errorSpan = document.createElement('span');
+                errorSpan.textContent = errorMsg;
+                errorSpan.style.color = "red";
+                errorSpan.style.fontWeight = "bold";
+                errorSpan.style.fontSize = "11px";
+                errorSpan.style.display = "block";
+                cell.appendChild(errorSpan);
+            }
+
             cell.appendChild(select);
             cell.appendChild(comfortCheckbox);
             cell.appendChild(foodCheckbox);

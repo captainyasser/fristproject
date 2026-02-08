@@ -796,27 +796,27 @@ def redo_last_change(request):
         AttendanceChangeLog.objects.create(
             attendance=attendance,
             user=request.user,
-            prev_state=attendance.state,
             prev_food=attendance.food,
             prev_comfort_adjustment=attendance.comfort_adjustment,
             prev_in_or_out=attendance.in_or_out
         )
-
+        
         # Calculate rahatcounter adjustment
         current_comfort = attendance.comfort_adjustment
         target_comfort = last_log.redo_comfort_adjustment
         delta = target_comfort - current_comfort
-
-        # Apply values from RedoLog
+        
+        # Revert values
         attendance.state = last_log.redo_state
         attendance.food = last_log.redo_food
         attendance.comfort_adjustment = last_log.redo_comfort_adjustment
         attendance.in_or_out = last_log.redo_in_or_out
         
         attendance.save()
-        
-        current_rahat_counter = attendance.employee.rahatcounter
 
+        current_rahat_counter = attendance.employee.rahatcounter
+        
+        # Update employee rahatcounter
         if delta != 0:
             employee = attendance.employee
             employee.rahatcounter += delta
@@ -841,6 +841,156 @@ def redo_last_change(request):
         
     except Exception as e:
         return Response({'success': False, 'error': str(e)})
+
+
+@login_required
+def irregular_attendance(request):
+    today = datetime.today().date()
+    selected_date_str = request.GET.get('date')
+    if selected_date_str:
+        try:
+            selected_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            selected_date = today
+    else:
+        selected_date = today
+
+    # Get filters
+    dept_id = request.GET.get('department')
+    operation = request.GET.get('operation')
+    gender = request.GET.get('gender')
+    
+    employees = Employee.objects.filter(mainornot=1)
+    
+    if dept_id and dept_id != '0':
+        employees = employees.filter(department_id=dept_id)
+    
+    if operation and operation != '0':
+        employees = employees.filter(operation=operation)
+        
+    if gender and gender != '0':
+        employees = employees.filter(gender=gender)
+
+    # Specific operations to check
+    # Mapping of Operation -> Day of week (0=Mon, 6=Sun) -> Expected State
+    # Saturday(5), Sunday(6), Monday(0), Tuesday(1), Wednesday(2), Thursday(3), Friday(4)
+    
+    # Operation 'السبت'
+    op_sat_rules = {
+        5: 'نوبتجي', 6: 'نوبتجي', 0: 'نوبتجي',
+        1: 'يومي',
+        2: 'راحة', 3: 'راحة', 4: 'راحة'
+    }
+    # Operation 'الأحد'
+    op_sun_rules = {
+        6: 'نوبتجي', 0: 'نوبتجي', 1: 'نوبتجي',
+        2: 'يومي',
+        3: 'راحة', 4: 'راحة', 5: 'راحة'
+    }
+    # Operation 'الاثنين'
+    op_mon_rules = {
+        0: 'نوبتجي', 1: 'نوبتجي', 2: 'نوبتجي',
+        3: 'يومي',
+        4: 'راحة', 5: 'راحة', 6: 'راحة'
+    }
+    # Operation 'الثلاثاء'
+    op_tue_rules = {
+        1: 'نوبتجي', 2: 'نوبتجي', 3: 'نوبتجي',
+        4: 'يومي',
+        5: 'راحة', 6: 'راحة', 0: 'راحة'
+    }
+    # Operation 'الأربعاء'
+    op_wed_rules = {
+        2: 'نوبتجي', 3: 'نوبتجي', 4: 'نوبتجي',
+        5: 'يومي',
+        6: 'راحة', 0: 'راحة', 1: 'راحة'
+    }
+    # Operation 'الخميس'
+    op_thu_rules = {
+        3: 'نوبتجي', 4: 'نوبتجي', 5: 'نوبتجي',
+        6: 'يومي',
+        0: 'راحة', 1: 'راحة', 2: 'راحة'
+    }
+    # Operation 'الجمعة'
+    op_fri_rules = {
+        4: 'نوبتجي', 5: 'نوبتجي', 6: 'نوبتجي',
+        0: 'يومي',
+        1: 'راحة', 2: 'راحة', 3: 'راحة'
+    }
+    
+    # Combined rules map
+    rules_map = {
+        'السبت': op_sat_rules,
+        'الأحد': op_sun_rules,
+        'الاثنين': op_mon_rules,
+        'الثلاثاء': op_tue_rules,
+        'الأربعاء': op_wed_rules,
+        'الخميس': op_thu_rules,
+        'الجمعة': op_fri_rules,
+        # Special cases
+        'انتداب': 'انتداب', # All days
+        'خاصه': 'خاصه',   # All days
+    }
+
+    irregular_employees = []
+    
+    attendances = Attendance.objects.filter(date=selected_date, employee__in=employees).select_related('employee')
+    attendance_map = {att.employee_id: att for att in attendances}
+    
+    day_of_week = selected_date.weekday()
+    
+    for emp in employees:
+        rule = rules_map.get(emp.operation)
+        if not rule:
+            continue
+            
+        expected_state = None
+        if isinstance(rule, dict):
+            expected_state = rule.get(day_of_week)
+        elif isinstance(rule, str):
+            expected_state = rule # 'انتداب' or 'خاصه'
+            
+        if not expected_state:
+            # Maybe operation is 'عمل يومي' or something not in our specific list
+            continue
+            
+        att = attendance_map.get(emp.id)
+        
+        if not att:
+             actual_state_display = "لا يوجد سجل"
+             mismatch = True
+        else:
+             actual_state_display = att.state
+             if att.state != expected_state:
+                 mismatch = True
+             else:
+                 mismatch = False
+                 
+        if mismatch:
+            # Add to list
+            irregular_employees.append({
+                'employee': emp,
+                'expected': expected_state,
+                'actual': actual_state_display
+            })
+
+    departments = Department.objects.all()
+    
+    context = {
+        'irregular_employees': irregular_employees,
+        'selected_date': selected_date,
+        'departments': departments,
+        'operation_choices': Employee.OPERATION_CHOICES,
+        'request': request,
+        'dept_id': int(dept_id) if dept_id else 0,
+        'operation_filter': operation if operation else '0',
+        'gender_filter': gender if gender else '0',
+        'today': today,
+    }
+    
+    return render(request, 'attendance/irregular_attendance.html', context)
+
+
 
 
 @api_view(['GET'])
