@@ -259,7 +259,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
             'nickname', 'operation', 'police_number', 'insurance_number', 'date_of_edara',
             'date_of_appointment', 'phone_number', 'alt_phone_number', 'marital_status',
             'gender', 'governorate', 'district', 'address', 'health_status', 'tmamam',
-            'food', 'rahatcounter', 'department', 'total_leave', 'bus', 'nots'
+            'food', 'rahatcounter', 'department', 'total_leave', 'bus', 'nots', 'dryfood'
         ]
 
         if field not in allowed_fields:
@@ -282,7 +282,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
                                 updated_items.append(employee)
                         elif field == 'image':
                             continue
-                        elif field in ['tmamam', 'food', 'bus', 'amen_or_ola']:
+                        elif field in ['tmamam', 'food', 'bus', 'amen_or_ola', 'dryfood']:
                             new_bool = bool(new_value)
                             if new_bool != current_value:
                                 setattr(employee, field, new_bool)
@@ -1590,4 +1590,40 @@ class DepartmentOperationReportAPIView(APIView):
             
         return Response(report_data)
 
+from .utils import calculate_next_promotion
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.decorators import login_required
 
+@login_required
+def professional_profile(request):
+    employee_id = request.GET.get('id', None)
+    search_query = request.GET.get('search', '')
+    
+    # Prefetch everything for the selected employee
+    employees = Employee.objects.all().only('id', 'name', 'rank__name').select_related('rank').order_by('sort_number')
+    
+    selected_employee = None
+    if employee_id:
+        selected_employee = Employee.objects.prefetch_related(
+            'promotions', 'promotions__from_rank', 'promotions__to_rank',
+            'penalties', 'penalties__penalty_level', 'penalties__penalty_applied',
+            'training_teams', 'training_teams__training_team', 'training_teams__place'
+        ).select_related('rank', 'department', 'institute').filter(id=employee_id).first()
+    
+    if selected_employee:
+        # Calculate next promotion
+        selected_employee.next_promotion_date = calculate_next_promotion(selected_employee)
+        
+        # Sort related data
+        selected_employee.sorted_promotions = selected_employee.promotions.all().order_by('-promotion_date')
+        selected_employee.sorted_penalties = selected_employee.penalties.all().order_by('-penalty_date')
+        selected_employee.sorted_training = selected_employee.training_teams.all().order_by('-start_date')
+        
+        # Full address
+        selected_employee.full_address = f"{selected_employee.governorate or ''} - {selected_employee.district or ''} - {selected_employee.address or ''}".strip(" -")
+    
+    return render(request, 'em_data/professional_profile.html', {
+        'employees': employees,
+        'selected_employee': selected_employee,
+        'search_query': search_query,
+    })

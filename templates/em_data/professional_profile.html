@@ -1,0 +1,454 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}الملف المهني المتكامل{% endblock %}
+
+{% block styles %}
+<style>
+    :root {
+        --primary-color: #007bff;
+        --secondary-color: #6c757d;
+        --success-color: #28a745;
+        --info-color: #17a2b8;
+        --warning-color: #ffc107;
+        --danger-color: #dc3545;
+        --card-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        --transition-speed: 0.3s;
+    }
+
+    .profile-sidebar {
+        height: calc(100vh - 120px);
+        overflow-y: auto;
+        border-left: 1px solid #dee2e6;
+        background: #fff;
+        padding: 15px;
+    }
+
+    .employee-item {
+        padding: 10px 15px;
+        border-radius: 8px;
+        margin-bottom: 5px;
+        cursor: pointer;
+        transition: all var(--transition-speed);
+        display: flex;
+        align-items: center;
+        text-decoration: none !important;
+        color: #333;
+    }
+
+    .employee-item:hover {
+        background-color: #f8f9fa;
+        transform: translateX(-5px);
+    }
+
+    .employee-item.active {
+        background-color: var(--primary-color);
+        color: #fff;
+    }
+
+    .data-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: var(--card-shadow);
+        border-top: 4px solid var(--primary-color);
+    }
+
+    .data-card.success-border { border-top-color: var(--success-color); }
+    .data-card.warning-border { border-top-color: var(--warning-color); }
+    .data-card.danger-border { border-top-color: var(--danger-color); }
+    .data-card.info-border { border-top-color: var(--info-color); }
+
+    .data-field {
+        margin-bottom: 15px;
+        position: relative;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 6px;
+        transition: background var(--transition-speed);
+    }
+
+    .data-field:hover {
+        background-color: #f1f3f5;
+    }
+
+    .data-field label {
+        display: block;
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-bottom: 2px;
+    }
+
+    .data-field .value {
+        font-weight: 600;
+        font-size: 1.05rem;
+        color: #212529;
+    }
+
+    .copy-tip {
+        position: absolute;
+        top: 0;
+        left: 0;
+        font-size: 10px;
+        background: var(--primary-color);
+        color: #fff;
+        padding: 2px 5px;
+        border-radius: 4px;
+        opacity: 0;
+        transition: opacity var(--transition-speed);
+    }
+
+    .data-field:hover .copy-tip {
+        opacity: 1;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 20px;
+        color: #495057;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .timeline {
+        position: relative;
+        padding-right: 20px;
+        border-right: 2px solid #e9ecef;
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-bottom: 20px;
+    }
+
+    .timeline-item::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: -26px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--primary-color);
+        border: 2px solid #fff;
+    }
+
+    .search-container {
+        position: sticky;
+        top: 0;
+        background: #fff;
+        z-index: 100;
+        padding-bottom: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-3">
+    <div class="row">
+        <!-- Sidebar Selection -->
+        <div class="col-md-3">
+            <div class="profile-sidebar shadow-sm rounded">
+                <div class="search-container">
+                    <input type="text" id="emp-search" class="form-control" placeholder="بحث عن فرد...">
+                </div>
+                <div id="emp-list">
+                    {% for emp in employees %}
+                    <a href="?id={{ emp.id }}" class="employee-item {% if selected_employee.id == emp.id %}active{% endif %}" data-name="{{ emp.name }}">
+                        <i class="fas fa-user-circle ml-2"></i>
+                        <span>{{ emp.name }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9">
+            {% if selected_employee %}
+            <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm border-right border-primary" style="border-right-width: 5px !important;">
+                <div>
+                    <h2 class="font-weight-bold mb-0 text-primary">{{ selected_employee.name }}</h2>
+                    <span class="text-muted">{{ selected_employee.rank.name }} - {{ selected_employee.department.name }}</span>
+                </div>
+                <div class="text-left">
+                    <div class="text-muted small">آخر تحديث للبيانات</div>
+                    <div class="font-weight-bold">{{ selected_employee.updated_at|date:"Y/m/d H:i" }}</div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Basic Data Card -->
+                <div class="col-md-6">
+                    <div class="data-card">
+                        <div class="section-title">
+                            <i class="fas fa-id-card text-primary"></i> البيانات الأساسية
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="data-field" onclick="copyValue(this)">
+                                    <label>رقم الشرطة</label>
+                                    <div class="value">{{ selected_employee.police_number|default:"-" }}</div>
+                                    <span class="copy-tip">نسخ</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="data-field" onclick="copyValue(this)">
+                                    <label>الرقم القومي</label>
+                                    <div class="value">{{ selected_employee.id_number|default:"-" }}</div>
+                                    <span class="copy-tip">نسخ</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="data-field" onclick="copyValue(this)">
+                                    <label>تاريخ الميلاد</label>
+                                    <div class="value">{{ selected_employee.date_of_birth|date:"Y/m/d"|default:"-" }}</div>
+                                    <span class="copy-tip">نسخ</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="data-field" onclick="copyValue(this)">
+                                    <label>العمر</label>
+                                    <div class="value">{{ selected_employee.age|default:"-" }} سنة</div>
+                                    <span class="copy-tip">نسخ</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="data-field" onclick="copyValue(this)">
+                                    <label>الرقم التأميني</label>
+                                    <div class="value">{{ selected_employee.insurance_number|default:"-" }}</div>
+                                    <span class="copy-tip">نسخ</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="data-field" onclick="copyValue(this)">
+                                    <label>تاريخ دخول الإدارة</label>
+                                    <div class="value">{{ selected_employee.date_of_edara|date:"Y/m/d"|default:"-" }}</div>
+                                    <span class="copy-tip">نسخ</span>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="data-field" onclick="copyValue(this)">
+                                    <label>ملاحظات عامة</label>
+                                    <div class="value" style="font-size: 0.95rem;">{{ selected_employee.nots|default:"لا توجد ملاحظات" }}</div>
+                                    <span class="copy-tip">نسخ</span>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="data-field" onclick="copyValue(this)">
+                                    <label>العنوان بالكامل</label>
+                                    <div class="value">{{ selected_employee.full_address|default:"-" }}</div>
+                                    <span class="copy-tip">نسخ</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Career Data Card -->
+                <div class="col-md-6">
+                    <div class="data-card info-border">
+                        <div class="section-title">
+                            <i class="fas fa-briefcase text-info"></i> المسار الوظيفي والترقيات
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="data-field" onclick="copyValue(this)">
+                                    <label>الدرجة الحالية</label>
+                                    <div class="value text-primary font-weight-bold">{{ selected_employee.rank.name|default:"-" }}</div>
+                                    <span class="copy-tip">نسخ</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="data-field" onclick="copyValue(this)">
+                                    <label>القسم</label>
+                                    <div class="value">{{ selected_employee.department.name|default:"-" }}</div>
+                                    <span class="copy-tip">نسخ</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="data-field" onclick="copyValue(this)">
+                                    <label>تاريخ التعيين</label>
+                                    <div class="value">{{ selected_employee.date_of_appointment|date:"Y/m/d"|default:"-" }}</div>
+                                    <span class="copy-tip">نسخ</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="data-field" onclick="copyValue(this)">
+                                    <label>تاريخ المعاش</label>
+                                    <div class="value text-danger font-weight-bold">{{ selected_employee.date_of_retirement|date:"Y/m/d"|default:"-" }}</div>
+                                    <span class="copy-tip">نسخ</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="data-field" onclick="copyValue(this)">
+                                    <label>تاريخ آخر ترقية</label>
+                                    <div class="value">{{ selected_employee.sorted_promotions.first.promotion_date|date:"Y/m/d"|default:"-" }}</div>
+                                    <span class="copy-tip">نسخ</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="data-field" onclick="copyValue(this)">
+                                    <label>موعد الترقية القادمة</label>
+                                    <div class="value text-success font-weight-bold">{{ selected_employee.next_promotion_date|date:"Y/m/d"|default:"بدون" }}</div>
+                                    <span class="copy-tip">نسخ</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- History Sections -->
+                <div class="col-md-12">
+                    <div class="row">
+                        <!-- Promotions History -->
+                        <div class="col-md-4">
+                            <div class="data-card success-border h-100">
+                                <div class="section-title">
+                                    <i class="fas fa-medal text-success"></i> تدرج الرتب والترقيات
+                                </div>
+                                <div class="timeline mr-4">
+                                    {% for p in selected_employee.sorted_promotions %}
+                                    <div class="timeline-item">
+                                        <div class="font-weight-bold text-dark">{{ p.to_rank.name }}</div>
+                                        <div class="text-sm text-muted">تاريخ: {{ p.promotion_date|date:"Y/m/d" }}</div>
+                                        {% if p.from_rank %}
+                                        <div class="text-xs">من درجة: {{ p.from_rank.name }}</div>
+                                        {% endif %}
+                                    </div>
+                                    {% empty %}
+                                    <div class="text-muted text-center py-4">لاتوجد بيانات ترقيات مسجلة</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Training History -->
+                        <div class="col-md-4">
+                            <div class="data-card warning-border h-100">
+                                <div class="section-title">
+                                    <i class="fas fa-graduation-cap text-warning"></i> السجل التدريبي
+                                </div>
+                                <div class="list-group list-group-flush">
+                                    {% for t in selected_employee.sorted_training %}
+                                    <div class="list-group-item bg-transparent border-0 px-0 pb-3 border-bottom mb-2">
+                                        <div class="font-weight-bold text-dark mb-1">{{ t.training_team.name }}</div>
+                                        <div class="text-sm">
+                                            <i class="fas fa-map-marker-alt text-muted ml-1"></i> {{ t.place.name }}
+                                        </div>
+                                        <div class="text-xs text-muted mt-1">
+                                            <span>من: {{ t.start_date|date:"Y/m/d" }}</span>
+                                            <span class="mx-1">|</span>
+                                            <span>إلى: {{ t.end_date|date:"Y/m/d" }}</span>
+                                        </div>
+                                        <div class="mt-2 text-left">
+                                            <span class="badge badge-{% if t.result == 'ناجح' %}success{% else %}danger{% endif %} py-1 px-3">
+                                                {{ t.result }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    {% empty %}
+                                    <div class="text-muted text-center py-4">لا توجد فرق تدريبية مسجلة</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Penalties History -->
+                        <div class="col-md-4">
+                            <div class="data-card danger-border h-100">
+                                <div class="section-title">
+                                    <i class="fas fa-exclamation-triangle text-danger"></i> سجل الجزاءات
+                                </div>
+                                <div class="list-group list-group-flush">
+                                    {% for penalty in selected_employee.sorted_penalties %}
+                                    <div class="list-group-item bg-transparent border-0 px-0 pb-3 border-bottom mb-2">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <span class="font-weight-bold text-dark">{{ penalty.penalty_applied.name }}</span>
+                                            <span class="badge badge-danger">{{ penalty.penalty_date|date:"Y/m/d" }}</span>
+                                        </div>
+                                        <div class="text-sm text-muted mt-1">{{ penalty.violation_type.name }}</div>
+                                        {% if penalty.penalty_amount %}
+                                        <div class="text-xs bg-light p-1 rounded mt-1 border">المقدار: {{ penalty.penalty_amount.name }}</div>
+                                        {% endif %}
+                                    </div>
+                                    {% empty %}
+                                    <div class="text-muted text-center py-4">لا توجد جزاءات مسجلة</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% else %}
+            <div class="text-center py-5 bg-white rounded shadow-sm">
+                <i class="fas fa-search fa-5x text-light mb-3"></i>
+                <h3 class="text-muted">الوصول السريع لبيانات الأفراد</h3>
+                <p class="text-muted">يرجى البحث أو اختيار اسم من القائمة الجانبية لعرض التفاصيل الكاملة</p>
+                <div class="col-md-4 mx-auto mt-4">
+                     <form action="" method="get">
+                        <div class="input-group">
+                            <input type="text" name="search" class="form-control" placeholder="ادخل الاسم هنا..." value="{{ search_query }}">
+                            <div class="input-group-append">
+                                <button class="btn btn-primary" type="submit">بحث</button>
+                            </div>
+                        </div>
+                     </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div id="copy-toast" style="position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 9999; display: none;">
+    <div class="bg-dark text-white px-4 py-2 rounded-pill shadow-lg animate__animated animate__fadeInUp">
+        تم نسخ: <span id="copied-text" class="font-weight-bold text-warning"></span> بنجاح
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function copyValue(element) {
+        const val = element.querySelector('.value').textContent.trim();
+        if(val === '-' || val === 'بدون') return;
+        
+        navigator.clipboard.writeText(val).then(() => {
+            const toast = document.getElementById('copy-toast');
+            const text = document.getElementById('copied-text');
+            text.textContent = val;
+            toast.style.display = 'block';
+            
+            // Re-trigger animation
+            toast.firstElementChild.classList.remove('animate__fadeInUp');
+            void toast.offsetWidth; // trigger reflow
+            toast.firstElementChild.classList.add('animate__fadeInUp');
+
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 2500);
+        });
+    }
+
+    // Client-side quick filter
+    document.getElementById('emp-search').addEventListener('input', function(e) {
+        const term = e.target.value.toLowerCase().trim();
+        const items = document.querySelectorAll('.employee-item');
+        items.forEach(item => {
+            const name = item.dataset.name.toLowerCase();
+            if (name.includes(term)) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    });
+</script>
+{% endblock %}

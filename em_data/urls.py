@@ -5,7 +5,8 @@ from .views import (
     EmployeeViewSet, home, FilterDataAPIView, filterdata_view, edit_multi_view,
     EmployeeStatementAPIView, employee_statement_html, idcard_data_view,
     idcard_filter_view, IDCardFilterAPIView,
-    department_operation_report_view, DepartmentOperationReportAPIView
+    department_operation_report_view, DepartmentOperationReportAPIView,
+    professional_profile
 )
 
 router = DefaultRouter()
@@ -14,6 +15,7 @@ router.register(r'employees', EmployeeViewSet)
 urlpatterns = [
     path('', include(router.urls)),
     path('home/', home, name='home'),
+    path('professional-profile/', professional_profile, name='professional_profile'),
     path('filterdata/', FilterDataAPIView.as_view(), name='filterdata_api'),
     path('filter/', filterdata_view, name='filterdata'),
     path('edit-multi/', edit_multi_view, name='edit_multi'),

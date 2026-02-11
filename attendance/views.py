@@ -1215,27 +1215,53 @@ class FoodListAPIView(APIView):
 
     def post(self, request):
         selected_date = request.data.get('date')
+        filter_dryfood = request.data.get('filter_dryfood')
+        sort_by_dryfood = request.data.get('sort_by_dryfood', False)
+        show_dryfood_label = request.data.get('show_dryfood_label', False)
         if not selected_date:
             return Response({"error": "يرجى تحديد تاريخ"}, status=status.HTTP_400_BAD_REQUEST)
         try:
             selected_date = date.fromisoformat(selected_date)
-            return self._get_food_list(selected_date)
+            return self._get_food_list(selected_date, filter_dryfood, sort_by_dryfood, show_dryfood_label)
         except ValueError:
             return Response({"error": "تنسيق التاريخ غير صالح، استخدم YYYY-MM-DD"}, status=status.HTTP_400_BAD_REQUEST)
 
-    def _get_food_list(self, selected_date):
-        names = Attendance.objects.filter(
+    def _get_food_list(self, selected_date, filter_dryfood=None, sort_by_dryfood=False, show_dryfood_label=False):
+        queryset = Attendance.objects.filter(
             date=selected_date,
-            food=1,
-            state__in=['نوبتجي', 'يومي', 'ت دوري', 'ت تكراري'],
-            employee__food=1
-        ).order_by(
-            'employee__sort_number',  # ثم ترتيب ثانوي حسب sort_number إن احتجت
-            'employee__dep_sort'  # ترتيب حسب dep_sort مباشرة
-        ).values_list('employee__name', flat=True)
+            state__in=['نوبتجي', 'يومي'],
+            food=True
+        ).select_related('employee')
 
+        if filter_dryfood == 'true':
+            queryset = queryset.filter(employee__dryfood=True)
+        elif filter_dryfood == 'false':
+            queryset = queryset.filter(employee__dryfood=False)
 
-        names_with_serials = [(index + 1, name) for index, name in enumerate(names)]
+        # Apply sorting
+        if sort_by_dryfood:
+            queryset = queryset.order_by(
+                '-employee__dryfood',  # True first, then False
+                'employee__sort_number',
+                'employee__dep_sort'
+            )
+        else:
+            queryset = queryset.order_by(
+                'employee__sort_number',
+                'employee__dep_sort'
+            )
+
+        # Get employee data with dryfood status
+        employees_data = queryset.values_list('employee__name', 'employee__dryfood')
+
+        # Create names with dryfood indicator
+        names_with_serials = []
+        for index, (name, is_dryfood) in enumerate(employees_data):
+            display_name = name
+            if show_dryfood_label and filter_dryfood == 'all' and is_dryfood:
+                display_name = f"{name} (تعيين جاف)"
+            names_with_serials.append((index + 1, display_name))
+
         day_name = ARABIC_DAYS[selected_date.weekday()]
         formatted_date = f"{day_name} {selected_date.day:02d}/{selected_date.month:02d}/{selected_date.year}"
 
@@ -2552,6 +2578,7 @@ def weekly_food_average(request):
     # تحديد التاريخ المختار
     # =========================
     selected_date_str = request.GET.get('selected_date')
+    filter_dryfood = request.GET.get('filter_dryfood') == 'on'
 
     try:
         selected_date = datetime.strptime(selected_date_str, "%Y-%m-%d").date() if selected_date_str else date.today()
@@ -2576,11 +2603,16 @@ def weekly_food_average(request):
     for index in range(7):
         current_day = week_start + timedelta(days=index)
 
-        daily_count = Attendance.objects.filter(
+        attendance_query = Attendance.objects.filter(
             date=current_day
         ).filter(
             Q(state='مأمورية') | Q(food=True)
-        ).count()
+        )
+
+        if filter_dryfood:
+            attendance_query = attendance_query.filter(employee__dryfood=True)
+
+        daily_count = attendance_query.count()
 
         first_week_days.append({
             'date': current_day,
@@ -2607,6 +2639,10 @@ def weekly_food_average(request):
         'الجمعة': 4
     }
 
+    employees_query = Employee.objects.filter(mainornot=1)
+    if filter_dryfood:
+        employees_query = employees_query.filter(dryfood=True)
+
     for index in range(7):
         current_day = week_start + timedelta(days=index)
         current_weekday = current_day.weekday()
@@ -2618,7 +2654,7 @@ def weekly_food_average(request):
         
         # عد الموظفين الذين يوم تشغيلهم ضمن الثلاث أيام
         count = 0
-        for employee in Employee.objects.filter(mainornot=1):
+        for employee in employees_query:
             operation = employee.operation
             if operation in operation_to_weekday:
                 employee_weekday = operation_to_weekday[operation]
@@ -2644,6 +2680,7 @@ def weekly_food_average(request):
         'selected_date': selected_date,
         'week_start': week_start,
         'week_end': week_end,
+        'filter_dryfood': filter_dryfood,
     }
 
     return render(request, 'attendance/weekly_food_average.html', context)

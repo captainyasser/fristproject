@@ -53,6 +53,7 @@
                                 <option value="bus">يستقل الأتوبيس</option>
                                 <option value="nots">ملاحظات</option>
                                 <option value="operation">التشغيل</option>
+                                <option value="dryfood">dryfood</option>
                             </select>
                         </div>
                     </form>
@@ -177,7 +178,7 @@
         function getCurrentValue(employee, field) {
             if (field === "department" && employee.department) return employee.department.name || "-";
             if (field === "rank" && employee.rank) return employee.rank.name || "-";
-            if (["tmamam", "food", "bus", "amen_or_ola"].includes(field)) return employee[field] ? "نعم" : "لا";
+            if (["tmamam", "food", "bus", "amen_or_ola", "dryfood"].includes(field)) return employee[field] ? "نعم" : "لا";
             if (["date_of_edara", "date_of_appointment", "date_of_birth", "date_of_retirement"].includes(field)) {
                 return employee[field] ? new Date(employee[field]).toLocaleDateString("ar-EG") : "-";
             }
@@ -201,7 +202,7 @@
                     ${ranks.map(r => `<option value="${r.id}" ${employee.rank && employee.rank.id === r.id ? "selected" : ""}>${r.name}</option>`).join('')}
                 </select>`;
             }
-            if (["tmamam", "food", "bus", "amen_or_ola", "mainornot"].includes(field)) {
+            if (["tmamam", "food", "bus", "amen_or_ola", "mainornot", "dryfood"].includes(field)) {
                 return `<input type="checkbox" class="form-check-input edit-value" data-id="${employee.id}" ${employee[field] ? "checked" : ""}>`;
             }
             if (["date_of_edara", "date_of_appointment", "date_of_birth", "date_of_retirement"].includes(field)) {
@@ -347,7 +348,7 @@
         });
 
         function getRawCurrentValue(employee, field) {
-            if (["tmamam", "food", "bus", "amen_or_ola"].includes(field)) {
+            if (["tmamam", "food", "bus", "amen_or_ola", "dryfood"].includes(field)) {
                 return employee[field];
             }
             if (["department", "rank"].includes(field)) {

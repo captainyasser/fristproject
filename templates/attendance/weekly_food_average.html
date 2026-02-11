@@ -101,6 +101,12 @@
             <form method="GET" action="{% url 'weekly_food_average' %}">
                 <label for="selected_date">اختر تاريخ في الأسبوع: </label>
                 <input type="date" id="selected_date" name="selected_date" value="{{ selected_date|date:'Y-m-d' }}">
+                
+                <label for="filter_dryfood" style="margin-right: 20px; cursor: pointer;">
+                    <input type="checkbox" id="filter_dryfood" name="filter_dryfood" {% if filter_dryfood %}checked{% endif %}>
+                    تصفية (تعيين جاف)
+                </label>
+
                 <button type="submit">عرض</button>
             </form>
         </div>
