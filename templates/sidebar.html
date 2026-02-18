@@ -62,10 +62,16 @@
                 <p>
                   بيانات الافراد
                   <i class="fas fa-angle-left right"></i>
-                  <span class="badge badge-info right">6</span>
+                  <span class="badge badge-info right">7</span>
                 </p>
               </a>
-              <ul class="nav nav-treeview">
+              <ul class="nav nav-treeview" style="font-size: 12px;">
+                <li class="nav-item">
+                  <a href="{% url 'all_employees' %}" class="nav-link text-warning font-weight-bold">
+                    <i class="fas fa-th-list nav-icon"></i>
+                    <p>كل بيانات الافراد</p>
+                  </a>
+                </li>
                 <li class="nav-item">
                   <a href="{% url 'home' %}" class="nav-link">
                     <i class="far fa-circle nav-icon"></i>
@@ -119,7 +125,13 @@
                   <i class="right fas fa-angle-left"></i>
                 </p>
               </a>
-              <ul class="nav nav-treeview">
+              <ul class="nav nav-treeview" style="font-size: 12px;">
+                <li class="nav-item">
+                  <a href="{% url 'all_attendance' %}" class="nav-link text-warning font-weight-bold">
+                    <i class="fas fa-th-list nav-icon"></i>
+                    <p>كل حالات الحضور</p>
+                  </a>
+                </li>
                 <li class="nav-item">
                   <a href="{% url 'attendance_3w' %}" class="nav-link">
                     <i class="far fa-circle nav-icon"></i>
@@ -155,7 +167,13 @@
                   <i class="fas fa-angle-left right"></i>
                 </p>
               </a>
-              <ul class="nav nav-treeview">
+              <ul class="nav nav-treeview" style="font-size: 12px;">
+                <li class="nav-item">
+                  <a href="{% url 'all_diaries' %}" class="nav-link text-warning font-weight-bold">
+                    <i class="fas fa-th-list nav-icon"></i>
+                    <p>كل اليوميات</p>
+                  </a>
+                </li>
                 <li class="nav-item">
                   <a href="{% url 'foodlist_page' %}" class="nav-link">
                     <i class="far fa-circle nav-icon"></i>
@@ -229,12 +247,17 @@
                   </a>
                 </li>
                 <li class="nav-item">
+                  <a href="{% url 'department_numbers' %}" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>يومية اعداد الاقسام</p>
+                  </a>
+                </li>
+                <li class="nav-item">
                   <a href="{% url 'irregular_validation' %}" class="nav-link">
                     <i class="far fa-circle nav-icon"></i>
                     <p>مخالفات التشغيل المعتاد</p>
                   </a>
                 </li>
-
               </ul>
             </li>
 
@@ -248,6 +271,12 @@
                 </p>
               </a>
               <ul class="nav nav-treeview">
+                <li class="nav-item">
+                  <a href="{% url 'all_reports' %}" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>كل الكشوف</p>
+                  </a>
+                </li>
                 <li class="nav-item">
                   <a href="{% url 'department_operation_report' %}" class="nav-link">
                     <i class="far fa-circle nav-icon"></i>
@@ -280,6 +309,12 @@
                   <a href="{% url 'training_page_view' %}" class="nav-link">
                     <i class="far fa-circle nav-icon"></i>
                     <p>دفتر الفرق التدريبية</p>
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a href="{% url 'current_teams' %}" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>الفرق التدريبية الحالية</p>
                   </a>
                 </li>
                 <li class="nav-item">

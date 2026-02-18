@@ -16,15 +16,20 @@ BACKUP_DIR = os.path.join(settings.MEDIA_ROOT, "backups")
 # Ensure backup directory exists
 os.makedirs(BACKUP_DIR, exist_ok=True)
 
-@login_required(login_url='/login/')
-def backup_database(request):
-    """Create a new database backup."""
+def create_backup():
+    """Helper function to create database backup."""
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     filename = f"{DB_NAME}_backup_{timestamp}.sql"
     filepath = os.path.join(BACKUP_DIR, filename)
 
     command = f"mysqldump -u {DB_USER} --password={DB_PASSWORD} {DB_NAME} > {filepath}"
     subprocess.run(command, shell=True)
+    return filename
+
+@login_required(login_url='/login/')
+def backup_database(request):
+    """Create a new database backup."""
+    create_backup()
     return redirect("backup_page")
 
 @login_required(login_url='/login/')
@@ -41,6 +46,17 @@ def delete_backup(request, filename):
     filepath = os.path.join(BACKUP_DIR, filename)
     if os.path.exists(filepath):
         os.remove(filepath)
+    return redirect("backup_page")
+
+@login_required(login_url='/login/')
+def bulk_delete_backup(request):
+    """Delete multiple backup files."""
+    if request.method == "POST":
+        filenames = request.POST.getlist("selected_backups")
+        for filename in filenames:
+            filepath = os.path.join(BACKUP_DIR, filename)
+            if os.path.exists(filepath):
+                os.remove(filepath)
     return redirect("backup_page")
 
 @login_required(login_url='/login/')

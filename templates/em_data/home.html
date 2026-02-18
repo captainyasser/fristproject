@@ -252,6 +252,7 @@
                                                     <option value="عمل يومي">عمل يومي</option>
                                                     <option value="انتداب">انتداب</option>
                                                     <option value="قرار66">قرار66</option>
+                                                    <option value="خاصه">خاصه</option>
                                                 </select>
                                             </div>
                                             <div class="form-group">
@@ -407,11 +408,6 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap4.min.js"></script>
-
 <script>
     const BASE_URL = window.location.origin;
 
@@ -549,18 +545,39 @@
                     fetchEmployees();
                 } else {
                     const text = await response.text();
+                    let errorMessage = `خطأ ${response.status}: `;
                     try {
                         const errorData = JSON.parse(text);
-                        let errorMessage = 'حدث خطأ أثناء التعديل';
                         if (errorData.id_number) {
-                            errorMessage = errorData.id_number.join(', ');
+                            errorMessage += errorData.id_number.join(', ');
                         } else if (errorData.name) {
-                            errorMessage = errorData.name.join(', ');
+                            errorMessage += errorData.name.join(', ');
+                        } else if (errorData.detail) {
+                            errorMessage += errorData.detail;
+                        } else if (errorData.non_field_errors) {
+                            errorMessage += errorData.non_field_errors.join(', ');
+                        } else {
+                            // Show all field errors
+                            const allErrors = Object.entries(errorData)
+                                .map(([field, errs]) => `${field}: ${Array.isArray(errs) ? errs.join(', ') : errs}`)
+                                .join(' | ');
+                            errorMessage += allErrors || 'حدث خطأ أثناء التعديل';
                         }
-                        showAlert(errorMessage, 'danger');
                     } catch {
-                        showAlert('حدث خطأ غير متوقع: ' + text.substring(0, 100), 'danger');
+                        // Response is HTML (server error page) - extract meaningful text
+                        if (text.includes('Exception') || text.includes('Error')) {
+                            const match = text.match(/<pre[^>]*>([\s\S]*?)<\/pre>/);
+                            if (match) {
+                                errorMessage += match[1].substring(0, 200);
+                            } else {
+                                errorMessage += `حدث خطأ في الخادم (${response.status}). تحقق من البيانات المدخلة.`;
+                            }
+                        } else {
+                            errorMessage += `حدث خطأ في الخادم (${response.status})`;
+                        }
                     }
+                    showAlert(errorMessage, 'danger');
+                    console.error('Server error response:', text.substring(0, 500));
                 }
             } catch (error) {
                 console.error('Edit fetch error:', error);

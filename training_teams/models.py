@@ -19,6 +19,7 @@ class Places(models.Model):
 
 class EmTrainingTeams(models.Model):
     RESULT_CHOICES = [
+        ('إنتظار', 'إنتظار'),
         ('ناجح', 'ناجح'),
         ('راسب', 'راسب'),
     ]
@@ -44,6 +45,11 @@ class EmTrainingTeams(models.Model):
     )
     note = models.TextField(verbose_name="ملاحظات", default="")
     round_num = models.IntegerField(blank=True, null=True, verbose_name="رقم الدورة")
+    success_certificate_image = models.ImageField(
+        upload_to='training_certificates/', 
+        blank=True, null=True, 
+        verbose_name="صورة إخطار النجاح"
+    )
 
     class Meta:
         verbose_name = "فريق تدريبي"

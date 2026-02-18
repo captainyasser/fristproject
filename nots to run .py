@@ -16,7 +16,11 @@ python manage.py migrate
 
 
 
+
 deactivate
 
 
 python manage.py startapp education
+
+
+python manage.py createsuperuser

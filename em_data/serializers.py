@@ -38,7 +38,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
     date_of_edara = serializers.DateField(required=False, allow_null=True)
     date_of_appointment = serializers.DateField(required=False, allow_null=True)
     image = serializers.ImageField(required=False, allow_null=True)
-    amen_or_ola = serializers.BooleanField(required=False, allow_null=True)
+    amen_or_ola = serializers.BooleanField(required=False, allow_null=True, default=False)
     rank_kind = serializers.IntegerField(required=False, allow_null=True)
     dep_sort = serializers.IntegerField(required=False, allow_null=True)
     mainornot = serializers.IntegerField(required=False, allow_null=True)
@@ -55,16 +55,16 @@ class EmployeeSerializer(serializers.ModelSerializer):
     district = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     address = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     police_number = serializers.CharField(required=False, allow_blank=True, allow_null=True)
-    total_leave = serializers.CharField(required=False, allow_blank=True, allow_null=True)
-    rahatcounter = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    total_leave = serializers.IntegerField(required=False, allow_null=True)
+    rahatcounter = serializers.IntegerField(required=False, allow_null=True)
     insurance_number = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     health_status = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     operation = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     idcard_expir = serializers.DateField(required=False, allow_null=True)
     idcard_work = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     idcard_social = serializers.CharField(required=False, allow_blank=True, allow_null=True)
-    is_driver = serializers.BooleanField(required=False, default=False)
-    dryfood = serializers.BooleanField(required=False, allow_null=True)
+    is_driver = serializers.BooleanField(required=False, default=False, allow_null=True)
+    dryfood = serializers.BooleanField(required=False, allow_null=True, default=False)
 
     class Meta:
         model = Employee
@@ -78,11 +78,66 @@ class EmployeeSerializer(serializers.ModelSerializer):
             'dep_sort', 'mainornot', 'bus', 'tmamam', 'food', 'rahatcounter', 'institute_id',
             'total_leave', 'rank_id', 'nots', 'department_id', 'idcard_expir', 'idcard_work', 'idcard_social', 'is_driver', 'dryfood'
         ]
-        read_only_fields = ['age']
+        read_only_fields = []
 
     def validate_id_number(self, value):
         if value == '' or value is None:
             return None
+        return value
+
+    def validate_amen_or_ola(self, value):
+        if value is None:
+            return False
+        return value
+
+    def validate_tmamam(self, value):
+        if value is None:
+            return 0
+        return value
+
+    def validate_food(self, value):
+        if value is None:
+            return 0
+        return value
+
+    def validate_bus(self, value):
+        if value is None:
+            return 0
+        return value
+
+    def validate_dryfood(self, value):
+        if value is None:
+            return False
+        return value
+
+    def validate_is_driver(self, value):
+        if value is None:
+            return False
+        return value
+
+    def validate_mainornot(self, value):
+        if value is None:
+            return 1
+        return value
+
+    def validate_rank_kind(self, value):
+        if value == '' or value is None:
+            return None
+        return value
+
+    def validate_dep_sort(self, value):
+        if value == '' or value is None:
+            return None
+        return value
+
+    def validate_rahatcounter(self, value):
+        if value == '' or value is None:
+            return 0
+        return value
+
+    def validate_total_leave(self, value):
+        if value == '' or value is None:
+            return 0
         return value
 
     def validate(self, data):

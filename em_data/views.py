@@ -172,19 +172,49 @@ from rest_framework.authtoken.models import Token
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from datetime import datetime, timedelta
 from django.utils import timezone
-from django.db.models import F
+from django.db.models import F, Count, Sum
 from .models import Employee
+from departments.models import Department
 from .serializers import EmployeeSerializer, EmployeeStatementSerializer
 
 
-
-class EmployeeViewSet(viewsets.ModelViewSet):
-    queryset = Employee.objects.all()
-    serializer_class = EmployeeSerializer
-
-    def partial_update(self, request, *args, **kwargs):
-        return super().partial_update(request, *args, **kwargs)
+@login_required
+def department_numbers_view(request):
+    check_protection()
+    week_days = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة']
     
+    departments = Department.objects.annotate(
+        male_count=Count('employee', filter=Q(employee__gender='ذكر')),
+        female_count=Count('employee', filter=Q(employee__gender='أنثي')),
+        daily_work_count=Count('employee', filter=Q(employee__operation='عمل يومي')),
+        shift_work_count=Count('employee', filter=Q(employee__operation__in=week_days)),
+        intdab_count=Count('employee', filter=Q(employee__operation='انتداب')),
+        private_count=Count('employee', filter=Q(employee__operation='خاصه')),
+        gwad_count=Count('employee', filter=Q(employee__operation='ج وضع')),
+        total_count=Count('employee'),
+    ).order_by('name')
+
+    totals = departments.aggregate(
+        total_male=Sum('male_count'),
+        total_female=Sum('female_count'),
+        total_daily_work=Sum('daily_work_count'),
+        total_shift_work=Sum('shift_work_count'),
+        total_intdab=Sum('intdab_count'),
+        total_private=Sum('private_count'),
+        total_gwad=Sum('gwad_count'),
+        total_all=Sum('total_count')
+    )
+
+    token, created = Token.objects.get_or_create(user=request.user)
+
+    return render(request, 'em_data/department_numbers.html', {
+        'departments': departments,
+        'totals': totals,
+        'token': token.key
+    })
+
+
+
 @login_required
 def home(request):
     check_protection()
@@ -215,27 +245,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         serializer.save(institute_id=institute_id)
 
     def perform_update(self, serializer):
-        instance = self.get_object()
-        id_number = self.request.data.get('id_number')
-        
-        if id_number and id_number != instance.id_number:
-            birth_date = instance.extract_birth_date()
-            if birth_date:
-                retirement_date = birth_date.replace(year=birth_date.year + 60)
-                today = datetime.now().date()
-                age = today.year - birth_date.year
-                if (today.month, today.day) < (birth_date.month, birth_date.day):
-                    age -= 1
-                
-                serializer.save(
-                    date_of_birth=birth_date,
-                    date_of_retirement=retirement_date,
-                    age=age
-                )
-            else:
-                serializer.save()
-        else:
-            serializer.save()
+        serializer.save()
 
     @action(detail=False, methods=['get'], url_path='extract_birth_date')
     def extract_birth_date(self, request):
@@ -380,7 +390,7 @@ class FilterDataAPIView(APIView):
             return Response({'error': str(e)}, status=500)
 
     def get_filter_options(self):
-        return {
+        filter_options = {
             'names': list(Employee.objects.exclude(name__isnull=True).exclude(name='').order_by('id').values_list('name', flat=True).distinct()),
             'ranks': list(Rank.objects.order_by('id').values('id', 'name')),
             'departments': list(Department.objects.values('id', 'name')),
@@ -389,6 +399,22 @@ class FilterDataAPIView(APIView):
             'governorates': list(Employee.objects.exclude(governorate__isnull=True).exclude(governorate='').values_list('governorate', flat=True).distinct()),
             'operations': list(Employee.objects.exclude(operation__isnull=True).exclude(operation='').values_list('operation', flat=True).distinct())
         }
+
+        # Custom sorting logic for operations
+        order = {
+            'السبت': 1,
+            'الأحد': 2,
+            'الاثنين': 3,
+            'الثلاثاء': 4,
+            'الأربعاء': 5,
+            'الخميس': 6,
+            'الجمعة': 7,
+            'عمل يومي': 8
+        }
+        
+        filter_options['operations'].sort(key=lambda x: (order.get(x, 9), x))
+        
+        return filter_options
 
     def apply_filters(self, request):
         employees = Employee.objects.select_related('rank', 'department').all()
@@ -1627,3 +1653,56 @@ def professional_profile(request):
         'selected_employee': selected_employee,
         'search_query': search_query,
     })
+
+@login_required
+def all_reports_view(request):
+    check_protection()
+    return render(request, 'em_data/all_reports.html')
+
+@login_required
+def all_diaries_view(request):
+    check_protection()
+    return render(request, 'em_data/all_diaries.html')
+
+@login_required
+def all_attendance_view(request):
+    check_protection()
+    return render(request, 'em_data/all_attendance.html')
+
+@login_required
+def all_employees_view(request):
+    check_protection()
+    return render(request, 'em_data/all_employees.html')
+
+@login_required
+def females_report_view(request):
+    check_protection()
+    return render(request, 'em_data/females_report.html')
+
+@login_required
+def male_musicians_report_view(request):
+    check_protection()
+    return render(request, 'em_data/male_musicians_report.html')
+
+class AllReportsAPIView(APIView):
+    def get(self, request):
+        report_type = request.GET.get('type', '')
+        
+        if report_type == 'females':
+            # Get all females
+            employees = Employee.objects.filter(gender='أنثي').select_related('rank').order_by('rank__id', 'sort_number')
+        elif report_type == 'male-musicians':
+            # Get all male musicians (assuming mainornot=1 means musician)
+            employees = Employee.objects.filter(gender='ذكر', mainornot=1).select_related('rank').order_by('rank__id', 'sort_number')
+        else:
+            return Response({'error': 'Invalid report type'}, status=400)
+        
+        emp_list = []
+        for emp in employees:
+            emp_list.append({
+                'rank': emp.rank.name if emp.rank else '',
+                'name': emp.name,
+                'operation': emp.operation or '-',
+            })
+        
+        return Response({'employees': emp_list})

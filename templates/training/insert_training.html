@@ -16,7 +16,7 @@
         <div class="col-md-8">
             <div class="form-container">
                 <h2 class="text-center mb-4">إضافة فرقة تدريبية</h2>
-                <form method="POST" action="{% url 'insert_training' %}" onsubmit="return validateDates()">
+                <form method="POST" action="{% url 'insert_training' %}" enctype="multipart/form-data" onsubmit="return validateDates()">
                     {% csrf_token %}
                     <input type="hidden" name="name" value="employee_name">
                     <div class="mb-3">
@@ -48,6 +48,7 @@
                     <div class="mb-3">
                         <label for="result">النتيجة:</label>
                         <select class="form-control" name="result" id="result">
+                            <option value="إنتظار" selected>إنتظار</option>
                             <option value="ناجح">ناجح</option>
                             <option value="راسب">راسب</option>
                         </select>
@@ -55,6 +56,11 @@
                     <div class="mb-3">
                         <label for="round_num">رقم الدورة:</label>
                         <input class="form-control" type="number" name="round_num" id="round_num">
+                    </div>
+                    <div class="mb-3">
+                        <label for="success_certificate_image">صورة إخطار النجاح (اختياري):</label>
+                        <input class="form-control" type="file" name="success_certificate_image" id="success_certificate_image" accept="image/*">
+                        <small class="form-text text-muted">يمكنك رفع صورة إخطار النجاح (PNG, JPG, JPEG)</small>
                     </div>
                     <div class="mb-3">
                         <label for="note">ملاحظات (للفرقة):</label>
@@ -93,8 +99,21 @@ function validateDates() {
     }
     return true; // السماح بإرسال النموذج
 }
+
+// Auto-fill note field with training team name
+document.addEventListener('DOMContentLoaded', function() {
+    const trainingTeamSelect = document.getElementById('training_team');
+    const noteField = document.getElementById('note');
+    
+    trainingTeamSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        if (selectedOption.value) {
+            noteField.value = selectedOption.text;
+        }
+    });
+});
 </script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="{% static 'offline_libs/sweetalert2.all.min.js' %}"></script>
 {% if messages %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {

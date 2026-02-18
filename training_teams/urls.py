@@ -20,6 +20,8 @@ urlpatterns = [
     path('delete-training-record/<int:training_id>/', views.delete_training_record, name='delete-training-record'),
     # 8. صفحة الأماكن
     path("places/", views.places_page, name="places_page"),
+    # 9. الفرق التدريبية الحالية
+    path("current-teams/", views.current_teams_view, name="current_teams"),
     
     
     

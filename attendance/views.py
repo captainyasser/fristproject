@@ -367,25 +367,44 @@ def get_attendance(request):
     start_date = request.GET.get('start_date')
     num_days = int(request.GET.get('num_days', 28))
     page = request.GET.get('page', 1)
+    
+    # Add filtering params to match the main view
+    sort_by = request.GET.get('sort_by', 'sort_number')
+    department_filter = request.GET.get('departments', '')
 
     start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')
     end_date_obj = start_date_obj + timedelta(days=num_days - 1)
 
     employees = Employee.objects.filter(mainornot=1)
+    
+    # Apply filters
+    if department_filter:
+        employees = employees.filter(department_id=department_filter)
+    if sort_by in ['dep_sort', 'sort_number', 'operation', 'department']:
+        employees = employees.order_by(sort_by)
+
     paginator = Paginator(employees, 300)
     page_obj = paginator.get_page(page)
 
+    # Optimization: Fetch all attendance records in one query
+    employee_ids = [e.id for e in page_obj]
+    records = Attendance.objects.filter(employee_id__in=employee_ids, date__range=[start_date_obj, end_date_obj])
+    
+    # Build a map for efficient lookup
+    records_map = {}
+    for record in records:
+        if record.employee_id not in records_map:
+            records_map[record.employee_id] = {}
+        records_map[record.employee_id][record.date.strftime('%Y%m%d')] = {
+            'state': record.state,
+            'comfort_adjustment': record.comfort_adjustment,
+            'food': record.food,
+            'note': record.note
+        }
+
     attendance_data = {}
     for employee in page_obj:
-        records = Attendance.objects.filter(employee=employee, date__range=[start_date_obj, end_date_obj])
-        attendance_data[employee.id] = {
-            record.date.strftime('%Y%m%d'): {
-                'state': record.state,
-                'comfort_adjustment': record.comfort_adjustment,
-                'food': record.food,
-                'note': record.note
-            } for record in records
-        }
+        attendance_data[employee.id] = records_map.get(employee.id, {})
 
     return Response({
         'success': True,
@@ -1196,9 +1215,14 @@ from django.db.models import F
 from datetime import date, timedelta
 from .models import Attendance
 from .serializers import FoodListResponseSerializer
+from backup_manager.views import create_backup
 
 @login_required
 def foodlist_page(request):
+    try:
+        create_backup()
+    except Exception as e:
+        print(f"Error creating backup: {e}")
     check_protection()
     return render(request, 'attendance/foodlist.html')
 

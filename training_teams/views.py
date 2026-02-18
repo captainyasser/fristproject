@@ -108,9 +108,11 @@ def insert_training(request):
         place = Places.objects.get(id=request.POST['place'])
         start_date = request.POST['start_date']
         end_date = request.POST['end_date']
-        result = request.POST.get('result', 'ناجح')
+        result = request.POST.get('result', 'إنتظار')
         note = request.POST.get('note', '')
         round_num = request.POST.get('round_num')
+        success_certificate_image = request.FILES.get('success_certificate_image')
+        
         if round_num == '':
             round_num = None
 
@@ -140,7 +142,8 @@ def insert_training(request):
                     end_date=end_date,
                     result=result,
                     round_num=round_num,
-                    note=note
+                    note=note,
+                    success_certificate_image=success_certificate_image
                 )
 
                 # Add Attendance records for the duration of the training
@@ -209,15 +212,28 @@ def delete_training_record(request, training_id):
 @login_required(login_url='/login/')
 def get_employee_training_data(request, employee_id):
     """Fetch training data for a selected employee and return as JSON."""
-    training_data = EmTrainingTeams.objects.filter(employee_id=employee_id).select_related('place', 'training_team').values(
-        'id', 'employee__name', 'start_date', 'end_date', 'result', 'round_num', 'place_id', 'training_team_id', 'note'
-    ).order_by('start_date')
+    training_records = EmTrainingTeams.objects.filter(employee_id=employee_id).select_related('place', 'training_team').order_by('start_date')
+    
+    training_data = []
+    for record in training_records:
+        training_data.append({
+            'id': record.id,
+            'employee__name': record.employee.name,
+            'start_date': record.start_date.strftime('%Y-%m-%d'),
+            'end_date': record.end_date.strftime('%Y-%m-%d'),
+            'result': record.result,
+            'round_num': record.round_num,
+            'place_id': record.place_id,
+            'training_team_id': record.training_team_id,
+            'note': record.note,
+            'success_certificate_image_url': record.success_certificate_image.url if record.success_certificate_image else None
+        })
     
     places = list(Places.objects.values('id', 'name'))  # Fetch available places
     training_teams = list(TrainingTeam.objects.values('id', 'name'))  # Fetch available training teams
     
     return JsonResponse({
-        "training_data": list(training_data),
+        "training_data": training_data,
         "places": places,
         "training_teams": training_teams
     })
@@ -227,16 +243,34 @@ def get_employee_training_data(request, employee_id):
 def update_training_record(request):
     if request.method == "POST":
         try:
-            data = json.loads(request.body)
-            training_record = EmTrainingTeams.objects.get(id=data['id'])
+            # Check if it's FormData (with files) or JSON
+            if request.content_type and 'application/json' in request.content_type:
+                data = json.loads(request.body)
+                training_record = EmTrainingTeams.objects.get(id=data['id'])
+                
+                training_record.start_date = data['start_date']
+                training_record.end_date = data['end_date']
+                training_record.result = data.get('result', '')
+                training_record.round_num = data.get('round_num', None)
+                training_record.place_id = data['place_id']
+                training_record.training_team_id = data['training_team_id']
+                training_record.note = data.get('note', '')
+            else:
+                # Handle FormData (with potential file upload)
+                training_record = EmTrainingTeams.objects.get(id=request.POST.get('id'))
+                
+                training_record.start_date = request.POST.get('start_date')
+                training_record.end_date = request.POST.get('end_date')
+                training_record.result = request.POST.get('result', '')
+                training_record.round_num = request.POST.get('round_num') or None
+                training_record.place_id = request.POST.get('place_id')
+                training_record.training_team_id = request.POST.get('training_team_id')
+                training_record.note = request.POST.get('note', '')
+                
+                # Handle file upload
+                if 'success_certificate_image' in request.FILES:
+                    training_record.success_certificate_image = request.FILES['success_certificate_image']
             
-            training_record.start_date = data['start_date']
-            training_record.end_date = data['end_date']
-            training_record.result = data.get('result', '')
-            training_record.round_num = data.get('round_num', None)
-            training_record.place_id = data['place_id']
-            training_record.training_team_id = data['training_team_id']
-            training_record.note = data.get('note', '')
             training_record.save()
 
             return JsonResponse({"success": True})
@@ -277,3 +311,43 @@ def places_page(request):
         return redirect("places_page")
 
     return render(request, "training/places.html", {"places": places, "form": form})
+
+@login_required(login_url='/login/')
+def current_teams_view(request):
+    # Get the filter date from request, default to today
+    filter_date_str = request.GET.get('start_date')
+    if filter_date_str:
+        try:
+            filter_date = datetime.strptime(filter_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            filter_date = datetime.today().date()
+    else:
+        filter_date = datetime.today().date()
+    
+    # Teams that are active from the selected date onwards (end_date >= filter_date)
+    current_active_records = EmTrainingTeams.objects.filter(
+        end_date__gte=filter_date
+    ).select_related('employee', 'training_team', 'place', 'employee__rank', 'employee__department').order_by('training_team__name', 'start_date', 'employee__rank__id', 'employee__sort_number')
+    
+    # Grouping by unique training instance
+    teams_map = {}
+    for record in current_active_records:
+        # Create a unique key for the course instance
+        key = f"{record.training_team.id}_{record.place.id}_{record.start_date}_{record.end_date}"
+        
+        if key not in teams_map:
+            teams_map[key] = {
+                'team_name': record.training_team.name,
+                'place_name': record.place.name,
+                'start_date': record.start_date,
+                'end_date': record.end_date,
+                'employees': []
+            }
+        teams_map[key]['employees'].append(record.employee)
+        
+    context = {
+        'grouped_teams': list(teams_map.values()),
+        'today': datetime.today().date(),
+        'selected_date': filter_date
+    }
+    return render(request, 'training/current_teams.html', context)

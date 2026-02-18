@@ -6,7 +6,9 @@ from .views import (
     EmployeeStatementAPIView, employee_statement_html, idcard_data_view,
     idcard_filter_view, IDCardFilterAPIView,
     department_operation_report_view, DepartmentOperationReportAPIView,
-    professional_profile
+    professional_profile, department_numbers_view,
+    all_reports_view, AllReportsAPIView, females_report_view, male_musicians_report_view,
+    all_diaries_view, all_attendance_view, all_employees_view
 )
 
 router = DefaultRouter()
@@ -26,6 +28,14 @@ urlpatterns = [
     path('api/idcard-filter/', IDCardFilterAPIView.as_view(), name='idcard_filter_api'),
     path('department-operation-report/', department_operation_report_view, name='department_operation_report'),
     path('api/department-operation-report/', DepartmentOperationReportAPIView.as_view(), name='department_operation_report_api'),
+    path('department-numbers/', department_numbers_view, name='department_numbers'),
+    path('all-reports/', all_reports_view, name='all_reports'),
+    path('api/all-reports/', AllReportsAPIView.as_view(), name='all_reports_api'),
+    path('females-report/', females_report_view, name='females_report'),
+    path('male-musicians-report/', male_musicians_report_view, name='male_musicians_report'),
+    path('all-diaries/', all_diaries_view, name='all_diaries'),
+    path('all-attendance/', all_attendance_view, name='all_attendance'),
+    path('all-employees/', all_employees_view, name='all_employees'),
 ]
 
 # from django.urls import path

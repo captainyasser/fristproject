@@ -46,32 +46,39 @@
                                                     </form>
                                             
                                                     <h3>النسخ الاحتياطية المتوفرة</h3>
-                                                    <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-                                                        <tr style="background-color: #686D76; color: white;">
-                                                            <th style="padding: 10px;">اسم الملف</th>
-                                                            <th style="padding: 10px;">الإجراءات</th>
-                                                        </tr>
-                                                        {% for file in backups %}
-                                                        <tr style="background-color: #EEEEEE;">
-                                                            <td style="padding: 10px;">{{ file }}</td>
-                                                            <td style="padding: 10px;">
-                                                                <a href="{% url 'download_backup' file %}" style="background-color: #DC5F00; color: white; padding: 5px 10px; border-radius: 5px;">تحميل</a>
-                                                                <a href="{% url 'restore_database' file %}" style="background-color: #686D76; color: white; padding: 5px 10px; border-radius: 5px;">استعادة</a>
-                                                                <a href="{% url 'delete_backup' file %}" style="background-color: #373A40; color: white; padding: 5px 10px; border-radius: 5px;">حذف</a>
-                                                            </td>
-                                                        </tr>
-                                                        {% empty %}
-                                                        <tr>
-                                                            <td colspan="2" style="padding: 10px; text-align: center;">لا توجد نسخ احتياطية متاحة.</td>
-                                                        </tr>
-                                                        {% endfor %}
-                                                    </table>
+                                                    <form method="post" action="{% url 'bulk_delete_backup' %}" id="bulkDeleteForm">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn btn-danger mb-2" onclick="return confirm('هل أنت متأكد من حذف الملفات المحددة؟')">
+                                                            حذف المحدد
+                                                        </button>
+                                                        <table id="backupTable" class="table table-bordered table-striped">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th style="width: 50px;">
+                                                                        <input type="checkbox" id="selectAll">
+                                                                    </th>
+                                                                    <th>اسم الملف</th>
+                                                                    <th>الإجراءات</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {% for file in backups %}
+                                                                <tr>
+                                                                    <td>
+                                                                        <input type="checkbox" name="selected_backups" value="{{ file }}">
+                                                                    </td>
+                                                                    <td>{{ file }}</td>
+                                                                    <td>
+                                                                        <a href="{% url 'download_backup' file %}" class="btn btn-warning btn-sm">تحميل</a>
+                                                                        <a href="{% url 'restore_database' file %}" class="btn btn-secondary btn-sm" onclick="return confirm('هل أنت متأكد من استعادة هذه النسخة؟ سيتم فقدان البيانات الحالية.')">استعادة</a>
+                                                                        <a href="{% url 'delete_backup' file %}" class="btn btn-dark btn-sm" onclick="return confirm('هل أنت متأكد من الحذف؟')">حذف</a>
+                                                                    </td>
+                                                                </tr>
+                                                                {% endfor %}
+                                                            </tbody>
+                                                        </table>
+                                                    </form>
                                                 </div>
-                                            
-
-
-
-                                          
                                 </div>
                             </div>
                         </div>
@@ -80,4 +87,68 @@
         </div>
         
 
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        var table = $('#backupTable').DataTable({
+            "dom": 'Bfrtip',
+            "buttons": [
+                'pageLength', 'copy', 'csv', 'excel', 'pdf', 'print', 'colvis'
+            ],
+            "lengthMenu": [
+                [10, 25, 50, 100, 500, -1],
+                ['10', '25', '50', '100', '500', 'الكل']
+            ],
+            "language": {
+                "sProcessing": "جارٍ التحميل...",
+                "sLengthMenu": "أظهر _MENU_ مدخلاً",
+                "sZeroRecords": "لم يعثر على أية سجلات",
+                "sInfo": "إظهار _START_ إلى _END_ من أصل _TOTAL_ مدخلاً",
+                "sInfoEmpty": "يعرض 0 إلى 0 من أصل 0 سجل",
+                "sInfoFiltered": "(منتقاة من مجموع _MAX_ مُدخل)",
+                "sInfoPostFix": "",
+                "sSearch": "ابحث:",
+                "sUrl": "",
+                "oPaginate": {
+                    "sFirst": "الأول",
+                    "sPrevious": "السابق",
+                    "sNext": "التالي",
+                    "sLast": "الأخير"
+                },
+                "buttons": {
+                    "pageLength": {
+                        "_": "إظهار %d صفوف",
+                        "-1": "إظهار الكل"
+                    },
+                    "copy": "نسخ",
+                    "csv": "CSV",
+                    "excel": "Excel",
+                    "pdf": "PDF",
+                    "print": "طباعة",
+                    "colvis": "الأعمدة الظاهرة"
+                }
+            },
+            "order": [[ 1, "desc" ]] // Sort by filename (date) by default
+        });
 
+        // Select All functionality
+        $('#selectAll').on('click', function(){
+            // Select rows in the current page only
+            var rows = table.rows({ 'page': 'current', 'search': 'applied' }).nodes();
+            
+            // Check/uncheck checkboxes in those rows
+            $('input[type="checkbox"]', rows).prop('checked', this.checked);
+        });
+        
+        // Ensure checkboxes in responsive rows work
+        $('#backupTable tbody').on('change', 'input[type="checkbox"]', function(){
+            if(!this.checked){
+                var el = $('#selectAll').get(0);
+                if(el && el.checked && ('indeterminate' in el)){
+                    el.indeterminate = true;
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

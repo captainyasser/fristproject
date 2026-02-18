@@ -295,6 +295,10 @@
                                     <input type="checkbox" id="outsiders_last" name="outsiders_last" value="true">
                                     <label for="outsiders_last">الخوارج في الآخر</label>
                                 </div>
+                                <div class="icheck-success d-inline filter-option">
+                                    <input type="checkbox" id="sort_by_operation" name="sort_by_operation" value="true">
+                                    <label for="sort_by_operation">ترتيب حسب التشغيل (مخصص)</label>
+                                </div>
                             </fieldset>
                         </div>
                     </div>
@@ -733,6 +737,39 @@
                         if (aIsOutsider && !bIsOutsider) return 1;
                         if (!aIsOutsider && bIsOutsider) return -1;
                         return a.originalIndex - b.originalIndex;
+                    });
+                }
+
+                // Apply custom operation sorting if checked
+                if ($('#sort_by_operation').is(':checked')) {
+                    const opOrder = {
+                        'السبت': 1,
+                        'الأحد': 2,
+                        'الاثنين': 3,
+                        'الثلاثاء': 4,
+                        'الأربعاء': 5,
+                        'الخميس': 6,
+                        'الجمعة': 7,
+                        'عمل يومي': 8
+                    };
+                    
+                    originalData.sort((a, b) => {
+                        const aOp = a.operation ? a.operation.trim() : '';
+                        const bOp = b.operation ? b.operation.trim() : '';
+                        
+                        const aVal = opOrder[aOp] || 99;
+                        const bVal = opOrder[bOp] || 99;
+                        
+                        if (aVal !== bVal) {
+                            return aVal - bVal;
+                        } else {
+                            // If values are same (both in list or both not), sort alphabetically
+                            if (aVal === 99 && bVal === 99) {
+                                return aOp.localeCompare(bOp, 'ar');
+                            }
+                            // Secondary sort by rank/original index (stable sort)
+                            return a.originalIndex - b.originalIndex;
+                        }
                     });
                 }
 

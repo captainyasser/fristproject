@@ -37,7 +37,7 @@ F:\emapi\myproject\templates\training\edit_training_record.html
                     <table id="trainingTable">
                         <thead>
                             <tr>
-                                <th>أسم الفرقة</th><th>المكان</th><th>تاريخ البداية</th><th>تاريخ النهاية</th><th>رقم الدورة</th><th>النتيجة</th><th>الحفظ</th><th>الحذف</th>
+                                <th>أسم الفرقة</th><th>المكان</th><th>تاريخ البداية</th><th>تاريخ النهاية</th><th>رقم الدورة</th><th>النتيجة</th><th>صورة الإخطار</th><th>الحفظ</th><th>الحذف</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -55,17 +55,22 @@ F:\emapi\myproject\templates\training\edit_training_record.html
                 var tableBody = document.querySelector("#trainingTable tbody");
                 tableBody.innerHTML = "";
                 if (data.training_data.length === 0) {
-                    tableBody.innerHTML = "<tr><td colspan='8'>No training records found.</td></tr>";
+                    tableBody.innerHTML = "<tr><td colspan='9'>No training records found.</td></tr>";
                 } else {
                     data.training_data.forEach(training => {
                         var row = document.createElement("tr");
+                        var imageCell = training.success_certificate_image_url 
+                            ? `<a href="${training.success_certificate_image_url}" target="_blank" style="color: #DC5F00;">عرض الصورة</a><br><small>تحديث:</small><input type="file" data-id="${training.id}" class="image-upload" name="success_certificate_image" accept="image/*" style="font-size: 12px; padding: 4px;">` 
+                            : `<input type="file" data-id="${training.id}" class="image-upload" name="success_certificate_image" accept="image/*" style="font-size: 12px; padding: 4px;">`;
+                        
                         row.innerHTML = `
                             <td><select data-id="${training.id}" class="editable" name="training_team_id">${data.training_teams.map(team => `<option value="${team.id}" ${team.id == training.training_team_id ? "selected" : ""}>${team.name}</option>`).join('')}</select></td>
                             <td><select data-id="${training.id}" class="editable" name="place_id">${data.places.map(place => `<option value="${place.id}" ${place.id == training.place_id ? "selected" : ""}>${place.name}</option>`).join('')}</select></td>
                             <td><input type="date" value="${training.start_date}" data-id="${training.id}" class="editable" name="start_date"></td>
                             <td><input type="date" value="${training.end_date}" data-id="${training.id}" class="editable" name="end_date"></td>
                             <td><input type="number" value="${training.round_num || ''}" data-id="${training.id}" class="editable" name="round_num"></td>
-                            <td><select data-id="${training.id}" class="editable" name="result"><option value="ناجح" ${training.result === "ناجح" ? "selected" : ""}>ناجح</option><option value="راسب" ${training.result === "راسب" ? "selected" : ""}>راسب</option></select></td>
+                            <td><select data-id="${training.id}" class="editable" name="result"><option value="إنتظار" ${training.result === "إنتظار" ? "selected" : ""}>إنتظار</option><option value="ناجح" ${training.result === "ناجح" ? "selected" : ""}>ناجح</option><option value="راسب" ${training.result === "راسب" ? "selected" : ""}>راسب</option></select></td>
+                            <td>${imageCell}</td>
                             <td><button class="save-btn" data-id="${training.id}">حفظ</button></td>
                             <td><button class="delete-btn" data-id="${training.id}" style="background-color: #ff4444; color: white; padding: 8px 12px; border: none; border-radius: 5px; cursor: pointer;">حذف</button></td>
                         `;
@@ -76,27 +81,34 @@ F:\emapi\myproject\templates\training\edit_training_record.html
                     document.querySelectorAll(".save-btn").forEach(button => {
                         button.addEventListener("click", function() {
                             var trainingId = this.getAttribute("data-id");
-                            var updatedData = {
-                                id: trainingId,
-                                start_date: document.querySelector(`[name='start_date'][data-id='${trainingId}']`).value,
-                                end_date: document.querySelector(`[name='end_date'][data-id='${trainingId}']`).value,
-                                result: document.querySelector(`[name='result'][data-id='${trainingId}']`).value,
-                                round_num: document.querySelector(`[name='round_num'][data-id='${trainingId}']`).value || null,
-                                place_id: document.querySelector(`[name='place_id'][data-id='${trainingId}']`).value,
-                                training_team_id: document.querySelector(`[name='training_team_id'][data-id='${trainingId}']`).value
-                            };
+                            var imageFile = document.querySelector(`.image-upload[data-id='${trainingId}']`)?.files[0];
+                            
+                            var formData = new FormData();
+                            formData.append('id', trainingId);
+                            formData.append('start_date', document.querySelector(`[name='start_date'][data-id='${trainingId}']`).value);
+                            formData.append('end_date', document.querySelector(`[name='end_date'][data-id='${trainingId}']`).value);
+                            formData.append('result', document.querySelector(`[name='result'][data-id='${trainingId}']`).value);
+                            formData.append('round_num', document.querySelector(`[name='round_num'][data-id='${trainingId}']`).value || '');
+                            formData.append('place_id', document.querySelector(`[name='place_id'][data-id='${trainingId}']`).value);
+                            formData.append('training_team_id', document.querySelector(`[name='training_team_id'][data-id='${trainingId}']`).value);
+                            
+                            if (imageFile) {
+                                formData.append('success_certificate_image', imageFile);
+                            }
+                            
                             fetch("/training/update-training-record/", {
                                 method: "POST",
                                 headers: {
-                                    "Content-Type": "application/json",
                                     "X-CSRFToken": getCSRFToken()
                                 },
-                                body: JSON.stringify(updatedData)
+                                body: formData
                             })
                             .then(response => response.json())
                             .then(result => {
                                 if (result.success) {
                                     alert("تم الحفظ بنجاح");
+                                    // Reload the employee data to show updated image
+                                    document.getElementById("employeeSelect").dispatchEvent(new Event('change'));
                                 } else {
                                     alert("Error: " + result.error);
                                 }

@@ -2,8 +2,6 @@
 {% load static %}
 
 {% block head %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
 <style>
     .spinner { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 40px; color: #007bff; z-index: 9999; }
     .table-container { margin-top: 20px; }
@@ -70,10 +68,7 @@
 <div id="editModalContainer"></div>
 <div id="detailsModalContainer"></div>
 
-<script async src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script async src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
-<script async src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<script async src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
+
 
 <script>
 let employeesTable;
@@ -138,7 +133,7 @@ function fetchRanks() {
 }
 
 function fetchDepartments() {
-    fetch('http://http://2.21.2.99:9090/departments/api/departments/')
+    fetch('/departments/api/departments/')
         .then(response => response.json())
         .then(depts => {
             departmentsCache = depts;

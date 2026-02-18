@@ -7,5 +7,6 @@ urlpatterns = [
     path('restore/<str:filename>/', views.restore_database, name='restore_database'),
     path('delete/<str:filename>/', views.delete_backup, name='delete_backup'),
     path('download/<str:filename>/', views.download_backup, name='download_backup'),
+    path('bulk_delete/', views.bulk_delete_backup, name='bulk_delete_backup'),
     path('upload/', views.upload_backup, name='upload_backup'),
 ]

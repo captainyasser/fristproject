@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}كشف الإناث{% endblock %}
+
+{% block styles %}
+<style>
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        
+        /* Hide marquee/notification bar when printing */
+        marquee,
+        [id*="marquee"],
+        .marquee-container,
+        #notification-bar {
+            display: none !important;
+        }
+        
+        body {
+            background-color: white !important;
+        }
+        
+        body.no-footer footer, body.no-footer footer.main-footer {
+            display: none !important;
+        }
+        
+        table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+        }
+        
+        th, td {
+            border: 2px solid black !important;
+            padding: 8px !important;
+            font-weight: bold !important;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+        }
+        
+        th {
+            background-color: #d3d3d3 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+    }
+    
+    .report-container {
+        padding: 20px;
+    }
+    
+    .report-table table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .report-table th {
+        background-color: #667eea;
+        color: white;
+        padding: 15px;
+        text-align: center;
+        font-weight: bold;
+        border: 2px solid #5568d3;
+    }
+    
+    .report-table td {
+        padding: 12px;
+        text-align: center;
+        border: 1px solid #ddd;
+        font-weight: bold;
+    }
+    
+    .report-table tr:nth-child(even) {
+        background-color: #f8f9fa;
+    }
+    
+    .report-table tr:hover {
+        background-color: #e9ecef;
+    }
+    
+    .controls-panel {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        border: 1px solid #ddd;
+    }
+    
+    .controls-panel .form-group {
+        margin-bottom: 15px;
+    }
+    
+    .controls-panel label {
+        font-weight: bold;
+        margin-bottom: 5px;
+        display: block;
+    }
+    
+    .action-buttons {
+        margin-bottom: 20px;
+        text-align: center;
+    }
+    
+    .action-buttons button {
+        margin: 0 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="report-container">
+    <!-- Controls Panel -->
+    <div class="controls-panel no-print">
+        <h4>إعدادات التقرير</h4>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label>حجم الخط (px)</label>
+                    <input type="number" class="form-control" id="font-size-input" value="16" onchange="updateStyles()">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label>ارتفاع الصف (px)</label>
+                    <input type="number" class="form-control" id="row-height-input" value="40" onchange="updateStyles()">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label>الفوتر</label>
+                    <div class="custom-control custom-switch">
+                        <input type="checkbox" class="custom-control-input" id="show-footer" checked onchange="toggleFooter()">
+                        <label class="custom-control-label" for="show-footer">إظهار</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="action-buttons no-print">
+        <button class="btn btn-primary" onclick="window.print()"><i class="fas fa-print"></i> طباعة</button>
+    </div>
+    
+    <div class="report-table">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th colspan="5" style="background-color: #d3d3d3; color: black; font-size: 20px;">
+                        كشف الإناث في الإدارة
+                    </th>
+                </tr>
+                <tr>
+                    <th>م</th>
+                    <th>الدرجة</th>
+                    <th>الاسم</th>
+                    <th>التشغيل</th>
+                    <th>ملاحظات</th>
+                </tr>
+            </thead>
+            <tbody id="report-tbody">
+                <!-- Data will be loaded here -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const csrfToken = '{{ csrf_token }}';
+    
+    function toArabicNumerals(str) {
+        if (typeof str !== 'string') str = String(str);
+        return str.replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
+    }
+    
+    function loadReport() {
+        fetch('{% url "all_reports_api" %}?type=females', {
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.getElementById('report-tbody');
+            tbody.innerHTML = '';
+            
+            data.employees.forEach((emp, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${toArabicNumerals(index + 1)}</td>
+                    <td>${emp.rank || '-'}</td>
+                    <td>${emp.name}</td>
+                    <td>${emp.operation || '-'}</td>
+                    <td contenteditable="true" style="min-width: 150px;"></td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            updateStyles();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('حدث خطأ أثناء تحميل البيانات');
+        });
+    }
+    
+    function updateStyles() {
+        const fontSize = document.getElementById('font-size-input').value + 'px';
+        const rowHeight = document.getElementById('row-height-input').value + 'px';
+        
+        document.querySelectorAll('.report-table td, .report-table th').forEach(el => {
+            el.style.fontSize = fontSize;
+            el.style.height = rowHeight;
+        });
+
+        document.querySelectorAll('.report-table tr').forEach(el => {
+            el.style.height = rowHeight;
+        });
+    }
+    
+    function toggleFooter() {
+        const show = document.getElementById('show-footer').checked;
+        if (show) {
+            document.body.classList.remove('no-footer');
+        } else {
+            document.body.classList.add('no-footer');
+        }
+    }
+    
+    // Load report on page load
+    window.addEventListener('DOMContentLoaded', function() {
+        loadReport();
+    });
+</script>
+{% endblock %}

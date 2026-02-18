@@ -383,125 +383,157 @@
 
 
 {% block scripts %}
-<script>
-    const stateColors = {
-        '_': 'white',
-        'نوبتجي': '#219C90',
-        'يومي': '#A7D397',
-        'راحة': '#00A9FF',
-        'دورية': '#C70039',
-        'ر بديلة': '#0488CA',
-        'طارئة': '#FF9130',
-        'مأمورية': '#eb5bad',
-        'مأمورية خ': '#DA0C81',
-        'فرقة': '#BCA37F',
-        'انتداب': '#713ABE',
-        'مرضي': 'yellow',
-        'ج وضع': 'yellow',
-        'خاصه': 'yellow',
-        '8 صباحاً': '#89CFF3',
-        'ت دوري': '#FFF2D8',
-        'ت تكراري': '#EAD7BB',
-        'منحة': '#A0E9FF',
-        'عطلة': '#CDF5FD',
-        'غياب': 'black',
-        'قرار66': 'yellow'
-    };
+    <!-- Debug Log Area -->
+    <div id="debug-log" style="background: #333; color: #fff; padding: 10px; margin-bottom: 10px; border-radius: 5px; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto;">
+        Wait logs...
+    </div>
 
-    let attendanceData = {};
+    <script>
+        function logDebug(msg) {
+            const logBox = document.getElementById('debug-log');
+            if (logBox) {
+                const time = new Date().toLocaleTimeString();
+                logBox.innerHTML += `<div>[${time}] ${msg}</div>`;
+                logBox.scrollTop = logBox.scrollHeight;
+            }
+            console.log(msg);
+        }
 
-    function changeDate(days) {
-        const startDateInput = document.getElementById('start_date');
-        const currentDate = new Date(startDateInput.value);
-        currentDate.setDate(currentDate.getDate() + days);
-        startDateInput.value = currentDate.toISOString().split('T')[0];
-    }
+        const stateColors = {
+            '_': 'white',
+            'نوبتجي': '#219C90',
+            'يومي': '#A7D397',
+            'راحة': '#00A9FF',
+            'دورية': '#C70039',
+            'ر بديلة': '#0488CA',
+            'طارئة': '#FF9130',
+            'مأمورية': '#eb5bad',
+            'مأمورية خ': '#DA0C81',
+            'فرقة': '#BCA37F',
+            'انتداب': '#713ABE',
+            'مرضي': 'yellow',
+            'ج وضع': 'yellow',
+            'خاصه': 'yellow',
+            '8 صباحاً': '#89CFF3',
+            'ت دوري': '#FFF2D8',
+            'ت تكراري': '#EAD7BB',
+            'منحة': '#A0E9FF',
+            'عطلة': '#CDF5FD',
+            'غياب': 'black',
+            'قرار66': 'yellow'
+        };
 
-    document.addEventListener('DOMContentLoaded', function () {
-        fetchAttendanceData();
-    });
+        let attendanceData = {};
 
-    async function fetchAttendanceData() {
-        const startDate = document.getElementById('start_date').value;
-        const numDays = document.getElementById('num_days').value;
-        const page = new URLSearchParams(window.location.search).get('page') || '1';
-        const url = `{% url 'get_attendance' %}?start_date=${startDate}&num_days=${numDays}&page=${page}`;
+        function changeDate(days) {
+            const startDateInput = document.getElementById('start_date');
+            const currentDate = new Date(startDateInput.value);
+            currentDate.setDate(currentDate.getDate() + days);
+            startDateInput.value = currentDate.toISOString().split('T')[0];
+        }
 
-        try {
-            const response = await fetch(url, {
+        document.addEventListener('DOMContentLoaded', function () {
+            logDebug('DOM Loaded. Starting fetch...');
+            fetchAttendanceData();
+        });
+
+        function fetchAttendanceData() {
+            const startDate = document.getElementById('start_date').value;
+            const numDays = document.getElementById('num_days').value;
+            const sortBy = document.getElementById('sort_by').value;
+            const departmentFilter = document.getElementById('departments').value;
+            const page = new URLSearchParams(window.location.search).get('page') || '1';
+            const url = `{% url 'get_attendance' %}?start_date=${startDate}&num_days=${numDays}&page=${page}&sort_by=${sortBy}&departments=${departmentFilter}`;
+            logDebug(`Fetching from: ${url}`);
+
+            fetch(url, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json'
                 }
-            });
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            const data = await response.json();
-            if (data.success) {
-                attendanceData = data.attendance_data || {};
-                observeRows();
-                addEventListeners();
-            } else {
-                console.error('Error in response:', data.error);
-                alert('فشل في جلب بيانات الحضور: ' + data.error);
-            }
-        } catch (error) {
-            console.error('Fetch error:', error);
-            alert('حدث خطأ أثناء جلب البيانات: ' + error.message);
-        }
-    }
+            })
+            .then(function(response) {
+                logDebug(`Response Status: ${response.status}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.text();
+            })
+            .then(function(text) {
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    logDebug(`JSON Parse Error: ${e.message}`);
+                    logDebug(`Response might be HTML: ${text.substring(0, 50)}...`);
+                    throw new Error("Invalid JSON response");
+                }
 
-    async function updateOperation(employeeId, operationValue) {
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        try {
-            const response = await fetch("{% url 'update_operation' %}", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
-                },
-                body: JSON.stringify({
-                    employee_id: employeeId,
-                    operation: operationValue
-                })
+                if (data.success) {
+                    attendanceData = data.attendance_data || {};
+                    const keys = Object.keys(attendanceData);
+                    logDebug(`Data loaded. Employees found: ${keys.length}`);
+                    observeRows();
+                    addEventListeners();
+                } else {
+                    logDebug(`API Error: ${data.error}`);
+                    alert('فشل في جلب بيانات الحضور: ' + data.error);
+                }
+            })
+            .catch(function(error) {
+                logDebug(`Fetch failed: ${error.message}`);
+                alert('حدث خطأ أثناء جلب البيانات: ' + error.message);
             });
-            const data = await response.json();
+        }
+
+    function updateOperation(employeeId, operationValue) {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        fetch("{% url 'update_operation' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                employee_id: employeeId,
+                operation: operationValue
+            })
+        })
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(data) {
             if (data.success) {
                 console.log(`Operation updated for employee ${employeeId} to ${data.operation}`);
             } else {
                 console.error('Error updating operation:', data.error);
                 alert('حدث خطأ أثناء تحديث العملية: ' + data.error);
             }
-        } catch (error) {
+        })
+        .catch(function(error) {
             console.error('AJAX error:', error);
             alert('حدث خطأ في الاتصال بالخادم');
-        }
+        });
     }
 
     function observeRows() {
+        // Immediate loading for all rows to ensure visibility on all devices
         const rows = document.querySelectorAll('tbody tr');
-        const observer = new IntersectionObserver((entries, observer) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const row = entry.target;
-                    const cells = row.querySelectorAll('.attendance-cell:not(.loaded)');
-                    populateAttendanceCellsForRow(cells);
-                    cells.forEach(cell => cell.classList.add('loaded'));
-                    observer.unobserve(row);
-                }
-            });
-        }, { rootMargin: '100px' });
-
-        rows.forEach(row => observer.observe(row));
+        console.log(`Found ${rows.length} rows to populate.`);
+        
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('.attendance-cell:not(.loaded)');
+            populateAttendanceCellsForRow(cells);
+            cells.forEach(cell => cell.classList.add('loaded'));
+        });
     }
 
     function populateAttendanceCellsForRow(cells) {
         cells.forEach(cell => {
             const employeeId = cell.dataset.employeeId;
             const date = cell.dataset.date;
-            const dayData = attendanceData[employeeId]?.[date] || { state: '_', comfort_adjustment: 0, food: false };
+            const dayData = (attendanceData[employeeId] && attendanceData[employeeId][date]) || { state: '_', comfort_adjustment: 0, food: false };
 
             const select = document.createElement('select');
             select.className = 'att-states';
@@ -571,7 +603,7 @@
     let pendingChanges = {};
     let debounceTimeout = null;
 
-    async function submitAttendanceForm(employeeId, selectedDate, comfortValue, foodValue, source) {
+    function submitAttendanceForm(employeeId, selectedDate, comfortValue, foodValue, source) {
         const key = `${employeeId}_${selectedDate}`;
         const selectedValue = document.querySelector(`select[name="attendance_state_${employeeId}_${selectedDate}"]`)?.value || null;
 
@@ -587,22 +619,26 @@
         updateUI(employeeId, selectedDate, pendingChanges[key]);
 
         clearTimeout(debounceTimeout);
-        debounceTimeout = setTimeout(async () => {
+        debounceTimeout = setTimeout(function() {
             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
             const formData = new FormData();
             formData.append('changes', JSON.stringify(pendingChanges));
 
-            try {
-                const response = await fetch("{% url 'update_attendance' %}", {
-                    method: 'POST',
-                    headers: { 'X-CSRFToken': csrfToken },
-                    body: formData
-                });
-                const data = await response.json();
+            fetch("{% url 'update_attendance' %}", {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken },
+                body: formData
+            })
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
                 if (data.success) {
                     if (data.updates) {
-                        Object.entries(data.updates).forEach(([key, update]) => {
-                            const [empId, date] = key.split('_');
+                        Object.entries(data.updates).forEach(function([key, update]) {
+                            const parts = key.split('_');
+                            const empId = parts[0];
+                            const date = parts[1];
                             const rahatcounterElement = document.getElementById(`rahatcounter_${empId}`);
                             if (rahatcounterElement && update.rahatcounter !== undefined) {
                                 rahatcounterElement.textContent = update.rahatcounter;
@@ -628,10 +664,11 @@
                     console.error('Error updating attendance:', data.error);
                     alert('حدث خطأ أثناء التحديث: ' + data.error);
                 }
-            } catch (error) {
+            })
+            .catch(function(error) {
                 console.error('AJAX error:', error);
                 alert('حدث خطأ في الاتصال بالخادم');
-            }
+            });
         }, 50);
     }
 
@@ -707,22 +744,24 @@
     }
 
 
-    async function resetRahatcounter(employeeId) {
+    function resetRahatcounter(employeeId) {
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
         const url = "{% url 'reset_rahatcounter' %}";
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
-                },
-                body: JSON.stringify({ employee_id: employeeId })
-            });
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ employee_id: employeeId })
+        })
+        .then(function(response) {
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
-            const data = await response.json();
+            return response.json();
+        })
+        .then(function(data) {
             if (data.success) {
                 const rahatcounterElement = document.getElementById(`rahatcounter_${employeeId}`);
                 if (rahatcounterElement) {
@@ -732,23 +771,26 @@
             } else {
                 alert('خطأ أثناء تصفير عداد الراحات: ' + data.error);
             }
-        } catch (error) {
+        })
+        .catch(function(error) {
             alert('حدث خطأ في الاتصال بالخادم: ' + error.message);
-        }
+        });
     }
 
-    async function incrementRahatcounter(employeeId) {
+    function incrementRahatcounter(employeeId) {
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        try {
-            const response = await fetch("{% url 'adjust_rahatcounter' %}", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
-                },
-                body: JSON.stringify({ employee_id: employeeId, adjustment: 1 })
-            });
-            const data = await response.json();
+        fetch("{% url 'adjust_rahatcounter' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ employee_id: employeeId, adjustment: 1 })
+        })
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(data) {
             if (data.success) {
                 const rahatcounterElement = document.getElementById(`rahatcounter_${employeeId}`);
                 if (rahatcounterElement) {
@@ -759,23 +801,26 @@
             } else {
                 alert('خطأ أثناء زيادة عداد الراحات: ' + data.error);
             }
-        } catch (error) {
+        })
+        .catch(function(error) {
             alert('حدث خطأ في الاتصال بالخادم: ' + error.message);
-        }
+        });
     }
 
-    async function decrementRahatcounter(employeeId) {
+    function decrementRahatcounter(employeeId) {
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        try {
-            const response = await fetch("{% url 'adjust_rahatcounter' %}", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
-                },
-                body: JSON.stringify({ employee_id: employeeId, adjustment: -1 })
-            });
-            const data = await response.json();
+        fetch("{% url 'adjust_rahatcounter' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ employee_id: employeeId, adjustment: -1 })
+        })
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(data) {
             if (data.success) {
                 const rahatcounterElement = document.getElementById(`rahatcounter_${employeeId}`);
                 if (rahatcounterElement) {
@@ -786,9 +831,10 @@
             } else {
                 alert('خطأ أثناء تقليل عداد الراحات: ' + data.error);
             }
-        } catch (error) {
+        })
+        .catch(function(error) {
             alert('حدث خطأ في الاتصال بالخادم: ' + error.message);
-        }
+        });
     }
 
     function updateButtonColor(employeeId, rahatcounter) {
@@ -824,28 +870,28 @@
         }
     });
 
-    async function globalUndo() {
-        await executeGlobalAction("{% url 'undo_last_change' %}", "فشل التراجع");
+    function globalUndo() {
+        executeGlobalAction("{% url 'undo_last_change' %}", "فشل التراجع");
     }
 
-    async function globalRedo() {
-        await executeGlobalAction("{% url 'redo_last_change' %}", "فشل الإعادة");
+    function globalRedo() {
+        executeGlobalAction("{% url 'redo_last_change' %}", "فشل الإعادة");
     }
 
-    async function executeGlobalAction(url, errorMsg) {
+    function executeGlobalAction(url, errorMsg) {
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
-                },
-                body: JSON.stringify({})
-            });
-
-            const data = await response.json();
-
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({})
+        })
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(data) {
             if (data.success) {
                 const update = data.updates;
                 const employeeId = update.employee_id;
@@ -892,9 +938,10 @@
             } else {
                 alert('تنبيه: ' + (data.error || errorMsg));
             }
-        } catch (e) {
+        })
+        .catch(function(e) {
             alert('خطأ في الاتصال: ' + e);
-        }
+        });
     }
 </script>
 {% endblock %}

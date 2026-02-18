@@ -8,6 +8,9 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>{% block title %}لوحة التحكم{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <!-- Google Fonts: Cairo -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
   
     <!-- Font Awesome -->
     <link rel="stylesheet" href="{% static 'adminlte/plugins/fontawesome-free/css/all.min.css' %}">
@@ -21,15 +24,16 @@
     <!-- overlayScrollbars -->
     <link rel="stylesheet" href="{% static 'adminlte/plugins/overlayScrollbars/css/OverlayScrollbars.min.css' %}">
     
-    <!-- Bootstrap 4 RTL -->
-    <link rel="stylesheet" href="https://cdn.rtlcss.com/bootstrap/v4.2.1/css/bootstrap.min.css">
+<!-- Bootstrap 4 RTL -->
+<link rel="stylesheet" href="{% static 'offline_libs/bootstrap-rtl.min.css' %}">
     
     <!-- Custom RTL Styles -->
     <link rel="stylesheet" href="{% static 'adminlte/dist/css/custom.css' %}">
     
     <!-- DataTables CSS -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap4.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap4.min.css">
+    <link rel="stylesheet" href="{% static 'adminlte/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css' %}">
+    <link rel="stylesheet" href="{% static 'adminlte/plugins/datatables-responsive/css/responsive.bootstrap4.min.css' %}">
+    <link rel="stylesheet" href="{% static 'adminlte/plugins/datatables-buttons/css/buttons.bootstrap4.min.css' %}">
     
     <!-- Select2 CSS -->
     <link rel="stylesheet" href="{% static 'adminlte/plugins/select2/css/select2.min.css' %}">

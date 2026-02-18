@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}يومية اعداد الاقسام{% endblock %}
+
+{% block styles %}
+<style>
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        body {
+            background-color: white !important;
+            font-size: 14pt;
+        }
+        .content-wrapper {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        .card {
+            box-shadow: none !important;
+            border: none !important;
+        }
+        /* Hide marquee/notification bar when printing */
+        marquee,
+        [id*="marquee"],
+        .marquee-container {
+            display: none !important;
+        }
+        body.no-footer footer, body.no-footer footer.main-footer {
+            display: none !important;
+        }
+    }
+    th, td {
+        text-align: center;
+        vertical-align: middle !important;
+    }
+</style>
+<script>
+    function toggleFooter() {
+        document.body.classList.toggle('no-footer');
+        const btn = document.getElementById('footer-toggle-btn');
+        if (document.body.classList.contains('no-footer')) {
+            btn.innerHTML = '<i class="fas fa-eye"></i> إظهار الفوتر';
+            btn.classList.replace('btn-secondary', 'btn-success');
+        } else {
+            btn.innerHTML = '<i class="fas fa-eye-slash"></i> إخفاء الفوتر';
+            btn.classList.replace('btn-success', 'btn-secondary');
+        }
+    }
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card">
+        <div class="card-header no-print">
+            <h3 class="card-title">يومية اعداد الاقسام</h3>
+            <div class="card-tools">
+                <button id="footer-toggle-btn" onclick="toggleFooter()" class="btn btn-secondary mr-2">
+                    <i class="fas fa-eye-slash"></i> إخفاء الفوتر
+                </button>
+                <button onclick="window.print()" class="btn btn-primary">
+                    <i class="fas fa-print"></i> طباعة
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="text-center mb-4">
+                <h2>يومية اعداد الاقسام</h2>
+            </div>
+            <table class="table table-bordered table-striped" dir="rtl">
+                <thead>
+                    <tr>
+                        <th>اسم القسم</th>
+                        <th>ذكور</th>
+                        <th>إناث</th>
+                        <th>عمل يومي</th>
+                        <th>نوبتجية</th>
+                        <th>انتداب</th>
+                        <th>خاصة</th>
+                        <th>ج وضع</th>
+                        <th>الاجمالي</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for dept in departments %}
+                    <tr>
+                        <td>{{ dept.name }}</td>
+                        <td>{{ dept.male_count }}</td>
+                        <td>{{ dept.female_count }}</td>
+                        <td>{{ dept.daily_work_count }}</td>
+                        <td>{{ dept.shift_work_count }}</td>
+                        <td>{{ dept.intdab_count }}</td>
+                        <td>{{ dept.private_count }}</td>
+                        <td>{{ dept.gwad_count }}</td>
+                        <td>{{ dept.total_count }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr class="font-weight-bold table-active">
+                        <td>الإجمالي</td>
+                        <td>{{ totals.total_male }}</td>
+                        <td>{{ totals.total_female }}</td>
+                        <td>{{ totals.total_daily_work }}</td>
+                        <td>{{ totals.total_shift_work }}</td>
+                        <td>{{ totals.total_intdab }}</td>
+                        <td>{{ totals.total_private }}</td>
+                        <td>{{ totals.total_gwad }}</td>
+                        <td>{{ totals.total_all }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
