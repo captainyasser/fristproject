@@ -134,6 +134,9 @@ class PenaltyRecord(models.Model):
     # صورة الأورنيك
     form_image = models.ImageField(upload_to='penalty_forms/', blank=True, null=True, verbose_name="صورة الأورنيك")
 
+    # خصم أيام الغياب
+    deduct_absence_days = models.BooleanField(default=False, verbose_name="مع خصم أيام الغياب")
+
     # محو الجزاءات
     erase_date = models.DateField(blank=True, null=True, verbose_name="تاريخ محو الجزاء")
     erase_decision_number = models.CharField(max_length=100, blank=True, null=True, verbose_name="رقم قرار المحو")

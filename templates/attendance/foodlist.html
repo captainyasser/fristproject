@@ -140,6 +140,15 @@
                 </div>
 
                 <button onclick="fetchFoodList()">عرض</button>
+
+                <div style="display: inline-block; margin-right: 20px;" class="no-print">
+                    <label for="empty-rows-count">إضافة خانات فارغة بالأعلى: </label>
+                    <input type="number" id="empty-rows-count" value="0" min="0" style="width: 50px; padding: 5px; border-radius: 4px; border: 1px solid #ddd;" onchange="updateTable(currentData)" />
+                </div>
+                <div style="display: inline-block; margin-right: 20px;" class="no-print">
+                    <label for="rows-per-col">عدد الصفوف في العمود: </label>
+                    <input type="number" id="rows-per-col" value="0" min="1" style="width: 60px; padding: 5px; border-radius: 4px; border: 1px solid #ddd;" onchange="updateTable(currentData)" />
+                </div>
             </div>
             <br>
             <div class="print-btn-container">
@@ -183,6 +192,8 @@
             const easternArabicNumerals = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
             return String(num).replace(/[0-9]/g, (digit) => easternArabicNumerals[digit]);
         }
+
+        let extraEmptyTop = 0;
 
         document.addEventListener("DOMContentLoaded", function () {
             const tomorrow = new Date();
@@ -232,35 +243,90 @@
         }
 
         function updateTable(data) {
+            if (!data) return;
+            currentData = data;
             const tableHeader = document.getElementById("table-header");
             const tableBody = document.getElementById("table-body");
             const dateDisplay = document.getElementById("date-display");
 
-            // تحويل الأرقام في formatted_date إلى أرقام هندية
             const formattedDateWithEasternNumerals = data.formatted_date.replace(/[0-9]/g, (digit) => toEasternArabicNumerals(digit));
             dateDisplay.textContent = `يومية التعيين عن يوم: ${formattedDateWithEasternNumerals}`;
 
+            const numCols = data.columns.length;
+            const extraEmpty = parseInt(document.getElementById("empty-rows-count").value) || 0;
+            const manualRows = parseInt(document.getElementById("rows-per-col").value) || 0;
+            
+            // تحديث القيمة الافتراضية لعدد الصفوف إذا كانت صفر (أول مرة)
+            if (manualRows === 0 && data.num_rows) {
+                document.getElementById("rows-per-col").value = data.num_rows;
+            }
+            const targetRows = manualRows || data.num_rows || 0;
+
+            // 1. تجميع الأفراد الحقيقيين
+            let employees = [];
+            for (let col of data.columns) {
+                for (let item of col) {
+                    if (item && item.name) {
+                        employees.push(item);
+                    }
+                }
+            }
+
+            // 2. تكوين القائمة الكاملة: فارغ بالأعلى + موظفين + فارغ بالأسفل
+            let allItems = [];
+            // فارغ بالأعلى
+            for (let i = 0; i < extraEmpty; i++) {
+                allItems.push({ name: "", is_empty: true });
+            }
+            // الموظفين
+            for (let emp of employees) {
+                allItems.push(emp);
+            }
+
+            // حساب عدد الصفوف المطلوب فعلياً (لو كان أكبر من المانيوال)
+            const requiredRows = Math.ceil(allItems.length / numCols);
+            const finalNumRows = Math.max(targetRows, requiredRows);
+            const totalCapacity = finalNumRows * numCols;
+
+            // تكملة الباقي كفراغات في الأسفل
+            const remaining = totalCapacity - allItems.length;
+            for (let i = 0; i < remaining; i++) {
+                allItems.push({ name: "", is_empty: true });
+            }
+
+            // تحديث الهيدر
             tableHeader.innerHTML = "";
             let headerRow = "<tr>";
-            for (let i = 0; i < data.columns.length; i++) {
+            for (let i = 0; i < numCols; i++) {
                 headerRow += "<th>م</th><th>الأســـــــــــــــــم</th>";
             }
             headerRow += "</tr>";
             tableHeader.innerHTML = headerRow;
 
+            // 4. بناء جسم الجدول بتوزيع رأسي (بالعواميد)
             tableBody.innerHTML = "";
-            for (let row = 0; row < data.num_rows; row++) {
+            for (let r = 0; r < finalNumRows; r++) {
                 let rowHtml = "<tr>";
-                for (let col of data.columns) {
-                    const item = col[row] || {};
-                    const serialNumber = item.serial_number ? toEasternArabicNumerals(item.serial_number) : "";
-                    rowHtml += `<td>${serialNumber}</td>`;
-                    rowHtml += `<td>${item.name || ""}</td>`;
+                for (let c = 0; c < numCols; c++) {
+                    const itemIdx = (c * finalNumRows) + r;
+                    const item = allItems[itemIdx] || {};
+                    
+                    const serialDisplay = toEasternArabicNumerals(itemIdx + 1);
+                    const nameDisplay = item.name || "";
+                    // أي خانة ليس بها اسم من الداتا الأصلية تكون قابلة للتعديل
+                    const isEditable = !item.name;
+                    const editableTag = isEditable ? 'contenteditable="true" style="background-color: #fffde7;"' : '';
+                    
+                    rowHtml += `<td>${serialDisplay}</td>`;
+                    rowHtml += `<td ${editableTag}>${nameDisplay}</td>`;
                 }
                 rowHtml += "</tr>";
                 tableBody.innerHTML += rowHtml;
             }
         }
+
+        // حذف دالة addEmptyRows لأننا أصبحنا نعتمد على onchange في المدخلاتDirectly
+        function addEmptyRows() { }
 
         function getCSRFToken() {
             const name = "csrftoken";

@@ -205,7 +205,7 @@
     </div>
     
     <div class="row no-print">
-        <div class="col-md-6">
+        <div class="col-md-4">
             <div class="report-card female" onclick="openReport('females')">
                 <i class="fas fa-female report-icon"></i>
                 <h3>كشف الإناث</h3>
@@ -213,11 +213,19 @@
             </div>
         </div>
         
-        <div class="col-md-6">
+        <div class="col-md-4">
             <div class="report-card male" onclick="openReport('male-musicians')">
                 <i class="fas fa-music report-icon"></i>
                 <h3>كشف الموسيقيين الذكور</h3>
                 <p>عرض كل الأفراد الموسيقيين الذكور مع التشغيل والملاحظات</p>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="report-card" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);" onclick="showReport('dry-food')">
+                <i class="fas fa-box-open report-icon"></i>
+                <h3>كشف الوجبات الجافة</h3>
+                <p>كشف الراغبين في الحصول علي وجبات جافة</p>
             </div>
         </div>
     </div>
@@ -245,6 +253,18 @@
                         <input type="checkbox" class="custom-control-input" id="show-footer" checked onchange="toggleFooter()">
                         <label class="custom-control-label" for="show-footer">إظهار</label>
                     </div>
+                </div>
+            </div>
+            <div class="col-md-3 dry-food-controls" style="display: none;">
+                <div class="form-group">
+                    <label>عدد الأعمدة</label>
+                    <input type="number" class="form-control" id="num-cols-input" value="2" min="1" max="5" onchange="renderDryFoodReport()">
+                </div>
+            </div>
+            <div class="col-md-3 dry-food-controls" style="display: none;">
+                <div class="form-group">
+                    <label>عدد الصفوف</label>
+                    <input type="number" class="form-control" id="num-rows-input" value="15" min="1" onchange="renderDryFoodReport()">
                 </div>
             </div>
         </div>
@@ -309,6 +329,18 @@
             </table>
         </div>
     </div>
+
+    <!-- Dry Food Report Table -->
+    <div id="dry-food-report" class="report-table">
+        <div class="action-buttons no-print">
+            <button class="btn btn-primary" onclick="window.print()"><i class="fas fa-print"></i> طباعة</button>
+            <button class="btn btn-secondary" onclick="hideReport()"><i class="fas fa-arrow-right"></i> رجوع</button>
+        </div>
+        
+        <div style="margin-top: 20px;" id="dry-food-content">
+            <!-- Tables will be injected here -->
+        </div>
+    </div>
 </div>
 
 <script>
@@ -339,6 +371,13 @@
         // Show controls panel
         document.getElementById('controls-panel').style.display = 'block';
         
+        // Handle dry food controls
+        if (reportType === 'dry-food') {
+            document.querySelectorAll('.dry-food-controls').forEach(el => el.style.display = 'block');
+        } else {
+            document.querySelectorAll('.dry-food-controls').forEach(el => el.style.display = 'none');
+        }
+        
         // Show selected report
         if (reportType === 'females') {
             document.getElementById('females-report').classList.add('active');
@@ -346,6 +385,9 @@
         } else if (reportType === 'male-musicians') {
             document.getElementById('male-musicians-report').classList.add('active');
             loadMaleMusiciansReport();
+        } else if (reportType === 'dry-food') {
+            document.getElementById('dry-food-report').classList.add('active');
+            loadDryFoodReport();
         }
     }
     
@@ -354,6 +396,7 @@
             el.classList.remove('active');
         });
         document.getElementById('controls-panel').style.display = 'none';
+        document.querySelectorAll('.dry-food-controls').forEach(el => el.style.display = 'none');
     }
     
     function loadFemalesReport() {
@@ -418,6 +461,105 @@
             console.error('Error:', error);
             alert('حدث خطأ أثناء تحميل البيانات');
         });
+    }
+    
+    let dryFoodData = [];
+    
+    function loadDryFoodReport() {
+        fetch('{% url "all_reports_api" %}?type=dry-food', {
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            dryFoodData = data.employees;
+            renderDryFoodReport();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('حدث خطأ أثناء تحميل البيانات');
+        });
+    }
+
+    function renderDryFoodReport() {
+        const numCols = parseInt(document.getElementById('num-cols-input').value) || 2;
+        const numRows = parseInt(document.getElementById('num-rows-input').value) || 15;
+        const container = document.getElementById('dry-food-content');
+        container.innerHTML = '';
+        
+        if (!dryFoodData.length) {
+            container.innerHTML = '<div class="alert alert-info">لا يوجد بيانات لعرضها</div>';
+            return;
+        }
+
+        // Calculate how many items per page (numCols * numRows)
+        const itemsPerPage = numCols * numRows;
+        const numPages = Math.ceil(dryFoodData.length / itemsPerPage);
+
+        for (let p = 0; p < numPages; p++) {
+            const pageDiv = document.createElement('div');
+            pageDiv.style.pageBreakAfter = 'always';
+            pageDiv.classList.add('report-page');
+            
+            const header = document.createElement('h3');
+            header.className = 'text-center mb-4 pb-2';
+            header.style.borderBottom = '2px solid black';
+            header.innerText = 'كشف الراغبين في الحصول علي وجبات جافة';
+            pageDiv.appendChild(header);
+
+            const table = document.createElement('table');
+            table.className = 'table table-bordered';
+            
+            // Create headers
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            for (let c = 0; c < numCols; c++) {
+                const thIdx = document.createElement('th');
+                thIdx.innerText = 'م';
+                thIdx.style.width = '50px';
+                headerRow.appendChild(thIdx);
+                
+                const thName = document.createElement('th');
+                thName.innerText = 'الاسم';
+                headerRow.appendChild(thName);
+            }
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+
+            const tbody = document.createElement('tbody');
+            const pageStart = p * itemsPerPage;
+            
+            for (let r = 0; r < numRows; r++) {
+                const tr = document.createElement('tr');
+                for (let c = 0; c < numCols; c++) {
+                    const itemIdx = pageStart + (c * numRows) + r;
+                    const emp = dryFoodData[itemIdx];
+                    
+                    if (emp) {
+                        const tdIdx = document.createElement('td');
+                        tdIdx.innerText = toArabicNumerals(itemIdx + 1);
+                        tr.appendChild(tdIdx);
+
+                        const tdName = document.createElement('td');
+                        tdName.innerText = emp.name;
+                        tdName.style.textAlign = 'right';
+                        tr.appendChild(tdName);
+                    } else {
+                        // Fill empty cells if needed
+                        tr.appendChild(document.createElement('td'));
+                        tr.appendChild(document.createElement('td'));
+                    }
+                }
+                tbody.appendChild(tr);
+            }
+            table.appendChild(tbody);
+            pageDiv.appendChild(table);
+            container.appendChild(pageDiv);
+        }
+        
+        updateStyles();
     }
     
     function updateStyles() {

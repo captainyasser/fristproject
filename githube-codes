@@ -2,7 +2,7 @@ git status
 
 git add .
 
-git commit -m "update 6 add new fields"
+git commit -m "update 7 add elawat tashgeia"
 
 git push
 

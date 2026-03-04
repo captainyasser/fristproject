@@ -9,7 +9,7 @@ class ElawaRecord(models.Model):
     كل إدخال يمثل (رقم القرار - تاريخ العلاوة - ملاحظات) مربوط بموظف.
     """
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='elawat')
-    decision_number = models.CharField(max_length=100, verbose_name="رقم القرار")
+    decision_number = models.CharField(max_length=100, null=True, blank=True, verbose_name="رقم القرار")
     elawa_date = models.DateField(verbose_name="تاريخ العلاوة")
     notes = models.TextField(null=True, blank=True, verbose_name="ملاحظات")
     created_at = models.DateTimeField(default=timezone.now)
@@ -23,3 +23,20 @@ class ElawaRecord(models.Model):
 
     def __str__(self):
         return f"{self.employee.name} - {self.decision_number} ({self.elawa_date})"
+
+class NominationRecord(models.Model):
+    """
+    سجل ترشيح موظف لعلاوة تشجيعية في سنة معينة.
+    """
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='nominations')
+    year = models.IntegerField(verbose_name="عام الترشيح")
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = 'elawat_tashgeea_nominations'
+        unique_together = ('employee', 'year')
+        verbose_name = "ترشيح علاوة تشجيعية"
+        verbose_name_plural = "ترشيحات العلاوة التشجيعية"
+
+    def __str__(self):
+        return f"{self.employee.name} - مرشح لعام {self.year}"

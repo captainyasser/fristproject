@@ -7,6 +7,7 @@ class ElawaBatchForm(forms.Form):
     decision_number = forms.CharField(
         label="رقم القرار",
         max_length=100,
+        required=False,
         widget=forms.TextInput(attrs={'class':'form-control'})
     )
     elawa_date = forms.DateField(
@@ -35,14 +36,6 @@ class ElawaRecordForm(forms.ModelForm):
             'notes': forms.Textarea(attrs={'class':'form-control','rows':3}),
         }
 
-
-
-# elawat_tashgeea/forms.py
-from django import forms
-from .models import ElawaRecord
-from em_data.models import Employee
-from django.forms import DateInput
-
 class MultiElawaForm(forms.Form):
     employee = forms.ModelChoiceField(
         queryset=Employee.objects.filter(deleted_at__isnull=True).order_by("sort_number"),
@@ -53,6 +46,7 @@ class MultiElawaForm(forms.Form):
     # سيتم تكرار هذه الحقول في القالب
     decision_number = forms.CharField(
         label="رقم القرار",
+        required=False,
         widget=forms.TextInput(attrs={"class": "form-control"})
     )
     elawa_date = forms.DateField(

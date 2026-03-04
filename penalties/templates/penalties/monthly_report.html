@@ -1,0 +1,247 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}كشف الجزاءات خلال الشهر{% endblock %}
+
+{% block styles %}
+<style>
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        .print-container {
+            width: 100%;
+            margin: 0;
+            padding: 10px;
+        }
+        body {
+            background: white !important;
+        }
+        .content-wrapper {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        table {
+            border: 2px solid #000 !important;
+        }
+        th, td {
+            border: 1px solid #000 !important;
+            color: #000 !important;
+        }
+    }
+
+    .print-container {
+        background: white;
+        padding: 30px 40px;
+        max-width: 297mm; /* A4 Landscape or large portrait */
+        margin: 0 auto;
+        min-height: 210mm;
+    }
+
+    .official-header {
+        text-align: right;
+        margin-bottom: 20px;
+        font-family: 'Traditional Arabic', 'Arial', serif;
+    }
+
+    .official-header h3 {
+        font-size: 18px;
+        font-weight: bold;
+        margin: 5px 0;
+    }
+
+    .report-title {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .report-title h2 {
+        font-size: 24px;
+        font-weight: bold;
+        margin: 10px 0;
+        text-decoration: underline;
+    }
+
+    .report-title h1 {
+        font-size: 28px;
+        font-weight: bold;
+        margin: 10px 0;
+    }
+
+    .penalties-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+
+    .penalties-table th,
+    .penalties-table td {
+        border: 1px solid #000;
+        padding: 8px 5px;
+        text-align: center;
+        vertical-align: middle;
+        font-size: 16px;
+    }
+
+    .penalties-table th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+    }
+
+    .penalties-table .name-col {
+        min-width: 200px;
+        text-align: right;
+        padding-right: 10px;
+    }
+
+    .penalties-table .desc-col {
+        text-align: right;
+        padding-right: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="no-print">
+    <section class="content-header">
+        <div class="container-fluid">
+            <div class="row mb-2">
+                <div class="col-sm-6">
+                    <h1>كشف الجزاءات الشهري</h1>
+                </div>
+                <div class="col-sm-6">
+                    <ol class="breadcrumb float-sm-right">
+                        <li class="breadcrumb-item"><a href="{% url 'penalties:dashboard' %}">الجزاءات</a></li>
+                        <li class="breadcrumb-item active">الكشف الشهري</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="card card-default no-print">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-filter"></i> تحديد التاريخ</h3>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="form-inline">
+                        <div class="form-group mr-3">
+                            <label class="mr-2">تاريخ البداية:</label>
+                            <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
+                        </div>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-sync"></i> تحديث البيانات</button>
+                        <button type="button" class="btn btn-success ml-3" onclick="window.print()"><i class="fas fa-print"></i> طباعة</button>
+                        <button type="button" class="btn btn-info ml-2" onclick="copyTableToClipboard()"><i class="fas fa-copy"></i> نسخ الجدول</button>
+                    </form>
+                    <div class="mt-2 text-info">
+                        <i class="fas fa-info-circle"></i> يمكنك الضغط على <b>اسم الشهر</b> أو <b>السنة</b> في الأسفل لتعديلهما يدوياً قبل الطباعة.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="print-container">
+            <!-- Official Header -->
+            <div class="official-header">
+                <h3>وزارة الداخلية</h3>
+                <h3>قطاع التدريب</h3>
+                <h3>الإدارة العامة للتدريب</h3>
+                <h3>إدارة موســـــيقات الشـــرطة</h3>
+            </div>
+
+            <!-- Report Title -->
+            <div class="report-title">
+                <h1>بيان</h1>
+                <h2>بالجزاءات عن شهر (<span contenteditable="true">{{ month_name }}</span>) لسنة <span contenteditable="true">{{ year }}</span></h2>
+            </div>
+
+            <!-- Table -->
+            <table class="penalties-table">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">م</th>
+                        <th style="width: 120px;">الدرجة</th>
+                        <th class="name-col">الاسـم</th>
+                        <th class="desc-col">الوصف</th>
+                        <th style="width: 150px;">الجزاء</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for penalty in penalties %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ penalty.employee.rank.name|default:"-" }}</td>
+                        <td class="name-col">{{ penalty.employee.name }}</td>
+                        <td class="desc-col">{{ penalty.violation_description|default:"-" }}</td>
+                        <td>
+                            {% if penalty.penalty_amount %}
+                                {{ penalty.penalty_amount.name }}
+                            {% elif penalty.penalty_applied %}
+                                {{ penalty.penalty_applied.name }}
+                            {% else %}
+                                -
+                            {% endif %}
+                            
+                            {% if penalty.deduct_absence_days %}
+                                <br><small>(مع خصم أيام الغياب)</small>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-4">لا توجد جزاءات مسجلة لهذه الفترة.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function copyTableToClipboard() {
+        // Select the table
+        const table = document.querySelector('.penalties-table');
+        if (!table) return;
+
+        // Selection logic to copy to clipboard
+        const range = document.createRange();
+        range.selectNode(table);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                // Flash message
+                const btn = event.currentTarget;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i> تم النسخ!';
+                btn.classList.add('btn-success');
+                btn.classList.remove('btn-info');
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.classList.remove('btn-success');
+                    btn.classList.add('btn-info');
+                }, 2000);
+            }
+        } catch (err) {
+            console.error('Error copying table:', err);
+            alert('حدث خطأ أثناء محاولة نسخ الجدول.');
+        }
+
+        // Clear selection
+        selection.removeAllRanges();
+    }
+</script>
+{% endblock %}

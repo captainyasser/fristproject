@@ -41,6 +41,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
     amen_or_ola = serializers.BooleanField(required=False, allow_null=True, default=False)
     rank_kind = serializers.IntegerField(required=False, allow_null=True)
     dep_sort = serializers.IntegerField(required=False, allow_null=True)
+    seniority_order = serializers.IntegerField(required=False, allow_null=True)
     mainornot = serializers.IntegerField(required=False, allow_null=True)
     bus = serializers.IntegerField(required=False, allow_null=True)
     tmamam = serializers.IntegerField(required=False, allow_null=True)
@@ -65,18 +66,19 @@ class EmployeeSerializer(serializers.ModelSerializer):
     idcard_social = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     is_driver = serializers.BooleanField(required=False, default=False, allow_null=True)
     dryfood = serializers.BooleanField(required=False, allow_null=True, default=False)
+    mony_out = serializers.BooleanField(required=False, allow_null=True, default=False)
 
     class Meta:
         model = Employee
         fields = [
-            'id', 'sort_number', 'name', 'nickname', 'id_number', 'gender', 
+            'id', 'sort_number', 'seniority_order', 'name', 'nickname', 'id_number', 'gender', 
             'marital_status', 'phone_number', 'alt_phone_number', 'governorate', 
             'district', 'address', 'age', 'date_of_birth', 'date_of_retirement', 
             'date_of_edara', 'date_of_appointment', 'police_number', 
             'insurance_number', 'health_status', 'rank', 'department', 
             'operation', 'image', 'amen_or_ola', 'rank_kind', 
             'dep_sort', 'mainornot', 'bus', 'tmamam', 'food', 'rahatcounter', 'institute_id',
-            'total_leave', 'rank_id', 'nots', 'department_id', 'idcard_expir', 'idcard_work', 'idcard_social', 'is_driver', 'dryfood'
+            'total_leave', 'rank_id', 'nots', 'department_id', 'idcard_expir', 'idcard_work', 'idcard_social', 'is_driver', 'dryfood', 'mony_out'
         ]
         read_only_fields = []
 
@@ -111,6 +113,11 @@ class EmployeeSerializer(serializers.ModelSerializer):
         return value
 
     def validate_is_driver(self, value):
+        if value is None:
+            return False
+        return value
+
+    def validate_mony_out(self, value):
         if value is None:
             return False
         return value
@@ -208,6 +215,7 @@ class EmployeeStatementSerializer(serializers.ModelSerializer):
         model = Employee
         fields = [
             'id', 'name', 'police_number', 'date_of_birth', 'date_of_appointment',
+            'seniority_order',
             'address', 'district', 'governorate', 'rank', 'idcard_expir',
             'idcard_work', 'idcard_social', 'id_number', 'marital_status'
         ]

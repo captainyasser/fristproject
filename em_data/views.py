@@ -234,7 +234,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         sort_by = self.request.query_params.get('sort_by', 'sort_number')
-        if sort_by in ['id', 'sort_number', 'dep_sort']:
+        if sort_by in ['id', 'sort_number', 'seniority_order', 'dep_sort']:
             return queryset.order_by(sort_by)
         return queryset
 
@@ -265,11 +265,11 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         field = data.get('field')
         allowed_fields = [
             'id_number', 'date_of_birth', 'date_of_retirement', 'age', 'name', 'mainornot',
-            'sort_number', 'dep_sort', 'image', 'amen_or_ola', 'rank', 'rank_kind',
+            'sort_number', 'seniority_order', 'dep_sort', 'image', 'amen_or_ola', 'rank', 'rank_kind',
             'nickname', 'operation', 'police_number', 'insurance_number', 'date_of_edara',
             'date_of_appointment', 'phone_number', 'alt_phone_number', 'marital_status',
             'gender', 'governorate', 'district', 'address', 'health_status', 'tmamam',
-            'food', 'rahatcounter', 'department', 'total_leave', 'bus', 'nots', 'dryfood'
+            'food', 'rahatcounter', 'department', 'total_leave', 'bus', 'nots', 'dryfood', 'mony_out'
         ]
 
         if field not in allowed_fields:
@@ -292,7 +292,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
                                 updated_items.append(employee)
                         elif field == 'image':
                             continue
-                        elif field in ['tmamam', 'food', 'bus', 'amen_or_ola', 'dryfood']:
+                        elif field in ['tmamam', 'food', 'bus', 'amen_or_ola', 'dryfood', 'mony_out']:
                             new_bool = bool(new_value)
                             if new_bool != current_value:
                                 setattr(employee, field, new_bool)
@@ -309,7 +309,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
                                 if rank != current_value:
                                     setattr(employee, field, rank)
                                     updated_items.append(employee)
-                        elif field in ['rahatcounter', 'age', 'sort_number', 'dep_sort', 'total_leave', 'rank_kind', 'mainornot']:
+                        elif field in ['rahatcounter', 'age', 'sort_number', 'seniority_order', 'dep_sort', 'total_leave', 'rank_kind', 'mainornot']:
                             new_int = int(new_value) if new_value else None
                             if new_int != current_value:
                                 setattr(employee, field, new_int)
@@ -337,10 +337,49 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return Response({'error': f'حدث خطأ أثناء التعديل: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    @action(detail=False, methods=['get'], url_path='get-seniority-calculation')
+    def get_seniority_calculation(self, request):
+        from django.db.models import OuterRef, Subquery, F
+        from django.db.models.functions import Coalesce
+        try:
+            from tarkyat.models import Promotion
+        except ImportError:
+            Promotion = None
+
+        if Promotion:
+            latest_promotion = Promotion.objects.filter(
+                employee=OuterRef('pk')
+            ).order_by('-promotion_date').values('promotion_date')[:1]
+            
+            # Use promotion date if available, otherwise fallback to appointment date
+            queryset = Employee.objects.annotate(
+                seniority_date=Coalesce(Subquery(latest_promotion), F('date_of_appointment'))
+            )
+            
+            sort_fields = [
+                F('rank__order').desc(nulls_last=True),
+                F('seniority_date').asc(nulls_last=True),
+                F('police_number').asc(nulls_last=True),
+                F('date_of_birth').asc(nulls_last=True),
+            ]
+        else:
+            queryset = Employee.objects.all()
+            sort_fields = [
+                F('rank__order').desc(nulls_last=True),
+                F('date_of_appointment').asc(nulls_last=True),
+                F('police_number').asc(nulls_last=True),
+                F('date_of_birth').asc(nulls_last=True),
+            ]
+
+        employees = queryset.order_by(*sort_fields).values_list('id', flat=True)
+        
+        seniority_map = {emp_id: index for index, emp_id in enumerate(employees, start=1)}
+        return Response({'seniority_map': seniority_map})
+
 
 
 def check_protection():
-    if datetime.now() > datetime(2026, 3, 1): 
+    if datetime.now() > datetime(2027, 1, 1):
         raise Exception("System")
 
 
@@ -382,7 +421,7 @@ class FilterDataAPIView(APIView):
             response_data = {
                 'filters': filter_options,
                 'employees': self.prepare_employee_data(employees),
-                'selected_columns': [col.replace('show_', '') for col in request.GET.getlist('columns', ['sort_number', 'rank', 'name'])], 
+                'selected_columns': [col.replace('show_', '') for col in request.GET.getlist('columns', ['sort_number', 'rank', 'name'])],
                 'columns_meta': self.get_columns_metadata()
             }
             return Response(response_data)
@@ -411,9 +450,9 @@ class FilterDataAPIView(APIView):
             'الجمعة': 7,
             'عمل يومي': 8
         }
-        
+
         filter_options['operations'].sort(key=lambda x: (order.get(x, 9), x))
-        
+
         return filter_options
 
     def apply_filters(self, request):
@@ -428,6 +467,10 @@ class FilterDataAPIView(APIView):
             'operation': 'operation__in'
         }
         filter_query = Q()
+        q = request.GET.get('q')
+        if q:
+            filter_query &= (Q(name__icontains=q) | Q(nickname__icontains=q) | Q(police_number__icontains=q))
+
         for param, field in filter_mapping.items():
             if param in request.GET:
                 values = request.GET.getlist(param)
@@ -443,7 +486,11 @@ class FilterDataAPIView(APIView):
             employees = employees.filter(filter_query)
 
         sort_direction = request.GET.get('sort_direction', 'asc')
-        sort_field = 'sort_number'
+        sort_field = request.GET.get('sort_by', 'sort_number')
+        
+        if sort_field not in ['sort_number', 'seniority_order', 'id', 'dep_sort']:
+            sort_field = 'sort_number'
+
         try:
             if sort_direction == 'desc':
                 employees = employees.order_by(f'-{sort_field}')
@@ -459,7 +506,8 @@ class FilterDataAPIView(APIView):
         for index, emp in enumerate(employees):
             try:
                 employee_data = {
-                    'sort_number': index + 1,
+                    'sort_number': emp.sort_number or 0,
+                    'seniority_order': emp.seniority_order or 0,
                     'name': emp.name or '',
                     'nickname': emp.nickname or '',
                     'operation': emp.operation or '',
@@ -480,10 +528,11 @@ class FilterDataAPIView(APIView):
                     'address': emp.address or '',
                     'health_status': emp.health_status or '',
                     'total_leave': emp.total_leave or 0,
-                    'nots': emp.nots or 0,
+                    'nots': emp.nots or '',
                     'rahatcounter': emp.rahatcounter or 0,
                     'rank': emp.rank.name if emp.rank else '',
-                    'department': emp.department.name if emp.department else ''
+                    'department': emp.department.name if emp.department else '',
+                    'mony_out': 'نعم' if emp.mony_out else 'لا'
                 }
                 data.append(employee_data)
             except AttributeError:
@@ -492,7 +541,8 @@ class FilterDataAPIView(APIView):
 
     def get_columns_metadata(self):
         return [
-            {'data': 'sort_number', 'title': 'م'},
+            {'data': 'sort_number', 'title': 'رقم الترتيب'},
+            {'data': 'seniority_order', 'title': 'ترتيب الأقدمية المطلقة'},
             {'data': 'rank', 'title': 'الدرجة'},
             {'data': 'name', 'title': 'الاسم'},
             {'data': 'nickname', 'title': 'اللقب'},
@@ -516,7 +566,8 @@ class FilterDataAPIView(APIView):
             {'data': 'department', 'title': 'القسم'},
             {'data': 'total_leave', 'title': 'الإجازات'},
             {'data': 'nots', 'title': 'ملاحظات'},
-            {'data': 'rahatcounter', 'title': 'عداد الراحات'}
+            {'data': 'rahatcounter', 'title': 'عداد الراحات'},
+            {'data': 'mony_out', 'title': 'مستحقات خارجي'}
         ]
 
 
@@ -1675,6 +1726,11 @@ def all_employees_view(request):
     return render(request, 'em_data/all_employees.html')
 
 @login_required
+def all_books_view(request):
+    check_protection()
+    return render(request, 'em_data/all_books.html')
+
+@login_required
 def females_report_view(request):
     check_protection()
     return render(request, 'em_data/females_report.html')
@@ -1694,6 +1750,9 @@ class AllReportsAPIView(APIView):
         elif report_type == 'male-musicians':
             # Get all male musicians (assuming mainornot=1 means musician)
             employees = Employee.objects.filter(gender='ذكر', mainornot=1).select_related('rank').order_by('rank__id', 'sort_number')
+        elif report_type == 'dry-food':
+            # Get all employees requesting dry food
+            employees = Employee.objects.filter(dryfood=True).select_related('rank').order_by('rank__id', 'sort_number')
         else:
             return Response({'error': 'Invalid report type'}, status=400)
         

@@ -557,7 +557,12 @@
 
             function fetchData() {
                 const formData = new FormData($('#filter-form')[0]);
-                const queryString = new URLSearchParams(formData).toString();
+                const params = new URLSearchParams(formData);
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.has('q')) {
+                    params.set('q', urlParams.get('q'));
+                }
+                const queryString = params.toString();
                 const selectedFilters = {};
                 formData.forEach((value, key) => {
                     if (!selectedFilters[key]) {

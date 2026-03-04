@@ -8,7 +8,7 @@ from .views import (
     department_operation_report_view, DepartmentOperationReportAPIView,
     professional_profile, department_numbers_view,
     all_reports_view, AllReportsAPIView, females_report_view, male_musicians_report_view,
-    all_diaries_view, all_attendance_view, all_employees_view
+    all_diaries_view, all_attendance_view, all_employees_view, all_books_view
 )
 
 router = DefaultRouter()
@@ -36,6 +36,7 @@ urlpatterns = [
     path('all-diaries/', all_diaries_view, name='all_diaries'),
     path('all-attendance/', all_attendance_view, name='all_attendance'),
     path('all-employees/', all_employees_view, name='all_employees'),
+    path('all-books/', all_books_view, name='all_books'),
 ]
 
 # from django.urls import path

@@ -25,4 +25,9 @@ urlpatterns = [
     # elawat_tashgeea/urls.py
     path('add-multiple/', views.add_multiple_elawat, name='add_multiple_elawat'),
 
+    # Nomination candidate list
+    path('nominate/', views.nominate_employees, name='nominate_employees'),
+
+    # Final Nomination List (Detailed)
+    path('final-nomination/', views.final_nomination_list, name='final_nomination_list'),
 ]

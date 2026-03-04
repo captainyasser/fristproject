@@ -14,6 +14,13 @@ body {
     transition: margin-right .3s ease-in-out;
 }
 
+/* Sidebar Fixed Width Overrides */
+.main-sidebar, .main-sidebar::before {
+    width: 300px !important;
+    overflow-y: auto !important; /* Ensure content is scrollable if it exceeds */
+}
+
+
 /* Navbar Fixes */
 .navbar-expand .navbar-nav {
     padding-right: 0;
@@ -154,7 +161,8 @@ th, td {
 /* Responsive adjustments - Mobile & Tablet */
 @media (max-width: 991.98px) {
     .main-sidebar, .main-sidebar::before {
-        margin-right: -250px !important;
+        width: 300px !important;
+        margin-right: -300px !important;
         margin-left: 0 !important;
     }
     .sidebar-open .main-sidebar, .sidebar-open .main-sidebar::before {
@@ -172,7 +180,7 @@ th, td {
     .sidebar-mini:not(.sidebar-collapse) .content-wrapper,
     .sidebar-mini:not(.sidebar-collapse) .main-footer,
     .sidebar-mini:not(.sidebar-collapse) .main-header {
-        margin-right: 250px !important;
+        margin-right: 300px !important;
         margin-left: 0 !important;
     }
 

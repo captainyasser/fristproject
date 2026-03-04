@@ -297,3 +297,41 @@ class PenaltyAmountDeleteView(LoginRequiredMixin, DeleteView):
     model = PenaltyAmount
     template_name = 'penalties/confirm_delete.html'
     success_url = reverse_lazy('penalties:amount_list')
+
+class MonthlyPenaltyReportView(LoginRequiredMixin, TemplateView):
+    template_name = 'penalties/monthly_report.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        today = date.today()
+        start_date_str = self.request.GET.get('start_date')
+        
+        if start_date_str:
+            try:
+                start_date = date.fromisoformat(start_date_str)
+            except ValueError:
+                start_date = today.replace(day=1)
+        else:
+            start_date = today.replace(day=1)
+            
+        month_int = start_date.month
+        year_int = start_date.year
+        
+        MONTHS_AR = {
+            1: 'يناير', 2: 'فبراير', 3: 'مارس', 4: 'أبريل',
+            5: 'مايو', 6: 'يونيو', 7: 'يوليو', 8: 'أغسطس',
+            9: 'سبتمبر', 10: 'أكتوبر', 11: 'نوفمبر', 12: 'ديسمبر'
+        }
+        
+        context['month_name'] = MONTHS_AR.get(month_int, '')
+        context['year'] = year_int
+        context['start_date'] = start_date.isoformat()
+        
+        penalties = PenaltyRecord.objects.filter(
+            penalty_date__gte=start_date,
+            penalty_date__month=month_int,
+            penalty_date__year=year_int
+        ).select_related('employee', 'employee__rank', 'penalty_applied', 'penalty_amount').order_by('penalty_date', 'employee__name')
+        
+        context['penalties'] = penalties
+        return context

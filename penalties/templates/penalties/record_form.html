@@ -104,12 +104,21 @@
 <span class="text-danger">{{ form.penalty_level.errors }}</span>
 </div>
 </div>
-<div class="col-md-4">
+<div class="col-md-3">
 <div class="form-group">
 <label>مقدار الجزاء</label>
-<small class="form-text text-muted">اختر مقدار الجزاء - سيتم تحديث الجزاءات الموقعة تلقائياً</small>
+<small class="form-text text-muted">اختر مقدار الجزاء</small>
 {{ form.penalty_amount }}
 <span class="text-danger">{{ form.penalty_amount.errors }}</span>
+</div>
+</div>
+<div class="col-md-3" id="deduct_absence_container" style="display:none;">
+<div class="form-group">
+<label>&nbsp;</label>
+<div class="custom-control custom-checkbox mt-2">
+{{ form.deduct_absence_days }}
+<label class="custom-control-label" for="{{ form.deduct_absence_days.id_for_label }}">مع خصم أيام الغياب</label>
+</div>
 </div>
 </div>
 </div>
@@ -221,7 +230,9 @@
             amount: $('#id_penalty_amount'),
             preset: $('#id_preset_select'),
             desc: $('#id_violation_description'),
-            absence: $('#absence_fields')
+            absence: $('#absence_fields'),
+            deductAbsence: $('#id_deduct_absence_days'),
+            deductAbsenceContainer: $('#deduct_absence_container')
         };
 
         /* 🔁 محرك التحديث المركزي */
@@ -310,7 +321,18 @@
 
             /* 4️⃣ الغياب + الوصف */
             const t = violationTypes.find(x => x.id == els.type.val());
-            els.absence.toggle(!!(t && t.is_absence));
+            const isAbsence = !!(t && t.is_absence);
+            
+            els.absence.toggle(isAbsence);
+            els.deductAbsenceContainer.toggle(isAbsence);
+            
+            // تفعيل المربع تلقائيا عند اختيار غياب لأول مرة (إذا لم يكن هناك PK للسجل أي أنه إضافة جديد)
+            {% if not form.instance.pk %}
+            if (isAbsence) {
+                els.deductAbsence.prop('checked', true);
+            }
+            {% endif %}
+
             if (t && t.description_template && !els.desc.val()) {
                 els.desc.val(t.description_template.replace('{date}', new Date().toLocaleDateString('en-CA'))); // استخدام تنسيق التاريخ YYYY-MM-DD
             }

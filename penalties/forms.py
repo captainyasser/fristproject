@@ -91,6 +91,7 @@ class PenaltyRecordForm(forms.ModelForm):
             'penalty_level',
             'notes',
             'form_image',
+            'deduct_absence_days',
             'erase_date',
             'erase_decision_number',
             'erase_year',

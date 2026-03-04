@@ -271,6 +271,16 @@
                         {% endfor %}
                     </select>
 
+                    <label for="gender">الجنس:</label>
+                    <select class="sorting" name="gender" id="gender">
+                        <option value="" {% if not gender_filter %}selected{% endif %}>الكل</option>
+                        <option value="ذكر" {% if gender_filter == 'ذكر' %}selected{% endif %}>ذكر</option>
+                        <option value="أنثي" {% if gender_filter == 'أنثي' %}selected{% endif %}>أنثي</option>
+                    </select>
+
+                    <label for="search_q">بحث:</label>
+                    <input type="text" id="search_q" name="q" value="{{ request.GET.q|default:'' }}" placeholder="الاسم أو رقم الشرطة">
+
                     <input type="submit" value="عرض" class="btn btn-primary">
                 </form>
 
@@ -442,8 +452,10 @@
             const numDays = document.getElementById('num_days').value;
             const sortBy = document.getElementById('sort_by').value;
             const departmentFilter = document.getElementById('departments').value;
+            const genderFilter = document.getElementById('gender').value;
+            const searchQuery = document.getElementById('search_q') ? document.getElementById('search_q').value : '';
             const page = new URLSearchParams(window.location.search).get('page') || '1';
-            const url = `{% url 'get_attendance' %}?start_date=${startDate}&num_days=${numDays}&page=${page}&sort_by=${sortBy}&departments=${departmentFilter}`;
+            const url = `{% url 'get_attendance' %}?start_date=${startDate}&num_days=${numDays}&page=${page}&sort_by=${sortBy}&departments=${departmentFilter}&gender=${genderFilter}&q=${encodeURIComponent(searchQuery)}`;
             logDebug(`Fetching from: ${url}`);
 
             fetch(url, {

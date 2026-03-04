@@ -56,4 +56,7 @@ urlpatterns = [
     path('extract/', views.PenaltyExtractSelectView.as_view(), name='penalty_extract_select'),
     path('extract/<int:employee_id>/', views.PenaltyExtractView.as_view(), name='penalty_extract'),
 
+    # Monthly Penalty Report
+    path('monthly-report/', views.MonthlyPenaltyReportView.as_view(), name='monthly_report'),
+
 ]

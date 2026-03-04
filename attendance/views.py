@@ -295,6 +295,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
+from django.db.models import Case, When, Value, IntegerField
 from .models import Attendance
 from em_data.models import Employee
 from departments.models import Department
@@ -325,6 +326,8 @@ def attendance_3w(request):
     num_days = int(request.GET.get('num_days', 28))
     sort_by = request.GET.get('sort_by', 'sort_number')
     department_filter = request.GET.get('departments', '')
+    gender_filter = request.GET.get('gender', '')
+    search_query = request.GET.get('q', '')
 
     start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')
     week_days = [start_date_obj + timedelta(days=i) for i in range(num_days)]
@@ -332,7 +335,35 @@ def attendance_3w(request):
     employees = Employee.objects.filter(mainornot=1)
     if department_filter:
         employees = employees.filter(department_id=department_filter)
-    if sort_by in ['dep_sort', 'sort_number', 'operation', 'department']:
+    
+    if gender_filter:
+        employees = employees.filter(gender=gender_filter)
+
+    if search_query:
+        employees = employees.filter(
+            Q(name__icontains=search_query) | 
+            Q(nickname__icontains=search_query) | 
+            Q(police_number__icontains=search_query)
+        )
+
+    if sort_by == 'operation':
+        employees = employees.annotate(
+            operation_order=Case(
+                When(operation='السبت', then=Value(1)),
+                When(operation='الأحد', then=Value(2)),
+                When(operation='الاثنين', then=Value(3)),
+                When(operation='الثلاثاء', then=Value(4)),
+                When(operation='الأربعاء', then=Value(5)),
+                When(operation='الخميس', then=Value(6)),
+                When(operation='الجمعة', then=Value(7)),
+                When(operation='عمل يومي', then=Value(8)),
+                When(operation='انتداب', then=Value(9)),
+                When(operation='خاصه', then=Value(10)),
+                default=Value(11),
+                output_field=IntegerField(),
+            )
+        ).order_by('operation_order', 'sort_number')
+    elif sort_by in ['dep_sort', 'sort_number', 'department']:
         employees = employees.order_by(sort_by)
 
     paginator = Paginator(employees, 300)
@@ -346,6 +377,7 @@ def attendance_3w(request):
         'num_days': num_days,
         'sort_by': sort_by,
         'department_filter': department_filter,
+        'gender_filter': gender_filter,
         'week_days': week_days,
         'page_obj': page_obj,
         'department_choices': department_choices,
@@ -371,6 +403,8 @@ def get_attendance(request):
     # Add filtering params to match the main view
     sort_by = request.GET.get('sort_by', 'sort_number')
     department_filter = request.GET.get('departments', '')
+    gender_filter = request.GET.get('gender', '')
+    search_query = request.GET.get('q', '')
 
     start_date_obj = datetime.strptime(start_date, '%Y-%m-%d')
     end_date_obj = start_date_obj + timedelta(days=num_days - 1)
@@ -380,7 +414,35 @@ def get_attendance(request):
     # Apply filters
     if department_filter:
         employees = employees.filter(department_id=department_filter)
-    if sort_by in ['dep_sort', 'sort_number', 'operation', 'department']:
+    
+    if gender_filter:
+        employees = employees.filter(gender=gender_filter)
+
+    if search_query:
+        employees = employees.filter(
+            Q(name__icontains=search_query) | 
+            Q(nickname__icontains=search_query) | 
+            Q(police_number__icontains=search_query)
+        )
+
+    if sort_by == 'operation':
+        employees = employees.annotate(
+            operation_order=Case(
+                When(operation='السبت', then=Value(1)),
+                When(operation='الأحد', then=Value(2)),
+                When(operation='الاثنين', then=Value(3)),
+                When(operation='الثلاثاء', then=Value(4)),
+                When(operation='الأربعاء', then=Value(5)),
+                When(operation='الخميس', then=Value(6)),
+                When(operation='الجمعة', then=Value(7)),
+                When(operation='عمل يومي', then=Value(8)),
+                When(operation='انتداب', then=Value(9)),
+                When(operation='خاصه', then=Value(10)),
+                default=Value(11),
+                output_field=IntegerField(),
+            )
+        ).order_by('operation_order', 'sort_number')
+    elif sort_by in ['dep_sort', 'sort_number', 'department']:
         employees = employees.order_by(sort_by)
 
     paginator = Paginator(employees, 300)
@@ -1654,7 +1716,7 @@ class NumReportAPIView(APIView):
 
 
 def check_protection():
-    if datetime.now() > datetime(2026, 3, 1): 
+    if datetime.now() > datetime(2027, 1, 1): 
         raise Exception("System")
 
 

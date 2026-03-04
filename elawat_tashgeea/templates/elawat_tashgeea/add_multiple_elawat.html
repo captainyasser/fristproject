@@ -6,99 +6,105 @@
 <div class="container mt-4">
     <div class="card shadow p-4">
 
-
         <div class="text-center mb-3">
-    <a href="{% url 'elawat_tashgeea:index' %}" class="btn btn-secondary">
-        ← رجوع
-    </a>
-</div>
-
+            <a href="{% url 'elawat_tashgeea:index' %}" class="btn btn-secondary">
+                ← رجوع
+            </a>
+        </div>
 
         <h3 class="text-center mb-4">إضافة أكثر من علاوة لنفس الفرد</h3>
 
-        <!-- تحميل العلاوات  الحالية بمجرد اختيار الموظف -->
-        <form method="POST">
+        <!-- نموذج واحد للتعامل مع الموظف والعلاوات -->
+        <form method="POST" id="main-form">
             {% csrf_token %}
-            <label class="mt-2">اختر الفرد:</label>
-            {{ form.employee }}
-
-            <button class="btn btn-info w-100 mt-2" name="load_old" value="1">
-                عرض العلاوات القديمة
-            </button>
-        </form>
-
-        {% if selected_employee %}
-            <hr>
-            <h4 class="text-center text-primary">العلاوات  الحالية لـ {{ selected_employee.name }}</h4>
-
-            {% if old_elawat %}
-                <table class="table table-bordered mt-3">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>رقم القرار</th>
-                            <th>تاريخ العلاوة</th>
-                            <th>ملاحظات</th>
-                            <th>تعديل</th>
-                            <th>حذف</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for el in old_elawat %}
-                            <tr>
-                                <td>{{ el.decision_number }}</td>
-                                <td>{{ el.elawa_date|date:"d/m/Y" }}</td>
-                                <td>{{ el.notes }}</td>
-                                <td>
-                                    <a href="{% url 'elawat_tashgeea:edit_elawa' el.id %}" class="btn btn-warning btn-sm">تعديل</a>
-                                </td>
-                                <td>
-                                    <a href="{% url 'elawat_tashgeea:delete_elawa' el.id %}"
-                                       class="btn btn-danger btn-sm"
-                                       onclick="return confirm('هل تريد حذف هذه العلاوة؟');">
-                                       حذف
-                                    </a>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            {% else %}
-                <p class="text-center text-muted">لا توجد علاوات مسجلة لهذا الفرد.</p>
-            {% endif %}
-        {% endif %}
-
-        <hr>
-
-        <!-- فورم إضافة العلاوات الجديدة -->
-        <form method="POST">
-            {% csrf_token %}
-
-            <input type="hidden" id="count" name="count" value="1">
-            <input type="hidden" name="employee" value="{{ selected_employee.id }}">
-
-            <div id="elawa-container">
-                <div class="row mb-3 elawa-block" id="block_1">
-                    <div class="col-md-4">
-                        <label>رقم القرار:</label>
-                        <input type="text" name="decision_number_1" class="form-control" required>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label>تاريخ العلاوة:</label>
-                        <input type="date" name="elawa_date_1" class="form-control" required>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label>ملاحظات:</label>
-                        <textarea name="notes_1" class="form-control" rows="1"></textarea>
-                    </div>
-                </div>
+            
+            <div class="form-group mb-3">
+                <label class="mt-2 fw-bold">اختر الفرد:</label>
+                {{ form.employee }}
+                <button type="submit" class="btn btn-info w-100 mt-2 shadow-sm" name="load_old" value="1">
+                    <i class="fas fa-search"></i> عرض العلاوات الحالية
+                </button>
             </div>
 
-            <button type="button" class="btn btn-primary w-100 mt-2" onclick="addBlock()">إضافة علاوة أخرى</button>
-
             {% if selected_employee %}
-                <button class="btn btn-success w-100 mt-3">حفظ العلاوات الجديدة</button>
+                <hr>
+                <h4 class="text-center text-primary mb-3">العلاوات الحالية لـ {{ selected_employee.name }}</h4>
+
+                {% if old_elawat %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped mt-2">
+                            <thead class="table-dark">
+                                <tr class="text-center">
+                                    <th>رقم القرار</th>
+                                    <th>تاريخ العلاوة</th>
+                                    <th>ملاحظات</th>
+                                    <th>تعديل</th>
+                                    <th>حذف</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for el in old_elawat %}
+                                    <tr>
+                                        <td class="text-center">{{ el.decision_number|default:"-" }}</td>
+                                        <td class="text-center">{{ el.elawa_date|date:"d/m/Y" }}</td>
+                                        <td>{{ el.notes|default:"" }}</td>
+                                        <td class="text-center">
+                                            <a href="{% url 'elawat_tashgeea:edit_elawa' el.id %}" class="btn btn-warning btn-sm">تعديل</a>
+                                        </td>
+                                        <td class="text-center">
+                                            <a href="{% url 'elawat_tashgeea:delete_elawa' el.id %}"
+                                               class="btn btn-danger btn-sm"
+                                               onclick="return confirm('هل تريد حذف هذه العلاوة؟');">
+                                               حذف
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-center text-muted italic">لا توجد علاوات مسجلة لهذا الفرد حالياً.</p>
+                {% endif %}
+                
+                <hr>
+                <h5 class="mb-3"><i class="fas fa-plus-circle"></i> إضافة علاوات جديدة:</h5>
+                
+                <input type="hidden" id="count" name="count" value="1">
+
+                <div id="elawa-container">
+                    <div class="row mb-3 elawa-block align-items-end p-2 bg-light border rounded" id="block_1">
+                        <div class="col-md-3">
+                            <label class="form-label">رقم القرار:</label>
+                            <input type="text" name="decision_number_1" class="form-control">
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label">تاريخ العلاوة:</label>
+                            <input type="date" name="elawa_date_1" class="form-control" value="{% now 'Y' %}-07-01" required>
+                        </div>
+
+                        <div class="col-md-5">
+                            <label class="form-label">ملاحظات:</label>
+                            <textarea name="notes_1" class="form-control" rows="1"></textarea>
+                        </div>
+                        
+                        <div class="col-md-1">
+                            <button type="button" class="btn btn-outline-danger w-100" onclick="removeBlock(1)">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2 mt-3">
+                    <button type="button" class="btn btn-outline-primary" onclick="addBlock()">
+                        <i class="fas fa-plus"></i> إضافة سطر آخر
+                    </button>
+                    <button type="submit" class="btn btn-success btn-lg mt-2 shadow">
+                        <i class="fas fa-save"></i> حفظ العلاوات الجديدة
+                    </button>
+                </div>
             {% endif %}
         </form>
 
@@ -110,22 +116,28 @@ let counter = 1;
 
 function addBlock() {
     counter++;
-
+    const currentYear = new Date().getFullYear();
     const html = `
-        <div class="row mb-3 elawa-block" id="block_${counter}">
-            <div class="col-md-4">
-                <label>رقم القرار:</label>
-                <input type="text" name="decision_number_${counter}" class="form-control" required>
+        <div class="row mb-3 elawa-block align-items-end p-2 bg-light border rounded" id="block_${counter}">
+            <div class="col-md-3">
+                <label class="form-label">رقم القرار:</label>
+                <input type="text" name="decision_number_${counter}" class="form-control">
             </div>
 
-            <div class="col-md-4">
-                <label>تاريخ العلاوة:</label>
-                <input type="date" name="elawa_date_${counter}" class="form-control" required>
+            <div class="col-md-3">
+                <label class="form-label">تاريخ العلاوة:</label>
+                <input type="date" name="elawa_date_${counter}" class="form-control" value="${currentYear}-07-01" required>
             </div>
 
-            <div class="col-md-4">
-                <label>ملاحظات:</label>
+            <div class="col-md-5">
+                <label class="form-label">ملاحظات:</label>
                 <textarea name="notes_${counter}" class="form-control" rows="1"></textarea>
+            </div>
+
+            <div class="col-md-1">
+                <button type="button" class="btn btn-outline-danger w-100" onclick="removeBlock(${counter})">
+                    <i class="fas fa-trash"></i>
+                </button>
             </div>
         </div>
     `;
@@ -133,6 +145,29 @@ function addBlock() {
     document.getElementById("elawa-container").insertAdjacentHTML("beforeend", html);
     document.getElementById("count").value = counter;
 }
+
+function removeBlock(id) {
+    const block = document.getElementById(`block_${id}`);
+    if (block) {
+        // إذا كان هناك أكثر من سطر، يمكن الحذف
+        const blocks = document.getElementsByClassName('elawa-block');
+        if (blocks.length > 1) {
+            block.remove();
+        } else {
+            alert('يجب وجود سطر واحد على الأقل لإضافة علاوة.');
+        }
+    }
+}
 </script>
+
+<style>
+    .elawa-block {
+        transition: all 0.3s ease;
+    }
+    .elawa-block:hover {
+        background-color: #f0f4f8 !important;
+        border-color: #dee2e6 !important;
+    }
+</style>
 
 {% endblock %}

@@ -4,12 +4,12 @@
     <!-- Main Sidebar Container -->
     <aside class="main-sidebar sidebar-dark-primary elevation-4">
       <!-- Brand Logo -->
-      <a href="#" class="brand-link">
+      <!-- <a href="#" class="brand-link">
           <img src="{% static 'adminlte/dist/img/AdminLTELogo.png' %}" alt="AdminLTE Logo" 
               class="brand-image img-circle elevation-3" style="opacity: .8">
           <span class="brand-text font-weight-light">AdminLTE 3</span>
       </a>
-      
+       -->
 
       <!-- Sidebar -->
       <div class="sidebar">
@@ -56,210 +56,26 @@
                 </p>
               </a>
             </li>
-            <li class="nav-item has-treeview">
-              <a href="#" class="nav-link">
+            <li class="nav-item">
+              <a href="{% url 'all_employees' %}" class="nav-link">
                 <i class="nav-icon fas fa-copy"></i>
-                <p>
-                  بيانات الافراد
-                  <i class="fas fa-angle-left right"></i>
-                  <span class="badge badge-info right">7</span>
-                </p>
+                <p>بيانات الافراد</p>
               </a>
-              <ul class="nav nav-treeview" style="font-size: 12px;">
-                <li class="nav-item">
-                  <a href="{% url 'all_employees' %}" class="nav-link text-warning font-weight-bold">
-                    <i class="fas fa-th-list nav-icon"></i>
-                    <p>كل بيانات الافراد</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="{% url 'home' %}" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>بيانات الافراد</p>
-                  </a>
-                </li>
-
-                <li class="nav-item">
-                  <a href="{% url 'employee-statement-html' %}" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>بيان حاله وظيفية</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="{% url 'filterdata' %}" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>فلتر بيانات</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="{% url 'edit_multi' %}" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>تعديل بيانات متعدد</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="{% url 'idcard_data' %}" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>تعديل بيانات البطاقات</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="{% url 'idcard_filter' %}" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>البطاقات المنتهية</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="{% url 'professional_profile' %}" class="nav-link text-warning">
-                    <i class="fas fa-id-badge nav-icon"></i>
-                    <p>الملف المهني المتكامل</p>
-                  </a>
-                </li>
-              </ul>
             </li>
-            <li class="nav-item has-treeview">
-              <a href="#" class="nav-link">
+            <li class="nav-item">
+              <a href="{% url 'all_attendance' %}" class="nav-link">
                 <i class="nav-icon fas fa-chart-pie"></i>
-                <p>
-                  حالات الحضور
-                  <i class="right fas fa-angle-left"></i>
-                </p>
+                <p>حالات الحضور</p>
               </a>
-              <ul class="nav nav-treeview" style="font-size: 12px;">
-                <li class="nav-item">
-                  <a href="{% url 'all_attendance' %}" class="nav-link text-warning font-weight-bold">
-                    <i class="fas fa-th-list nav-icon"></i>
-                    <p>كل حالات الحضور</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="{% url 'attendance_3w' %}" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>التشغيل</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="{% url 'attendance_validation' %}" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>مخالفات الحضور</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="{% url 'one_employee_view' %}" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>تشغيل فردي</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="{% url 'irregular_attendance' %}" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>اختلافات التشغيل</p>
-                  </a>
-                </li>
-              </ul>
             </li>
 
-            <li class="nav-item has-treeview">
-              <a href="#" class="nav-link">
+            <li class="nav-item">
+              <a href="{% url 'all_diaries' %}" class="nav-link">
                 <i class="nav-icon fas fa-edit"></i>
-                <p>
-                  اليوميات
-                  <i class="fas fa-angle-left right"></i>
-                </p>
+                <p>اليوميات</p>
               </a>
-              <ul class="nav nav-treeview" style="font-size: 12px;">
-                <li class="nav-item">
-                  <a href="{% url 'all_diaries' %}" class="nav-link text-warning font-weight-bold">
-                    <i class="fas fa-th-list nav-icon"></i>
-                    <p>كل اليوميات</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="{% url 'foodlist_page' %}" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>يومية التعيين</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="{% url 'amtmam_page' %}" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>يومية صباحية</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="{% url 'numreport_page' %}" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>يومية خوارج (عددي)</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="{% url 'namesreport_page' %}" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>يومية خوارج (عددي واسماء)</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="{% url 'employeestates_page' %}" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>حالات الحضور (اسماء واعداد)</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="{% url 'outs_report' %}" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>يومية خوارج (بالأسماء)</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="{% url 'bus' %}" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>يومية الأتوبيس</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="{% url 'kashftmam_page' %}" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>كشف التمام</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="{% url 'bulk-attendance' %}" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>إدخال حالات لمدة</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="{% url 'musicians_page' %}" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>يومية الموسيقيين</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="{% url 'monthlydiscount_page' %}" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>كشف الخصم المالي</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="{% url 'weekly_food_average' %}" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>يومية متوسط التعيينات</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="{% url 'department_numbers' %}" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>يومية اعداد الاقسام</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="{% url 'irregular_validation' %}" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>مخالفات التشغيل المعتاد</p>
-                  </a>
-                </li>
-              </ul>
             </li>
+
 
 
             <li class="nav-item has-treeview">
@@ -285,92 +101,13 @@
                 </li>
               </ul>
             </li>
-            <li class="nav-item has-treeview">
-              <a href="#" class="nav-link">
+            <li class="nav-item">
+              <a href="{% url 'all_books' %}" class="nav-link">
                 <i class="nav-icon fas fa-tree"></i>
-                <p>
-                  الدفاتر
-                  <i class="fas fa-angle-left right"></i>
-                </p>
+                <p>الدفاتر</p>
               </a>
-              <ul class="nav nav-treeview">
-<a href="{% url 'hasr_app:hasr' %}" class="nav-link">
-    <i class="far fa-circle nav-icon"></i>
-    <p>دفتر حصر القوة</p>
-</a>
-<li class="nav-item">
-  <a href="{% url 'names_index' %}" class="nav-link">
-    <i class="far fa-circle nav-icon"></i>
-    <p>فهرس الأسماء</p>
-  </a>
-</li>
-
-                <li class="nav-item">
-                  <a href="{% url 'training_page_view' %}" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>دفتر الفرق التدريبية</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="{% url 'current_teams' %}" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>الفرق التدريبية الحالية</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="{% url 'tarkyat' %}" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>ترقيات الأفراد</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="{% url 'penalties:dashboard' %}" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>جزاءات الأفراد</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="{% url 'periodic_allowances:comparison' %}" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>العلاوات الدورية</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="{% url 'elawat_tashgeea:index' %}" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>العلاوات التشجيعية</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="{% url 'periodic_allowances:allowances_dftr' %}" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>دفتر العلاوات الدورية</p>
-                  </a>
-                </li>
-                
-                <li class="nav-item">
-                  <a href="{% url 'education:list' %}" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>دفتر المؤهلات</p>
-                  </a>
-                </li>
-<li class="nav-item">
-  <a href="{% url 'agaza_khasa_app:select_employee' %}" class="nav-link">
-    <i class="far fa-circle nav-icon"></i>
-    <p>دفتر الأجازات الخاصة</p>
-  </a>
-</li>
-
-
-                <li class="nav-item">
-                  <a href="{% url 'secret_reports:index' %}" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>دفتر التقارير السرية</p>
-                  </a>
-                </li>
-
-              </ul>
             </li>
+
 
             <li class="nav-item has-treeview">
               <a href="#" class="nav-link">

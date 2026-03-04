@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="card shadow p-4">
+        
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <a href="{% url 'elawat_tashgeea:index' %}" class="btn btn-secondary">
+                ← رجوع
+            </a>
+            <h3 class="text-center flex-grow-1">كشف المرشحين للعلاوة التشجيعية لعام {{ year }}</h3>
+        </div>
+
+        <!-- اختيار العام -->
+        <div class="row justify-content-center mb-4">
+            <div class="col-md-4">
+                <form method="GET" class="d-flex gap-2">
+                    <label class="me-2 align-self-center">العام:</label>
+                    <select name="year" class="form-control me-2" onchange="this.form.submit()">
+                        {% for y in years_list %}
+                            <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </div>
+        </div>
+
+        <form method="POST">
+            {% csrf_token %}
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped table-hover mt-3" id="employeesTable">
+                    <thead class="table-dark text-center">
+                        <tr>
+                            <th style="width: 50px;">
+                                <input type="checkbox" id="selectAll" class="form-check-input">
+                            </th>
+                            <th style="width: 80px;">م</th>
+                            <th>الاسم</th>
+                            <th>الرتبة / الدرجة</th>
+                            <th>القسم</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for emp in employees %}
+                            <tr>
+                                <td class="text-center">
+                                    <input type="checkbox" name="employee_ids" value="{{ emp.id }}" class="form-check-input emp-checkbox"
+                                    {% if emp.id in nominated_ids %}checked{% endif %}>
+                                </td>
+                                <td class="text-center">{{ forloop.counter }}</td>
+                                <td>{{ emp.name }}</td>
+                                <td>{{ emp.rank }}</td>
+                                <td>{{ emp.department }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="text-center mt-4">
+                <button type="submit" class="btn btn-success btn-lg px-5 shadow">
+                    <i class="fas fa-save me-2"></i> حفظ قائمة المرشحين لعام {{ year }}
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // تفعيل اختيار الكل
+    $('#selectAll').click(function() {
+        $('.emp-checkbox').prop('checked', this.checked);
+    });
+
+    // تحديث حالة "اختيار الكل" عند تغيير أي مربع اختيار فردي
+    $('.emp-checkbox').change(function() {
+        if ($('.emp-checkbox:checked').length == $('.emp-checkbox').length) {
+            $('#selectAll').prop('checked', true);
+        } else {
+            $('#selectAll').prop('checked', false);
+        }
+    });
+
+    // جعل السطر قابل للضغط لتحديد الموظف
+    $('#employeesTable tbody tr').click(function(event) {
+        if (event.target.type !== 'checkbox') {
+            $(this).find('.emp-checkbox').trigger('click');
+        }
+    });
+});
+</script>
+{% endblock %}
+
+{% endblock %}

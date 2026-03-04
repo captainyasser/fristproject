@@ -9,7 +9,11 @@
 }
 .content-wrapper, .main-footer, .main-header {
     margin-left: 0px;
-    margin-right: 250px;
+    margin-right: 300px;
+}
+
+.main-sidebar, .main-sidebar::before {
+    width: 300px !important;
 }
 .mr-auto-navbav{
     margin-right: auto!important;
@@ -51,7 +55,7 @@
 @media (max-width: 767.98px) {
     .main-sidebar, .main-sidebar::before {
         box-shadow: none !important;
-        margin-right: -250px;
+        margin-right: -300px;
     }
 
     .content-wrapper, .content-wrapper::before, .main-footer, .main-footer::before, .main-header, .main-header::before {

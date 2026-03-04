@@ -13,6 +13,7 @@
                             <label for="sort_by">ترتيب حسب:</label>
                             <select id="sort_by" name="sort_by" class="form-control">
                                 <option value="sort_number">رقم الترتيب</option>
+                                <option value="seniority_order">ترتيب الأقدمية المطلقة</option>
                                 <option value="dep_sort">ترتيب القسم</option>
                             </select>
                         </div>
@@ -27,6 +28,7 @@
                                 <option value="name">الاسم</option>
                                 <option value="mainornot">رئيسي أم لا</option>
                                 <option value="sort_number">رقم الترتيب</option>
+                                <option value="seniority_order">ترتيب الأقدمية المطلقة</option>
                                 <option value="dep_sort">ترتيب القسم</option>
                                 <option value="image">الصورة</option>
                                 <option value="amen_or_ola">أمن أو علا</option>
@@ -54,6 +56,7 @@
                                 <option value="nots">ملاحظات</option>
                                 <option value="operation">التشغيل</option>
                                 <option value="dryfood">dryfood</option>
+                                <option value="mony_out">مستحقات مالية خارج الإدارة</option>
                             </select>
                         </div>
                     </form>
@@ -66,7 +69,9 @@
                                 <table class="table">
                                     <thead>
                                         <tr>
+                                            <th>م</th>
                                             <th>الاسم</th>
+                                            <th>الدرجة</th>
                                             <th>القيمة الحالية</th>
                                             <th>القيمة الجديدة</th>
                                         </tr>
@@ -75,6 +80,7 @@
                                 </table>
                             </div>
                             <button type="button" id="fill-sort-numbers" class="btn btn-info" style="display: none;">ملء أرقام الترتيب</button>
+                            <button type="button" id="calculate-seniority-btn" class="btn btn-warning" style="display: none;">ضبط ترتيب الأقدمية تلقائياً</button>
                             <button type="submit" class="btn btn-primary">حفظ</button>
                         </form>
                     </div>
@@ -110,6 +116,7 @@
             document.getElementById("sort_by").addEventListener("change", loadEmployees);
             document.getElementById("field").addEventListener("change", handleFieldChange);
             document.getElementById("fill-sort-numbers").addEventListener("click", fillSortNumbers);
+            document.getElementById("calculate-seniority-btn").addEventListener("click", calculateSeniority);
         });
 
         function handleFieldChange() {
@@ -125,10 +132,12 @@
                 renderInputs(field);
                 // إظهار زر الملء فقط عند اختيار sort_number
                 fillButton.style.display = (field === "sort_number") ? "inline-block" : "none";
+                document.getElementById("calculate-seniority-btn").style.display = (field === "seniority_order") ? "inline-block" : "none";
             } else {
                 container.style.display = "none";
                 inputsBody.innerHTML = "";
                 fillButton.style.display = "none";
+                document.getElementById("calculate-seniority-btn").style.display = "none";
             }
         }
 
@@ -160,14 +169,26 @@
             tbody.innerHTML = "";
             
             if (!employeesData.length) {
-                tbody.innerHTML = "<tr><td colspan='3'>لا توجد بيانات لعرضها</td></tr>";
+                tbody.innerHTML = "<tr><td colspan='5'>لا توجد بيانات لعرضها</td></tr>";
                 return;
             }
 
-            employeesData.forEach(employee => {
+            // Update header
+            const thead = tbody.closest('table').querySelector('thead tr');
+            thead.innerHTML = `
+                <th>م</th>
+                <th>الاسم</th>
+                <th>الدرجة</th>
+                <th>القيمة الحالية</th>
+                <th>القيمة الجديدة</th>
+            `;
+
+            employeesData.forEach((employee, index) => {
                 const row = document.createElement("tr");
                 row.innerHTML = `
+                    <td>${index + 1}</td>
                     <td>${employee.name || '-'}</td>
+                    <td>${employee.rank ? employee.rank.name : '-'}</td>
                     <td>${getCurrentValue(employee, field)}</td>
                     <td>${getInputField(employee, field)}</td>
                 `;
@@ -178,7 +199,7 @@
         function getCurrentValue(employee, field) {
             if (field === "department" && employee.department) return employee.department.name || "-";
             if (field === "rank" && employee.rank) return employee.rank.name || "-";
-            if (["tmamam", "food", "bus", "amen_or_ola", "dryfood"].includes(field)) return employee[field] ? "نعم" : "لا";
+            if (["tmamam", "food", "bus", "amen_or_ola", "dryfood", "mony_out"].includes(field)) return employee[field] ? "نعم" : "لا";
             if (["date_of_edara", "date_of_appointment", "date_of_birth", "date_of_retirement"].includes(field)) {
                 return employee[field] ? new Date(employee[field]).toLocaleDateString("ar-EG") : "-";
             }
@@ -202,14 +223,14 @@
                     ${ranks.map(r => `<option value="${r.id}" ${employee.rank && employee.rank.id === r.id ? "selected" : ""}>${r.name}</option>`).join('')}
                 </select>`;
             }
-            if (["tmamam", "food", "bus", "amen_or_ola", "mainornot", "dryfood"].includes(field)) {
+            if (["tmamam", "food", "bus", "amen_or_ola", "mainornot", "dryfood", "mony_out"].includes(field)) {
                 return `<input type="checkbox" class="form-check-input edit-value" data-id="${employee.id}" ${employee[field] ? "checked" : ""}>`;
             }
             if (["date_of_edara", "date_of_appointment", "date_of_birth", "date_of_retirement"].includes(field)) {
                 const dateValue = employee[field] ? new Date(employee[field]).toISOString().split('T')[0] : '';
                 return `<input type="date" class="form-control edit-value" data-id="${employee.id}" value="${dateValue}">`;
             }
-            if (["age", "sort_number", "dep_sort", "total_leave", "rank_kind"].includes(field)) {
+            if (["age", "sort_number", "seniority_order", "dep_sort", "total_leave", "rank_kind"].includes(field)) {
                 return `<input type="number" class="form-control edit-value" data-id="${employee.id}" value="${employee[field] || ''}">`;
             }
             if (field === "rahatcounter") {
@@ -280,6 +301,45 @@
             });
         }
 
+        function calculateSeniority() {
+            if (!confirm("هل أنت متأكد من رغبتك في حساب ترتيب الأقدمية المبدئي للأفراد المعروضين؟ \n سيتم ملء القيم في الجدول، وعليك الضغط على زر حفظ لتثبيتها. \n (الترتيب: الدرجة -> تاريخ الترقية -> السن -> رقم الشرطة)")) return;
+            
+            fetch(`${apiUrl}get-seniority-calculation/`, {
+                method: "GET",
+                headers: {
+                    "Authorization": `Token ${token}`,
+                    "Content-Type": "application/json"
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.seniority_map) {
+                    // convert all keys to string for comparison with dataset.id
+                    const seniorityMap = {};
+                    Object.keys(data.seniority_map).forEach(k => {
+                        seniorityMap[String(k)] = data.seniority_map[k];
+                    });
+
+                    const inputs = document.querySelectorAll(".edit-value");
+                    let filledCount = 0;
+                    inputs.forEach(input => {
+                        const empId = String(input.dataset.id);
+                        if (seniorityMap[empId] !== undefined) {
+                            input.value = seniorityMap[empId];
+                            filledCount++;
+                        }
+                    });
+                    showMessage(`تم حساب الترتيب لـ ${filledCount} فرد. يرجى مراجعة الجدول ثم الضغط على حفظ.`, "info");
+                } else {
+                    showMessage("لم يُرجع الخادم بيانات أقدمية.", "warning");
+                }
+            })
+            .catch(error => {
+                console.error("Error calculating seniority:", error);
+                showMessage("حدث خطأ أثناء جلب حسابات الأقدمية", "danger");
+            });
+        }
+
         document.getElementById("edit-form").addEventListener("submit", function(e) {
             e.preventDefault();
             const field = document.getElementById("field").value;
@@ -295,7 +355,7 @@
                     return; // Skip file inputs for now
                 } else if (["date_of_edara", "date_of_appointment", "date_of_birth", "date_of_retirement"].includes(field)) {
                     value = input.value || null;
-                } else if (["age", "sort_number", "dep_sort", "total_leave", "rank_kind", "mainornot"].includes(field)) {
+                } else if (["age", "sort_number", "seniority_order", "dep_sort", "total_leave", "rank_kind", "mainornot"].includes(field)) {
                     value = input.value ? parseInt(input.value) : null;
                 } else if (field === "rahatcounter") {
                     value = input.value !== "" ? parseInt(input.value) : null;
@@ -349,7 +409,7 @@
         });
 
         function getRawCurrentValue(employee, field) {
-            if (["tmamam", "food", "bus", "amen_or_ola", "dryfood"].includes(field)) {
+            if (["tmamam", "food", "bus", "amen_or_ola", "dryfood", "mony_out"].includes(field)) {
                 return employee[field];
             }
             if (["department", "rank"].includes(field)) {

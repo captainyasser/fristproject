@@ -31,7 +31,8 @@
                         <table id="employeesTable" class="table table-bordered table-striped">
                             <thead>
                                 <tr>
-                                    <th>ترتيب الاقدمية</th>
+                                    <th>ترتيب الاقدمية العام</th>
+                                    <th>الأقدمية المطلقة</th>
                                     <th>الدرجة</th>
                                     <th>رقم الشرطة</th>
                                     <th>الاسم</th>
@@ -65,9 +66,12 @@
                                 <form id="addEmployeeForm">
                                     <input type="hidden" id="add_institute" name="institute" value="{{ institute_id }}">
                                     <div class="form-group">
-                                        <label for="add_sort_number">ترتيب الاقدمية <span class="text-danger">*</span></label>
+                                        <label for="add_sort_number">ترتيب الاقدمية العام <span class="text-danger">*</span></label>
                                         <input type="number" class="form-control" id="add_sort_number" name="sort_number" required>
-                                        <div class="invalid-feedback">يرجى إدخال ترتيب الاقدمية</div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="add_seniority_order">ترتيب الأقدمية المطلقة</label>
+                                        <input type="number" class="form-control" id="add_seniority_order" name="seniority_order">
                                     </div>
                                     <div class="form-group">
                                         <label for="add_dep_sort">ترتيب القسم</label>
@@ -105,6 +109,12 @@
                                         <div class="form-check">
                                             <input type="checkbox" class="form-check-input" id="add_is_driver" name="is_driver">
                                             <label class="form-check-label" for="add_is_driver">سائق</label>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" id="add_mony_out" name="mony_out">
+                                            <label class="form-check-label" for="add_mony_out">مستحقات خارج الإدارة</label>
                                         </div>
                                     </div>
                                     <div class="form-group">
@@ -158,9 +168,12 @@
                                         <!-- البيانات الأساسية -->
                                         <div class="tab-pane fade show active" id="basic" role="tabpanel" aria-labelledby="basic-tab">
                                             <div class="form-group">
-                                                <label for="edit_sort_number">ترتيب الاقدمية <span class="text-danger">*</span></label>
+                                                <label for="edit_sort_number">ترتيب الاقدمية العام <span class="text-danger">*</span></label>
                                                 <input type="number" class="form-control" id="edit_sort_number" name="sort_number" required>
-                                                <div class="invalid-feedback">يرجى إدخال ترتيب الاقدمية</div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="edit_seniority_order">ترتيب الأقدمية المطلقة</label>
+                                                <input type="number" class="form-control" id="edit_seniority_order" name="seniority_order">
                                             </div>
                                             <div class="form-group">
                                                 <label for="edit_name">الاسم <span class="text-danger">*</span></label>
@@ -302,6 +315,12 @@
                                                 <div class="form-check">
                                                     <input type="checkbox" class="form-check-input" id="edit_is_driver" name="is_driver">
                                                     <label class="form-check-label" for="edit_is_driver">سائق</label>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <div class="form-check">
+                                                    <input type="checkbox" class="form-check-input" id="edit_mony_out" name="mony_out">
+                                                    <label class="form-check-label" for="edit_mony_out">مستحقات خارج الإدارة</label>
                                                 </div>
                                             </div>
                                         </div>
@@ -474,6 +493,7 @@
             const formData = new FormData(form);
             const data = Object.fromEntries(formData);
             data.is_driver = $('#add_is_driver').is(':checked'); // تعيين قيمة boolean صريحة
+            data.mony_out = $('#add_mony_out').is(':checked'); // تعيين قيمة boolean صريحة
             data.rank_id = data.rank_id === "" ? null : data.rank_id;
             data.department_id = data.department_id === "" ? null : data.department_id;
             
@@ -524,8 +544,9 @@
             if (formData.get('id_number') === '') {
                 formData.set('id_number', null);
             }
-            // التعامل مع is_driver بشكل صريح
+            // التعامل مع is_driver و mony_out بشكل صريح
             formData.set('is_driver', $('#edit_is_driver').is(':checked') ? 'True' : 'False');
+            formData.set('mony_out', $('#edit_mony_out').is(':checked') ? 'True' : 'False');
 
             try {
                 const response = await fetch(`${API_URL}${id}/`, {
@@ -645,6 +666,7 @@
                 // تحديث جدول قائمة الأفراد
                 table.row.add([
                     employee.sort_number || '-',
+                    employee.seniority_order || '-',
                     employee.rank ? employee.rank.name : '-', // الدرجة
                     employee.police_number || '-', // رقم الشرطة
                     employee.name, // الاسم
@@ -688,7 +710,8 @@
                             </ul>
                             <div class="tab-content" id="employeeDetailTabsContent${employee.id}">
                                 <div class="tab-pane fade show active" id="basic-detail-${employee.id}" role="tabpanel" aria-labelledby="basic-detail-tab-${employee.id}">
-                                    <p><strong>ترتيب الاقدمية:</strong> ${employee.sort_number || '-'}</p>
+                                    <p><strong>ترتيب الاقدمية العام:</strong> ${employee.sort_number || '-'}</p>
+                                    <p><strong>الأقدمية المطلقة:</strong> ${employee.seniority_order || '-'}</p>
                                     <p><strong>الاسم:</strong> ${employee.name || '-'}</p>
                                     <p><strong>الرقم القومي:</strong> ${employee.id_number || '-'}</p>
                                     <p><strong>رقم الهاتف:</strong> ${employee.phone_number || '-'}</p>
@@ -715,6 +738,7 @@
                                     <p><strong>قوة أساسية/منتدب:</strong> ${employee.mainornot == 1 ? 'قوة أساسية' : employee.mainornot == 2 ? 'منتدب' : '-'}</p>
                                     <p><strong>نوع الدرجة:</strong> ${employee.rank_kind || '-'}</p>
                                     <p><strong>سائق:</strong> ${employee.is_driver ? 'نعم' : 'لا'}</p>
+                                    <p><strong>مستحقات خارج الإدارة:</strong> ${employee.mony_out ? 'نعم' : 'لا'}</p>
                                 </div>
                                 <div class="tab-pane fade" id="address-detail-${employee.id}" role="tabpanel" aria-labelledby="address-detail-tab-${employee.id}">
                                     <p><strong>المحافظة:</strong> ${employee.governorate || '-'}</p>
@@ -856,6 +880,7 @@
                 document.getElementById('edit_amen_or_ola').value = employee.amen_or_ola ? '1' : '0';
                 document.getElementById('edit_nots').value = employee.nots || '';
                 document.getElementById('edit_is_driver').checked = employee.is_driver || false;
+                document.getElementById('edit_mony_out').checked = employee.mony_out || false;
 
                 $('#editEmployeeModal').modal('show');
             } else {

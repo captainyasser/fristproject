@@ -54,6 +54,7 @@ class Employee(models.Model):
     name = models.CharField(max_length=100, verbose_name="الاسم")
     mainornot = models.IntegerField(default=1)
     sort_number = models.IntegerField(null=True, blank=True)
+    seniority_order = models.IntegerField(null=True, blank=True, verbose_name="ترتيب الأقدمية المطلقة")
     dep_sort = models.IntegerField(null=True, blank=True)
     institute = models.ForeignKey(Institute, on_delete=models.CASCADE, related_name='employees')
     image = models.ImageField(upload_to='employee_images/', default='employee_images/noimage.jpg', null=True, blank=True)
@@ -89,6 +90,7 @@ class Employee(models.Model):
     idcard_social = models.CharField(max_length=20, choices=MARITAL_STATUS_CHOICES, null=True, blank=True, verbose_name="الحالة الاجتماعية")
     is_driver = models.BooleanField(default=False, verbose_name="سائق")
     dryfood = models.BooleanField(default=False, verbose_name="dryfood")
+    mony_out = models.BooleanField(default=False, verbose_name="مستحقات خارج الإدارة")
 
     class Meta:
         db_table = 'employees'

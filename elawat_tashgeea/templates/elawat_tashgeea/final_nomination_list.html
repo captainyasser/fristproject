@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="card shadow p-4">
+        
+        <div class="text-center mb-4">
+            <a href="{% url 'elawat_tashgeea:index' %}" class="btn btn-secondary float-start no-print">← رجوع</a>
+            <h3 class="d-inline">كشف الترشيح النهائي للعلاوة التشجيعية لعام {{ nomination_year }}</h3>
+        </div>
+
+        <div class="card bg-light p-3 mb-4 no-print">
+            <form method="GET" class="row g-3 align-items-end">
+                <div class="col-md-2">
+                    <label>عام الترشيح:</label>
+                    <select name="nomination_year" class="form-control">
+                        {% for y in years_list %}
+                            <option value="{{ y }}" {% if y == nomination_year %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label>عام التقرير 1:</label>
+                    <select name="report_year_1" class="form-control">
+                        {% for y in years_list %}
+                            <option value="{{ y }}" {% if y == ry1 %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label>عام التقرير 2:</label>
+                    <select name="report_year_2" class="form-control">
+                        {% for y in years_list %}
+                            <option value="{{ y }}" {% if y == ry2 %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label>ترتيب حسب:</label>
+                    <select name="sort_by" class="form-control">
+                        <option value="sort_number" {% if sort_by == 'sort_number' %}selected{% endif %}>رقم الترتيب العام</option>
+                        <option value="seniority_order" {% if sort_by == 'seniority_order' %}selected{% endif %}>ترتيب الأقدمية المطلقة</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100">تحديث البيانات</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped table-hover" id="finalTable" style="width:100%">
+                <thead class="table-dark text-center">
+                    <tr>
+                        <th rowspan="2" class="align-middle">مسلسل</th>
+                        <th rowspan="2" class="align-middle">الدرجة</th>
+                        <th rowspan="2" class="align-middle">رقم الشرطة</th>
+                        <th rowspan="2" class="align-middle">الاسم</th>
+                        <th rowspan="2" class="align-middle">جهة العمل الفرعية</th>
+                        <th rowspan="2" class="align-middle">تاريخ الميلاد</th>
+                        <th rowspan="2" class="align-middle">تاريخ التعيين</th>
+                        <th rowspan="2" class="align-middle">تاريخ آخر ترقية</th>
+                        <th colspan="2">التقرير السري لعام {{ ry1 }}</th>
+                        <th colspan="2">التقرير السري لعام {{ ry2 }}</th>
+                        {% for i in "12345" %}
+                            <th rowspan="2" class="align-middle">علاوة {{ forloop.counter }}</th>
+                        {% endfor %}
+                        <th rowspan="2" class="align-middle">عدد مرات الحصول على العلاوة</th>
+                        <th rowspan="2" class="align-middle">ملاحظات</th>
+                    </tr>
+                    <tr>
+                        <th>الدرجة</th>
+                        <th>التقدير</th>
+                        <th>الدرجة</th>
+                        <th>التقدير</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in data_list %}
+                    <tr>
+                        <td class="text-center">{{ forloop.counter }}</td>
+                        <td class="text-center">{{ item.emp.rank }}</td>
+                        <td class="text-center">{{ item.emp.police_number|default:"-" }}</td>
+                        <td>{{ item.emp.name }}</td>
+                        <td>إدارة موسيقات الشرطة</td>
+                        <td class="text-center">{{ item.emp.date_of_birth|date:"Y-m-d"|default:"-" }}</td>
+                        <td class="text-center">{{ item.emp.date_of_appointment|date:"Y-m-d"|default:"-" }}</td>
+                        <td class="text-center">{{ item.promotion_date|date:"Y-m-d"|default:"-" }}</td>
+                        
+                        <td class="text-center">{{ item.report1.score }}</td>
+                        <td class="text-center">{{ item.report1.rating }}</td>
+                        
+                        <td class="text-center">{{ item.report2.score }}</td>
+                        <td class="text-center">{{ item.report2.rating }}</td>
+                        
+                        {% for yr_val in item.prev_allw_details %}
+                            <td class="text-center">{{ yr_val }}</td>
+                        {% endfor %}
+                        
+                        <td class="text-center">{{ item.total_allw_count }}</td>
+                        <td>{{ item.emp.nots|default:"" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="20" class="text-center text-muted">لا يوجد مرشحون لعام {{ nomination_year }} بعد.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="text-center mt-4 no-print">
+            <button onclick="window.print()" class="btn btn-info btn-lg">
+                <i class="fas fa-print"></i> طباعة التقرير
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<style>
+@media print {
+    .no-print, .btn, form, footer, .main-footer { display: none !important; }
+    .container-fluid { width: 100% !important; padding: 0 !important; margin: 0 !important; }
+    .card { border: none !important; box-shadow: none !important; }
+    table { font-size: 9px !important; width: 100% !important; border-collapse: collapse !important; }
+    th, td { padding: 2px !important; border: 1px solid #000 !important; }
+    .table-dark { background-color: #eee !important; color: #000 !important; }
+    .content-wrapper { margin-left: 0 !important; }
+}
+</style>
+
+{% block scripts %}
+<!-- Add DataTables JS and dependencies for Buttons (Excel export) -->
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    // نستخدم مكتبة DataTable المتاحة في المشروع
+    if ($.fn.DataTable) {
+        $('#finalTable').DataTable({
+            dom: 'Bfrtip',
+            buttons: [
+                {
+                    extend: 'excel',
+                    text: '<i class="fas fa-file-excel"></i> تصدير Excel',
+                    className: 'btn btn-success btn-sm mb-3'
+                }
+            ],
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.13.7/i18n/ar.json"
+            },
+            "paging": false,
+            "searching": true,
+            "info": true,
+            "scrollX": true
+        });
+    }
+});
+</script>
+{% endblock %}
+
+{% endblock %}
