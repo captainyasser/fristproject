@@ -1,0 +1,433 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="no-print p-3 bg-light border-bottom mb-3">
+        <div class="row align-items-end g-2">
+            <div class="col-md-2">
+                <label class="form-label small">التاريخ:</label>
+                <input type="date" id="date-input" class="form-control form-control-sm" />
+            </div>
+            <div class="col-md-1">
+                <button onclick="fetchModernReport()" class="btn btn-primary btn-sm w-100">
+                    <i class="fas fa-search"></i> عرض
+                </button>
+            </div>
+            <div class="col-md-1">
+                <label class="form-label small" title="خط الأسماء">خط 1:</label>
+                <input type="number" id="font-size-input" class="form-control form-control-sm" value="16" oninput="updateStyles()" />
+            </div>
+            <div class="col-md-1">
+                <label class="form-label small" title="خط الجدول">خط 2:</label>
+                <input type="number" id="summary-font-size-input" class="form-control form-control-sm" value="20" oninput="updateStyles()" />
+            </div>
+            <div class="col-md-1">
+                <label class="form-label small">عمود:</label>
+                <input type="number" id="names-per-col-input" class="form-control form-control-sm" value="35" oninput="renderReport()" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">نظام الترتيب:</label>
+                <select id="sort-mode-select" class="form-select form-select-sm" onchange="renderReport()">
+                    <option value="gender">الذكور أولاً</option>
+                    <option value="absolute">ترتيب أقدمية</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <div class="form-check form-switch pb-1">
+                    <input class="form-check-input" type="checkbox" checked id="show-notes-toggle" onchange="renderReport()">
+                    <label class="form-check-label small" for="show-notes-toggle">الملاحظات</label>
+                </div>
+            </div>
+            <div class="col-md-1">
+                <a href="{% url 'amtmam_page' %}" class="btn btn-outline-dark btn-sm w-100" title="يومية التمام الصباحي">
+                    <i class="fas fa-list-alt"></i>
+                </a>
+            </div>
+            <div class="col-md-1">
+                <button onclick="window.print()" class="btn btn-success btn-sm w-100">
+                    <i class="fas fa-print"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="mt-2 row align-items-center">
+            <div class="col-md-12">
+                <label class="form-label small d-inline-block me-2">تصفية الحالات:</label>
+                <div id="states-checkboxes" class="d-inline-flex flex-wrap gap-2">
+                    <!-- ستتم تعبئة الخيارات برمجياً -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="report-printable" class="report-area">
+        <div class="report-header text-center mb-3">
+            <h5 id="report-title" class="fw-bold">يومية الخوارج الحديثة</h5>
+            <p id="report-date" class="text-muted small mb-1"></p>
+        </div>
+
+        <!-- جدول الإحصائيات -->
+        <div id="summary-table-container" class="mb-3"></div>
+
+        <!-- محتوى التقرير (الأعمدة) -->
+        <div id="report-content" class="report-columns-container">
+            <!-- سيتم تعبئة الجداول هنا -->
+        </div>
+    </div>
+</div>
+
+<style>
+    :root {
+        --base-font-size: 14px;
+        --summary-font-size: 13px;
+        --table-width: 100%;
+    }
+
+    body {
+        background-color: #fff;
+        direction: rtl;
+        font-family: 'Tajawal', Arial, sans-serif;
+    }
+
+    .report-area {
+        width: var(--table-width);
+        margin: 0 auto;
+    }
+
+    /* أنماط جدول الإحصائيات */
+    .summary-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+    }
+    .summary-table th, .summary-table td {
+        border: 1px solid #ced4da;
+        padding: 3px 5px;
+        font-size: var(--summary-font-size);
+        text-align: center;
+    }
+    .summary-table th {
+        background-color: #f8f9fa;
+        color: #16404D;
+        font-weight: bold;
+    }
+    .summary-table .number-cell {
+        font-size: calc(var(--summary-font-size) + 2px);
+        font-weight: bold;
+    }
+
+    /* أنماط الأعمدة المتتالية */
+    .report-columns-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+    .report-columns-table td {
+        vertical-align: top;
+        padding: 0 10px;
+        border-left: 1px solid #eee;
+    }
+    .report-columns-table td:last-child {
+        border-left: none;
+    }
+
+    .report-section-header {
+        background-color: #1a1a2e;
+        color: white;
+        padding: 2px 8px;
+        font-weight: bold;
+        font-size: calc(var(--base-font-size) + 1px);
+        margin: 8px 0 4px 0;
+        border-radius: 3px;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .report-gender-header {
+        background-color: #f1f1f1;
+        border-right: 4px solid #007bff;
+        padding: 1px 8px;
+        font-weight: bold;
+        font-size: var(--base-font-size);
+        margin: 4px 0 2px 0;
+    }
+
+    .names-list-vertical {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .name-row {
+        font-size: var(--base-font-size);
+        padding: 2px 0;
+        display: flex;
+        flex-direction: column; /* جعل الاسم والملاحظة فوق بعض */
+        gap: 0;
+        border-bottom: 1px dashed #f0f0f0;
+    }
+
+    .name-main-info {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .note-row {
+        font-size: 0.85em;
+        color: #666;
+        padding-right: 30px; /* إزاحة لتبدأ تحت الاسم وليس الرقم */
+        margin-top: -2px;
+        font-style: italic;
+        white-space: normal; /* السماح للملاحظة بالالتفاف */
+    }
+
+    .name-idx {
+        color: #007bff;
+        font-weight: bold;
+        min-width: 25px;
+        font-size: 0.85em;
+    }
+
+    .musician-mark {
+        color: #e74c3c;
+        font-size: 0.75em;
+        margin-right: 3px;
+    }
+
+    .report-header h5#report-title {
+        font-size: 20px;
+        margin-bottom: 5px;
+    }
+
+    .report-header p#report-date {
+        font-size: 20px;
+        margin: 0;
+    }
+
+    .gender-divider {
+        margin: 4px 0;
+        border: 0;
+        border-top: 1px solid #ddd;
+        opacity: 0.5;
+    }
+
+    @media print {
+        .no-print { display: none !important; }
+        body { padding: 0 !important; margin: 0 !important; }
+        .report-area { width: 100% !important; margin: 0 !important; border: none !important; }
+        .summary-table { margin-bottom: 10px !important; }
+        .report-header { margin-bottom: 10px !important; }
+        .report-header h5 { font-size: 20px !important; margin: 0; }
+        .report-header p { font-size: 20px !important; margin: 0; }
+        .report-columns-table td { border-left: 1px solid #ddd !important; padding: 0 5px !important; }
+        nav, footer { display: none !important; }
+    }
+</style>
+
+<script>
+    const statesMap = {
+        'tarka': 'طارئة',
+        'dawrya': 'دورية',
+        'sick': 'مرضي',
+        'khas': 'خاصة',
+        'mamrya': 'مأمورية',
+        'intdab': 'إنتداب',
+        'ferka': 'فرقة',
+        'raha': 'راحة',
+        'ghiyab': 'غياب',
+        'nobtji': 'نوبتجي',
+        'yawmi': 'يومي'
+    };
+
+    let reportData = null;
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const today = new Date();
+        document.getElementById("date-input").value = today.toISOString().split("T")[0];
+        
+        // إنشاء الـ checkboxes بتصميم مضغوط
+        const container = document.getElementById('states-checkboxes');
+        Object.keys(statesMap).forEach(key => {
+            const div = document.createElement('div');
+            div.className = 'form-check form-check-inline m-0 me-3';
+            div.innerHTML = `
+                <input class="form-check-input state-filter" type="checkbox" id="check-${key}" value="${key}" checked oninput="renderReport()">
+                <label class="form-check-label small" for="check-${key}">${statesMap[key]}</label>
+            `;
+            container.appendChild(div);
+        });
+
+        fetchModernReport();
+    });
+
+    function updateStyles() {
+        const fontSize = document.getElementById('font-size-input').value;
+        const summarySize = document.getElementById('summary-font-size-input').value;
+        document.documentElement.style.setProperty('--base-font-size', fontSize + 'px');
+        document.documentElement.style.setProperty('--summary-font-size', summarySize + 'px');
+    }
+
+    function fetchModernReport() {
+        const dateInput = document.getElementById("date-input").value;
+        const apiUrl = "/attendance/api/modern-outs-diary/";
+
+        fetch(apiUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": '{{ csrf_token }}',
+            },
+            body: JSON.stringify({ date: dateInput }),
+        })
+        .then(res => res.json())
+        .then(data => {
+            reportData = data;
+            document.getElementById('report-date').textContent = data.formatted_date;
+            renderReport();
+        })
+        .catch(err => console.error("Error:", err));
+    }
+
+    function toEasternArabicNumerals(num) {
+        const easternArabicNumerals = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+        return String(num).replace(/[0-9]/g, (digit) => easternArabicNumerals[digit]);
+    }
+
+    function renderReport() {
+        if (!reportData) return;
+
+        const selectedStates = Array.from(document.querySelectorAll('.state-filter:checked')).map(cb => cb.value);
+        const reportContent = document.getElementById('report-content');
+        const summaryContainer = document.getElementById('summary-table-container');
+        const namesPerCol = parseInt(document.getElementById('names-per-col-input').value) || 35;
+        const showNotes = document.getElementById('show-notes-toggle').checked;
+        const sortMode = document.getElementById('sort-mode-select').value;
+        
+        reportContent.innerHTML = '';
+        summaryContainer.innerHTML = '';
+
+        // --- إنشاء جدول الإحصائيات (نفس المنطق السابق) ---
+        // ... (كود الجدول العددي يظل كما هو) ...
+        const summaryCategories = [
+            { key: 'dawrya', label: 'دورية' },
+            { key: 'tarka', label: 'طارئة' },
+            { key: 'sick', label: 'مرضي' },
+            { key: 'khas', label: 'خاصة' },
+            { key: 'mamrya', label: 'مأمورية' },
+            { key: 'intdab', label: 'إنتداب' },
+            { key: 'ferka', label: 'فرقة' },
+            { key: 'raha', label: 'راحة' },
+            { key: 'ghiyab', label: 'غياب' }
+        ];
+        const excludedFromKhawarij = ['nobtji', 'yawmi'];
+        const groups = ['m_e', 'm_m', 'f_e', 'f_m'];
+        const groupLabels = {'m_e':'ذكور (إداري)','m_m':'ذكور (موسيقي)','f_e':'إناث (إداري)','f_m':'إناث (موسيقي)'};
+
+        let summaryHtml = '<table class="summary-table"><tr><th style="width:140px">الفرد / الحالة</th><th>الإجمالي</th>';
+        summaryCategories.forEach(cat => summaryHtml += `<th>${cat.label}</th>`);
+        summaryHtml += '<th>الخوارج</th><th>الموجود</th></tr>';
+
+        let columnTotals = new Array(summaryCategories.length).fill(0);
+        let grandTotal=0, grandKhawarij=0, grandPresent=0;
+
+        groups.forEach(g => {
+            let gTotal=0, gKhawarij=0, gPresent=0;
+            summaryHtml += `<tr><td class="text-start ps-2 fw-bold">${groupLabels[g]}</td>`;
+            const presCount = (reportData.report_data[g]['nobtji']?.length || 0) + (reportData.report_data[g]['yawmi']?.length || 0);
+            let rowVals = [];
+            summaryCategories.forEach((cat, i) => {
+                const count = reportData.report_data[g][cat.key]?.length || 0;
+                rowVals.push(count); gTotal += count; columnTotals[i] += count;
+                if(!excludedFromKhawarij.includes(cat.key)) gKhawarij += count;
+            });
+            gTotal += presCount; gPresent = presCount;
+            summaryHtml += `<td class="number-cell text-primary">${gTotal > 0 ? toEasternArabicNumerals(gTotal) : ''}</td>`;
+            rowVals.forEach(v => summaryHtml += `<td class="number-cell">${v>0?toEasternArabicNumerals(v):''}</td>`);
+            summaryHtml += `<td class="number-cell text-danger">${gKhawarij>0?toEasternArabicNumerals(gKhawarij):''}</td>`;
+            summaryHtml += `<td class="number-cell text-success">${gPresent>0?toEasternArabicNumerals(gPresent):''}</td></tr>`;
+            grandTotal+=gTotal; grandKhawarij+=gKhawarij; grandPresent+=gPresent;
+        });
+        summaryHtml += `<tr class="bg-light fw-bold"><td>الإجمالي العام</td><td>${toEasternArabicNumerals(grandTotal)}</td>`;
+        columnTotals.forEach(t => summaryHtml += `<td>${t>0?toEasternArabicNumerals(t):''}</td>`);
+        summaryHtml += `<td>${toEasternArabicNumerals(grandKhawarij)}</td><td>${toEasternArabicNumerals(grandPresent)}</td></tr></table>`;
+        summaryContainer.innerHTML = summaryHtml;
+
+        // --- توزيع المحتوى في أعمدة ---
+        let allItems = [];
+
+        selectedStates.forEach(sk => {
+            let m_list = (reportData.report_data['m_e'][sk] || []).concat(reportData.report_data['m_m'][sk] || []);
+            let f_list = (reportData.report_data['f_e'][sk] || []).concat(reportData.report_data['f_m'][sk] || []);
+
+            if (m_list.length === 0 && f_list.length === 0) return;
+
+            // إضافة عنوان الحالة وإجماليها
+            allItems.push({ type: 'section', label: statesMap[sk], count: m_list.length + f_list.length });
+
+            let serial = 1;
+
+            if (sortMode === 'absolute') {
+                // ترتيب مطلق: نخلط الكل ونرتب بـ sort_number
+                let combined = m_list.concat(f_list);
+                combined.sort((a, b) => a.sort_number - b.sort_number);
+                combined.forEach(emp => {
+                    const g_class = (reportData.report_data['m_e'][sk]?.includes(emp) || reportData.report_data['m_m'][sk]?.includes(emp)) ? 'male-name' : 'female-name';
+                    allItems.push({ type: 'name', idx: serial++, name: emp.name, is_musician: emp.is_musician, gender_class: g_class, note: emp.note });
+                });
+            } else {
+                // ترتيب حسب النوع (الوضع الافتراضي السابق)
+                if (m_list.length > 0) {
+                    m_list.sort((a, b) => a.sort_number - b.sort_number);
+                    m_list.forEach(emp => {
+                        allItems.push({ type: 'name', idx: serial++, name: emp.name, is_musician: emp.is_musician, gender_class: 'male-name', note: emp.note });
+                    });
+                }
+                if (m_list.length > 0 && f_list.length > 0) {
+                    allItems.push({ type: 'divider' });
+                }
+                if (f_list.length > 0) {
+                    f_list.sort((a, b) => a.sort_number - b.sort_number);
+                    f_list.forEach(emp => {
+                        allItems.push({ type: 'name', idx: serial++, name: emp.name, is_musician: emp.is_musician, gender_class: 'female-name', note: emp.note });
+                    });
+                }
+            }
+        });
+
+        if (allItems.length === 0) {
+            reportContent.innerHTML = '<div class="w-100 text-center py-5 text-muted">لا توجد خوارج للحالات المختارة</div>';
+            return;
+        }
+
+        const numCols = Math.ceil(allItems.length / namesPerCol);
+        let tableHtml = '<table class="report-columns-table"><tr>';
+        
+        for (let c = 0; c < numCols; c++) {
+            tableHtml += '<td>';
+            const colItems = allItems.slice(c * namesPerCol, (c + 1) * namesPerCol);
+            colItems.forEach(item => {
+                if (item.type === 'section') {
+                    tableHtml += `<div class="report-section-header"><span>${item.label}</span><span>(${item.count})</span></div>`;
+                } else if (item.type === 'divider') {
+                    tableHtml += `<hr class="gender-divider">`;
+                } else if (item.type === 'name') {
+                    let noteHtml = (showNotes && item.note) ? `<div class="note-row">${item.note}</div>` : '';
+                    tableHtml += `
+                        <div class="name-row ${item.gender_class}">
+                            <div class="name-main-info">
+                                <span class="name-idx">${toEasternArabicNumerals(item.idx)}.</span>
+                                <span>${item.name} ${item.is_musician ? '<i class="fas fa-music musician-mark"></i>' : ''}</span>
+                            </div>
+                            ${noteHtml}
+                        </div>`;
+                }
+            });
+            tableHtml += '</td>';
+        }
+        tableHtml += '</tr></table>';
+        reportContent.innerHTML = tableHtml;
+    }
+</script>
+{% endblock %}

@@ -199,9 +199,9 @@ def final_nomination_list(request):
     def get_rating(score):
         if score is None: return "-"
         if score >= 90: return "ممتاز"
-        if score >= 85: return "جيد جدا"
-        if score >= 75: return "جيد"
-        if score >= 65: return "مقبول"
+        if score >= 70: return "جيد"
+        if score >= 50: return "متوسط"
+        if score >= 30: return "دون المتوسط"
         return "ضعيف"
 
     # السنوات الـ 5 السابقة للعلاوات

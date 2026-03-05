@@ -116,8 +116,11 @@
                 </form>
             </div>
             <br>
-            <div class="print-btn-container">
+            <div class="print-btn-container" style="display: flex; gap: 10px;">
                 <button onclick="window.print()">طباعة</button>
+                <a href="{% url 'modern_outs_diary_page' %}" style="text-decoration: none;">
+                    <button type="button" style="background-color: #34495e; color: white; border: none; padding: 5px 15px; cursor: pointer;">يومية الخوارج</button>
+                </a>
             </div>
             <h4 id="formatted-date">يومية تمام صباحي عن يوم</h4>
             <table class="styled-table table-quarter">

@@ -1736,6 +1736,12 @@ def namesreport_page(request):
     check_protection()
     return render(request, 'attendance/namesreport.html')
 
+@login_required
+def modern_outs_diary_page(request):
+    check_protection()
+    return render(request, 'attendance/modern_outs_diary.html')
+
+
 class NamesReportAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -1849,6 +1855,95 @@ class NamesReportAPIView(APIView):
             'day_data': day_data
         }
         return Response(data, status=status.HTTP_200_OK)
+
+
+class ModernOutsAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        selected_date_str = request.data.get('date')
+        if not selected_date_str:
+            return Response({"error": "يرجى تحديد تاريخ"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            selected_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            return Response({"error": "تنسيق التاريخ غير صالح"}, status=status.HTTP_400_BAD_REQUEST)
+
+        weekdays = ['الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد']
+        day_name = weekdays[selected_date.weekday()]
+        formatted_date = f"{day_name} {selected_date.day:02d}/{selected_date.month}/{selected_date.year}"
+
+        # فئات الحالات
+        states_groups = {
+            'tarka': 'طارئة', 
+            'dawrya': 'دورية', 
+            'sick': ['مرضي', 'قرار66'],
+            'khas': ['خاصه', 'ج وضع'], 
+            'mamrya': ['مأمورية', 'مأمورية خ'],
+            'intdab': 'انتداب', 
+            'ferka': ['فرقة', 'ت دوري', 'ت تكراري'],
+            'raha': ['منحة', 'عطلة', '8 صباحاً', 'ر بديلة', 'راحة'],
+            'nobtji': 'نوبتجي',
+            'yawmi': 'يومي',
+            'ghiyab': 'غياب'
+        }
+
+        # جلب جميع الحضور لهذا اليوم مع بيانات الموظف والدرجة والقسم
+        attendances = Attendance.objects.filter(date=selected_date).select_related(
+            'employee', 'employee__rank', 'employee__department'
+        )
+
+        # تحضير البيانات المجمعة
+        # الهيكل: group -> state_key -> list of employees
+        report_data = {
+            'm_e': {k: [] for k in states_groups.keys()}, # Male Admin
+            'm_m': {k: [] for k in states_groups.keys()}, # Male Musician
+            'f_e': {k: [] for k in states_groups.keys()}, # Female Admin
+            'f_m': {k: [] for k in states_groups.keys()}  # Female Musician
+        }
+
+        for att in attendances:
+            emp = att.employee
+            is_musician = emp.department.name == 'فريق الموسيقي' if emp.department else False
+            
+            if emp.gender == 'ذكر':
+                group = 'm_m' if is_musician else 'm_e'
+            else:
+                group = 'f_m' if is_musician else 'f_e'
+            
+            # تحديد مفتاح الحالة
+            state_key = None
+            for key, val in states_groups.items():
+                if isinstance(val, list):
+                    if att.state in val:
+                        state_key = key
+                        break
+                else:
+                    if att.state == val:
+                        state_key = key
+                        break
+            
+            if state_key:
+                report_data[group][state_key].append({
+                    'name': emp.nickname or emp.name,
+                    'is_musician': is_musician,
+                    'sort_number': emp.sort_number or 999999,
+                    'rank': emp.rank.name if emp.rank else '',
+                    'note': att.note or ''
+                })
+
+        # ترتيب النتائج حسب sort_number
+        for group in report_data.keys():
+            for key in states_groups.keys():
+                report_data[group][key].sort(key=lambda x: x['sort_number'])
+
+        return Response({
+            'selected_date': selected_date_str,
+            'formatted_date': formatted_date,
+            'report_data': report_data
+        })
+
 
 
 
