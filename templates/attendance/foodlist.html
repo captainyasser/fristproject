@@ -149,6 +149,14 @@
                     <label for="rows-per-col">عدد الصفوف في العمود: </label>
                     <input type="number" id="rows-per-col" value="0" min="1" style="width: 60px; padding: 5px; border-radius: 4px; border: 1px solid #ddd;" onchange="updateTable(currentData)" />
                 </div>
+                <div style="display: inline-block; margin-right: 20px;" class="no-print">
+                    <label for="font-size-input">حجم الخط: </label>
+                    <input type="number" id="font-size-input" value="25" min="10" max="100" style="width: 50px; padding: 5px; border-radius: 4px; border: 1px solid #ddd;" onchange="updateFontSize()" />
+                </div>
+                <div style="display: inline-block; margin-right: 20px;" class="no-print">
+                    <label for="col-width-input">عرض عمود الاسم: </label>
+                    <input type="number" id="col-width-input" value="250" min="50" max="800" style="width: 60px; padding: 5px; border-radius: 4px; border: 1px solid #ddd;" onchange="updateColumnWidth()" />
+                </div>
             </div>
             <br>
             <div class="print-btn-container">
@@ -298,7 +306,7 @@
             tableHeader.innerHTML = "";
             let headerRow = "<tr>";
             for (let i = 0; i < numCols; i++) {
-                headerRow += "<th>م</th><th>الأســـــــــــــــــم</th>";
+                headerRow += '<th style="width: 40px;">م</th><th class="name-column">الأســـــــــــــــــم</th>';
             }
             headerRow += "</tr>";
             tableHeader.innerHTML = headerRow;
@@ -318,11 +326,28 @@
                     const editableTag = isEditable ? 'contenteditable="true" style="background-color: #fffde7;"' : '';
                     
                     rowHtml += `<td>${serialDisplay}</td>`;
-                    rowHtml += `<td ${editableTag}>${nameDisplay}</td>`;
+                    rowHtml += `<td class="name-column" ${editableTag}>${nameDisplay}</td>`;
                 }
                 rowHtml += "</tr>";
                 tableBody.innerHTML += rowHtml;
             }
+            updateFontSize();
+            updateColumnWidth();
+        }
+
+        function updateFontSize() {
+            const fontSize = document.getElementById("font-size-input").value + "px";
+            document.querySelectorAll(".styled-table td, .styled-table th").forEach(el => {
+                el.style.fontSize = fontSize;
+            });
+        }
+
+        function updateColumnWidth() {
+            const width = document.getElementById("col-width-input").value + "px";
+            document.querySelectorAll(".name-column").forEach(el => {
+                el.style.width = width;
+                el.style.minWidth = width;
+            });
         }
 
         // حذف دالة addEmptyRows لأننا أصبحنا نعتمد على onchange في المدخلاتDirectly

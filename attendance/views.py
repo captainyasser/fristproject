@@ -1476,6 +1476,12 @@ class AmtmamAPIView(APIView):
         outtamam = len(table3_data)
         alltamam = intamam + outtamam
 
+        # Calculate Bus Statistics
+        bus_out_today = Attendance.objects.filter(date=selected_date, in_or_out='going', employee__bus=1).count()
+        bus_in_tomorrow = Attendance.objects.filter(date=next_day, in_or_out='in', employee__bus=1).count()
+        nonbus_out_today = Attendance.objects.filter(date=selected_date, in_or_out='going', employee__bus=0).count()
+        nonbus_in_tomorrow = Attendance.objects.filter(date=next_day, in_or_out='in', employee__bus=0).count()
+
         data = {
             "selected_date": selected_date.strftime('%Y-%m-%d'),
             "formatted_date": formatted_date,
@@ -1487,6 +1493,10 @@ class AmtmamAPIView(APIView):
             "outtamam": outtamam,
             "alltamam": alltamam,
             "tomorrow_food_count": tomorrow_food_count,
+            "bus_out_today": bus_out_today,
+            "bus_in_tomorrow": bus_in_tomorrow,
+            "nonbus_out_today": nonbus_out_today,
+            "nonbus_in_tomorrow": nonbus_in_tomorrow,
         }
 
         return Response(data, status=status.HTTP_200_OK)

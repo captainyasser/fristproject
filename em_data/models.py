@@ -55,6 +55,7 @@ class Employee(models.Model):
     mainornot = models.IntegerField(default=1)
     sort_number = models.IntegerField(null=True, blank=True)
     seniority_order = models.IntegerField(null=True, blank=True, verbose_name="ترتيب الأقدمية المطلقة")
+    batch_number = models.CharField(max_length=50, null=True, blank=True, verbose_name="رقم الدفعة")
     dep_sort = models.IntegerField(null=True, blank=True)
     institute = models.ForeignKey(Institute, on_delete=models.CASCADE, related_name='employees')
     image = models.ImageField(upload_to='employee_images/', default='employee_images/noimage.jpg', null=True, blank=True)

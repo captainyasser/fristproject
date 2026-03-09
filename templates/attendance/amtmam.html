@@ -130,6 +130,10 @@
                         <th class="mm">خوارج التمام</th>
                         <th class="mm">اجمالي موجود بالادارة</th>
                         <th class="mm">يومية تعيين غدا</th>
+                        <th class="mm">المنصرفين اليوم بالاتوبيس</th>
+                        <th class="mm">حضور غدا بالاتوبيس</th>
+                        <th class="mm">المنصرفين اليوم دون الاتوبيس</th>
+                        <th class="mm">حضور غدا دون الاتوبيس</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -138,6 +142,10 @@
                         <td class="mm" id="outtamam"></td>
                         <td class="mm" id="alltamam"></td>
                         <td class="mm" id="tomorrow-food-count"></td>
+                        <td class="mm" id="bus-out-today"></td>
+                        <td class="mm" id="bus-in-tomorrow"></td>
+                        <td class="mm" id="nonbus-out-today"></td>
+                        <td class="mm" id="nonbus-in-tomorrow"></td>
                     </tr>
                 </tbody>
             </table>
@@ -207,6 +215,10 @@
             document.getElementById('outtamam').textContent = toEasternArabicNumerals(data.outtamam);
             document.getElementById('alltamam').textContent = toEasternArabicNumerals(data.alltamam);
             document.getElementById('tomorrow-food-count').textContent = toEasternArabicNumerals(data.tomorrow_food_count);
+            document.getElementById('bus-out-today').textContent = toEasternArabicNumerals(data.bus_out_today);
+            document.getElementById('bus-in-tomorrow').textContent = toEasternArabicNumerals(data.bus_in_tomorrow);
+            document.getElementById('nonbus-out-today').textContent = toEasternArabicNumerals(data.nonbus_out_today);
+            document.getElementById('nonbus-in-tomorrow').textContent = toEasternArabicNumerals(data.nonbus_in_tomorrow);
 
             // Render Table 1
             const table1Head = document.getElementById('table1-head');

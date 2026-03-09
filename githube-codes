@@ -2,7 +2,7 @@ git status
 
 git add .
 
-git commit -m "update 8 add am report"
+git commit -m "update 9 add planty extract"
 
 git push
 

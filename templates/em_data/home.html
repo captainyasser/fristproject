@@ -35,6 +35,7 @@
                                     <th>الأقدمية المطلقة</th>
                                     <th>الدرجة</th>
                                     <th>رقم الشرطة</th>
+                                    <th>رقم الدفعة</th>
                                     <th>الاسم</th>
                                     <th>رقم الهاتف</th>
                                     <th>تاريخ الميلاد</th>
@@ -121,6 +122,10 @@
                                         <label for="add_id_number">الرقم القومي</label>
                                         <input type="text" class="form-control" id="add_id_number" name="id_number">
                                     </div>
+                                    <div class="form-group">
+                                        <label for="add_batch_number">رقم الدفعة</label>
+                                        <input type="text" class="form-control" id="add_batch_number" name="batch_number">
+                                    </div>
                                     <button type="submit" class="btn btn-primary">إضافة</button>
                                 </form>
                             </div>
@@ -195,6 +200,10 @@
                                             <div class="form-group">
                                                 <label for="edit_nickname">اللقب</label>
                                                 <input type="text" class="form-control" id="edit_nickname" name="nickname">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="edit_batch_number">رقم الدفعة</label>
+                                                <input type="text" class="form-control" id="edit_batch_number" name="batch_number">
                                             </div>
                                         </div>
 
@@ -669,6 +678,7 @@
                     employee.seniority_order || '-',
                     employee.rank ? employee.rank.name : '-', // الدرجة
                     employee.police_number || '-', // رقم الشرطة
+                    employee.batch_number || '-', // رقم الدفعة
                     employee.name, // الاسم
                     employee.phone_number || '-', // رقم الهاتف
                     employee.date_of_birth || '-', // تاريخ الميلاد
@@ -716,7 +726,8 @@
                                     <p><strong>الرقم القومي:</strong> ${employee.id_number || '-'}</p>
                                     <p><strong>رقم الهاتف:</strong> ${employee.phone_number || '-'}</p>
                                     <p><strong>رقم هاتف بديل:</strong> ${employee.alt_phone_number || '-'}</p>
-                                    <p><strong>اللقب:</strong> ${employee.nickname || '-'}</p>
+                                     <p><strong>اللقب:</strong> ${employee.nickname || '-'}</p>
+                                     <p><strong>رقم الدفعة:</strong> ${employee.batch_number || '-'}</p>
                                 </div>
                                 <div class="tab-pane fade" id="dates-detail-${employee.id}" role="tabpanel" aria-labelledby="dates-detail-tab-${employee.id}">
                                     <p><strong>تاريخ الميلاد:</strong> ${employee.date_of_birth || '-'}</p>
@@ -850,6 +861,7 @@
                 document.getElementById('edit_phone_number').value = employee.phone_number || '';
                 document.getElementById('edit_alt_phone_number').value = employee.alt_phone_number || '';
                 document.getElementById('edit_nickname').value = employee.nickname || '';
+                document.getElementById('edit_batch_number').value = employee.batch_number || '';
                 document.getElementById('edit_date_of_birth').value = employee.date_of_birth || '';
                 document.getElementById('edit_date_of_retirement').value = employee.date_of_retirement || '';
                 document.getElementById('edit_date_of_edara').value = employee.date_of_edara || '';

@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid" dir="rtl">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0 mt-4">
+                <div class="card-header bg-dark text-white text-center py-3">
+                    <h3 class="mb-0"><i class="fas fa-graduation-cap me-2"></i>إدخال فرقة التأهيل للترقي</h3>
+                </div>
+                <div class="card-body p-4">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post" action="">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label class="form-label font-weight-bold"><i class="fas fa-users mr-2"></i>اختيار الأفراد:</label>
+                            <div class="border rounded p-3 bg-light" style="max-height: 200px; overflow-y: auto;">
+                                {% for emp in employees %}
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="employee" value="{{ emp.id }}" id="emp_{{ emp.id }}">
+                                        <label class="form-check-label mr-4" for="emp_{{ emp.id }}">
+                                            {{ emp.name }} <small class="text-muted">({{ emp.rank.name }})</small>
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <div class="mt-2">
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="toggleAll(true)">تحديد الكل</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleAll(false)">إلغاء التحديد</button>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="to_rank" class="form-label font-weight-bold">الدرجة المستهدفة (التي يتم التأهيل لها):</label>
+                                <select name="to_rank" id="to_rank" class="form-control" required>
+                                    <option value="">-- اختر الدرجة --</option>
+                                    {% for rank in ranks %}
+                                        <option value="{{ rank.id }}">{{ rank.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="training_course_number" class="form-label font-weight-bold">رقم الدورة التأهيلية:</label>
+                                <input type="text" name="training_course_number" id="training_course_number" class="form-control">
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="training_start_date" class="form-label font-weight-bold">تاريخ بداية الدورة:</label>
+                                <input type="date" name="training_start_date" id="training_start_date" class="form-control">
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="training_end_date" class="form-label font-weight-bold">تاريخ نهاية الدورة:</label>
+                                <input type="date" name="training_end_date" id="training_end_date" class="form-control">
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="training_location" class="form-label font-weight-bold">مكان انعقاد الدورة:</label>
+                                <select name="training_location" id="training_location" class="form-control">
+                                    <option value="">-- اختر المكان --</option>
+                                    {% for place in places %}
+                                        <option value="{{ place.id }}">{{ place.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="promotion_date" class="form-label font-weight-bold">تاريخ الترقية (أو المتوقع):</label>
+                                <input type="date" name="promotion_date" id="promotion_date" class="form-control">
+                                <small class="text-muted">إذا تركت فارغاً لبيانات جديدة، سيتم استخدام تاريخ اليوم كافتراضي.</small>
+                            </div>
+
+                            <div class="col-md-12 mb-3">
+                                <label for="notes" class="form-label font-weight-bold">ملاحظات إضافية:</label>
+                                <textarea name="notes" id="notes" rows="3" class="form-control" placeholder="أي تفاصيل أخرى عن الدورة..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary btn-block btn-lg">
+                                <i class="fas fa-save mr-2"></i> حفظ بيانات الفرقة لجميع المحددين
+                            </button>
+                            <a href="{% url 'tarkyat' %}" class="btn btn-outline-dark btn-block mt-2">إلغاء والعودة</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleAll(selectAll) {
+        const checkboxes = document.querySelectorAll('input[name="employee"]');
+        checkboxes.forEach(cb => cb.checked = selectAll);
+    }
+</script>
+{% endblock %}

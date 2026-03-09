@@ -144,7 +144,7 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'yasser',
+        'NAME': 'yasser2',
         'USER': 'root',
         'PASSWORD': '',
         'HOST': 'localhost',

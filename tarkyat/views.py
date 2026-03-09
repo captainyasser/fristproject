@@ -1,11 +1,14 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse
+from django.contrib import messages
+
 from .models import Promotion, Employee
 from ranks.models import Rank
+from training_teams.models import Places
+from attendance.models import Attendance
 from .forms import PromotionForm
 from django.core.exceptions import ValidationError
 from django.db.models import Q
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from dateutil.relativedelta import relativedelta
 import logging
 
@@ -250,6 +253,111 @@ def add_tarkya_for_many(request):
     employees = Employee.objects.all()
     ranks = Rank.objects.all().order_by('id')
     return render(request, 'tarkyat/add_tarkya.html', {'employees': employees, 'ranks': ranks})
+
+def add_training_qualification(request):
+    if request.method == 'POST':
+        logger.info("POST data for training: %s", request.POST)
+        employee_ids = request.POST.getlist('employee')
+        to_rank = Rank.objects.get(id=request.POST['to_rank'])
+        
+        training_start_date = request.POST.get('training_start_date') or None
+        training_end_date = request.POST.get('training_end_date') or None
+        training_course_number = request.POST.get('training_course_number') or None
+        training_location = request.POST.get('training_location') or None
+        notes = request.POST.get('notes') or None
+        promotion_date = request.POST.get('promotion_date') or None
+        
+        # تحويل المكان إلى نص لحفظه في حقل الترقية (Model Promotion يستخدم CharField)
+        place_obj = Places.objects.get(id=training_location) if training_location else None
+        place_name = place_obj.name if place_obj else ""
+
+
+        for emp_id in employee_ids:
+            employee = Employee.objects.get(id=emp_id)
+            
+            # محاولة العثور على ترقية حالية لهذه الدرجة لتحديثها، أو إنشاء واحدة جديدة
+            promotion = Promotion.objects.filter(employee=employee, to_rank=to_rank).first()
+            
+            if promotion:
+                promotion.training_start_date = training_start_date
+                promotion.training_end_date = training_end_date
+                promotion.training_course_number = training_course_number
+                promotion.training_location = place_name
+                if notes:
+                    promotion.notes = (promotion.notes or "") + "\n" + notes
+                if promotion_date:
+                    promotion.promotion_date = promotion_date
+                promotion.save()
+            else:
+                final_promotion_date = promotion_date if promotion_date else date.today()
+                Promotion.objects.create(
+                    employee=employee,
+                    to_rank=to_rank,
+                    from_rank=employee.rank,
+                    promotion_date=final_promotion_date,
+                    training_start_date=training_start_date,
+                    training_end_date=training_end_date,
+                    training_course_number=training_course_number,
+                    training_location=place_name,
+                    notes=notes
+                )
+
+            # إضافة مدة الدورة كـ "فرقة" في جدول الحضور والانصراف
+            if training_start_date and training_end_date:
+                start_dt = datetime.strptime(training_start_date, "%Y-%m-%d").date()
+                end_dt = datetime.strptime(training_end_date, "%Y-%m-%d").date()
+                
+                curr_dt = start_dt
+                attendance_note = f"فرقة تأهيل لدرجة {to_rank.name} بمكان {place_name}"
+                if notes:
+                    attendance_note += f" - {notes}"
+
+                while curr_dt <= end_dt:
+                    # منطق إضافة الحضور والانصراف (فرقة)
+                    # فرقة تعني (out) في in_or_out و (-1) في comfort_adjustment عادة أو (0) حسب نظامكم
+                    # هنا سنستخدم 'فرقة' و comfort_adjustment = 0 (لأنها مأمورية تدريبية وليست راحة)
+                    # أو -1 إذا كانت تستهلك من رصيد العمل. حسب السياق سأجعلها 0 (عمل خارجي)
+                    
+                    # جلب السجل الحالي إذا وجد لتفادي التكرار (unique_together)
+                    att, created = Attendance.objects.get_or_create(
+                        employee=employee,
+                        date=curr_dt,
+                        defaults={
+                            'state': 'فرقة',
+                            'note': attendance_note,
+                            'in_or_out': 'out',
+                            'comfort_adjustment': 0
+                        }
+                    )
+                    
+                    if not created:
+                        # تحديث إذا كان السجل موجوداً أصلاً (تغيير الحالة إلى فرقة)
+                        # يجب مراعاة عداد الراحات عند التغيير
+                        old_comfort = att.comfort_adjustment
+                        att.state = 'فرقة'
+                        att.note = attendance_note
+                        att.in_or_out = 'out'
+                        att.comfort_adjustment = 0
+                        att.save()
+                        
+                        # تحديث عداد الراحات للموظف (الفرق بين الجديد والقديم)
+                        employee.rahatcounter += (0 - old_comfort)
+                        employee.save()
+                    
+                    curr_dt += timedelta(days=1)
+
+        messages.success(request, "تم حفظ بيانات الفرقة وإضافتها لجدول الحضور بنجاح.")
+        return redirect('add_training_qualification')
+    
+    employees = Employee.objects.all().order_by('sort_number')
+    ranks = Rank.objects.all().order_by('id')
+    places = Places.objects.all().order_by('name')
+    return render(request, 'tarkyat/add_training_qualification.html', {
+        'employees': employees, 
+        'ranks': ranks,
+        'places': places
+    })
+
 
 def delete_promotion(request, pk):
     promotion = get_object_or_404(Promotion, pk=pk)

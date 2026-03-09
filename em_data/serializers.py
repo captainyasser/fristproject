@@ -67,6 +67,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
     is_driver = serializers.BooleanField(required=False, default=False, allow_null=True)
     dryfood = serializers.BooleanField(required=False, allow_null=True, default=False)
     mony_out = serializers.BooleanField(required=False, allow_null=True, default=False)
+    batch_number = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
     class Meta:
         model = Employee
@@ -78,7 +79,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
             'insurance_number', 'health_status', 'rank', 'department', 
             'operation', 'image', 'amen_or_ola', 'rank_kind', 
             'dep_sort', 'mainornot', 'bus', 'tmamam', 'food', 'rahatcounter', 'institute_id',
-            'total_leave', 'rank_id', 'nots', 'department_id', 'idcard_expir', 'idcard_work', 'idcard_social', 'is_driver', 'dryfood', 'mony_out'
+            'total_leave', 'rank_id', 'nots', 'department_id', 'idcard_expir', 'idcard_work', 'idcard_social', 'is_driver', 'dryfood', 'mony_out', 'batch_number'
         ]
         read_only_fields = []
 
@@ -217,5 +218,5 @@ class EmployeeStatementSerializer(serializers.ModelSerializer):
             'id', 'name', 'police_number', 'date_of_birth', 'date_of_appointment',
             'seniority_order',
             'address', 'district', 'governorate', 'rank', 'idcard_expir',
-            'idcard_work', 'idcard_social', 'id_number', 'marital_status'
+            'idcard_work', 'idcard_social', 'id_number', 'marital_status', 'batch_number'
         ]

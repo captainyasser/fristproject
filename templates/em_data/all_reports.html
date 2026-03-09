@@ -10,20 +10,30 @@
     }
     
     .report-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 15px;
-        padding: 30px;
+        border-radius: 20px;
+        padding: 15px 5px;
         margin-bottom: 20px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         cursor: pointer;
         position: relative;
         overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        text-decoration: none !important;
+        color: white !important;
+        aspect-ratio: 1 / 1;
+        width: 100%;
+        text-align: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
     
     .report-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.25);
     }
     
     .report-card::before {
@@ -34,7 +44,7 @@
         width: 100%;
         height: 100%;
         background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-        transition: left 0.5s;
+        transition: left 0.6s;
     }
     
     .report-card:hover::before {
@@ -51,25 +61,21 @@
     
     .report-card h3 {
         color: white;
-        font-size: 24px;
+        font-size: 20px;
         font-weight: bold;
-        margin-bottom: 10px;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        margin: 0;
+        line-height: 1.2;
+        text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
     }
     
     .report-card p {
-        color: rgba(255,255,255,0.9);
-        font-size: 16px;
-        margin-bottom: 0;
+        display: none; /* إخفاء الوصف */
     }
     
     .report-icon {
-        font-size: 48px;
-        color: rgba(255,255,255,0.3);
-        position: absolute;
-        right: 30px;
-        top: 50%;
-        transform: translateY(-50%);
+        font-size: 70px;
+        margin-bottom: 5px;
+        opacity: 0.95;
     }
     
     .page-header {
@@ -205,7 +211,7 @@
     </div>
     
     <div class="row no-print">
-        <div class="col-md-4">
+        <div class="col-4 col-md-2">
             <div class="report-card female" onclick="openReport('females')">
                 <i class="fas fa-female report-icon"></i>
                 <h3>كشف الإناث</h3>
@@ -213,7 +219,7 @@
             </div>
         </div>
         
-        <div class="col-md-4">
+        <div class="col-4 col-md-2">
             <div class="report-card male" onclick="openReport('male-musicians')">
                 <i class="fas fa-music report-icon"></i>
                 <h3>كشف الموسيقيين الذكور</h3>
@@ -221,7 +227,7 @@
             </div>
         </div>
 
-        <div class="col-md-4">
+        <div class="col-4 col-md-2">
             <div class="report-card" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);" onclick="showReport('dry-food')">
                 <i class="fas fa-box-open report-icon"></i>
                 <h3>كشف الوجبات الجافة</h3>

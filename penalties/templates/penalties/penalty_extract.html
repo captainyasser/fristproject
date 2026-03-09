@@ -1,338 +1,263 @@
-<!-- F:\emapi-edit\myproject\penalties\templates\penalties\penalty_extract.html -->
-{% extends 'base.html' %}
-{% load static %}
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <title>مستخرج جزاءات</title>
+    <!-- خط Amiri للعرض العربي -->
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-{% block title %}مستخرج جزاءات - {{ employee.name }}{% endblock %}
-
-{% block extra_css %}
-<style>
-    @media print {
-        .no-print {
-            display: none !important;
-        }
-        .print-container {
-            width: 100%;
-            margin: 0;
-            padding: 20px;
-        }
+    <style>
         body {
-            background: white !important;
+            margin: 0;
+            padding: 0;
+            background: #ffffff;
+            font-family: 'Amiri', serif;
+            direction: rtl;
         }
-        .content-wrapper {
-            margin: 0 !important;
-            padding: 0 !important;
+
+        /* تخفي الأرقام الصفحات والعناوين الافتراضية للمتصفح */
+        @page {
+            margin: 15mm;
+            size: auto;
         }
-        .penalties-table {
-            page-break-inside: auto;
+
+        /* أزرار التحكم */
+        .controls {
+            text-align: center;
+            margin: 20px;
         }
-        .penalties-table tr {
-            page-break-inside: avoid;
-            page-break-after: auto;
+
+        .controls button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 5px;
+            cursor: pointer;
+            border: none;
+            background: #2c7be5;
+            color: #fff;
+            border-radius: 5px;
         }
-        .penalties-table th,
-        .penalties-table td {
-            padding: 10px 8px;
-            font-size: 14px;
+
+        .controls button.excel {
+            background: #28a745;
         }
-        .official-header h2 {
+
+        /* الصفحة */
+        .page {
+            width: 190mm;
+            margin: auto;
+            padding: 10mm;
+            box-sizing: border-box;
+        }
+
+        /* الترويسة */
+        .header {
+            text-align: right;
             font-size: 22px;
+            font-weight: bold;
+            line-height: 1.8;
         }
-        .official-header h3 {
+
+        /* العنوان */
+        .title {
+            text-align: center;
+            font-size: 30px;
+            font-weight: bold;
+            margin-top: 20px;
+            margin-bottom: 25px;
+        }
+
+        /* بيانات الموظف */
+        .employee {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 30px;
+        }
+
+        /* الجدول */
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        /* لمنع تكرار ترويسة الجدول في كل صفحة عند الطباعة */
+        thead {
+            display: table-row-group;
+        }
+
+        .table th,
+        .table td {
+            border: 2px solid #000;
+            padding: 6px;
+            text-align: center;
             font-size: 18px;
         }
-        .document-title {
-            font-size: 28px;
+
+        .table th {
+            background: #f0f0f0;
         }
-        .employee-info {
+
+        /* نص المخالفة */
+        .violation {
+            text-align: right;
+            padding-right: 8px;
+            word-wrap: break-word;
+        }
+
+        /* التوقيعات */
+        .signatures {
+            margin-top: 50px;
+        }
+
+        .sign-flex {
+            display: flex;
+            justify-content: space-between;
+            text-align: right;
             font-size: 20px;
         }
-    }
 
-    .print-container {
-        background: white;
-        padding: 40px 60px;
-        max-width: 210mm;
-        margin: 0 auto;
-        box-shadow: 0 0 20px rgba(0,0,0,0.1);
-        min-height: 297mm;
-    }
+        .sign-flex h4 {
+            margin: 8px 0;
+            font-weight: bold;
+        }
 
-    .official-header {
-        text-align: center;
-        margin-bottom: 50px;
-        font-family: 'Traditional Arabic', 'Arial', serif;
-        border-bottom: 3px double #000;
-        padding-bottom: 20px;
-    }
+        /* الطباعة */
+        @media print {
+            .controls {
+                display: none;
+            }
+            .page {
+                width: 100%;
+                margin: 0;
+                padding: 10mm;
+            }
+            body {
+                background: #fff;
+            }
+            /* إخفاء رأس وتذييل الصفحة الافتراضي للمتصفح */
+            @page {
+                margin-top: 10mm;
+                margin-bottom: 10mm;
+            }
+        }
+    </style>
+</head>
+<body>
 
-    .official-header h2 {
-        font-size: 26px;
-        font-weight: bold;
-        margin: 10px 0;
-        color: #000;
-        letter-spacing: 1px;
-    }
+    <!-- أزرار -->
+    <div class="controls">
+        <button onclick="window.print()">طباعة</button>
+        <button class="excel" onclick="exportExcel()">تصدير Excel</button>
+        <button onclick="window.history.back()" style="background: #6c757d;">رجوع</button>
+    </div>
 
-    .official-header h3 {
-        font-size: 22px;
-        font-weight: bold;
-        margin: 8px 0;
-        color: #000;
-    }
-
-    .document-title {
-        text-align: center;
-        margin: 50px 0 40px 0;
-        font-size: 32px;
-        font-weight: bold;
-        text-decoration: underline;
-        text-decoration-thickness: 2px;
-        text-underline-offset: 8px;
-        color: #000;
-        letter-spacing: 2px;
-    }
-
-    .employee-info {
-        text-align: center;
-        margin: 40px 0;
-        font-size: 22px;
-        font-weight: bold;
-        padding: 15px;
-        background-color: #f8f9fa;
-        border: 2px solid #dee2e6;
-        border-radius: 5px;
-    }
-
-    .penalties-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 40px;
-        font-size: 16px;
-    }
-
-    .penalties-table th,
-    .penalties-table td {
-        border: 2px solid #000;
-        padding: 15px 10px;
-        text-align: center;
-        vertical-align: middle;
-    }
-
-    .penalties-table th {
-        background-color: #e9ecef;
-        font-weight: bold;
-        font-size: 18px;
-        color: #000;
-    }
-
-    .penalties-table tbody tr:nth-child(even) {
-        background-color: #f8f9fa;
-    }
-
-    .penalties-table tbody tr:hover {
-        background-color: #e3f2fd;
-    }
-
-    .penalties-table td {
-        line-height: 1.6;
-    }
-
-    .penalties-table .serial-col {
-        width: 80px;
-        font-weight: bold;
-    }
-
-    .penalties-table .violation-col {
-        text-align: right;
-        padding-right: 20px;
-    }
-
-    .penalties-table .penalty-col {
-        width: 200px;
-        font-weight: 600;
-        color: #d32f2f;
-    }
-
-    .summary-section {
-        margin-top: 40px;
-        padding: 20px;
-        background-color: #fff3cd;
-        border: 2px solid #ffc107;
-        border-radius: 5px;
-    }
-
-    .summary-section .summary-item {
-        font-size: 18px;
-        font-weight: bold;
-        margin: 10px 0;
-        color: #000;
-    }
-
-    .no-penalties-message {
-        text-align: center;
-        padding: 60px 30px;
-        color: #6c757d;
-        font-size: 18px;
-        background-color: #f8f9fa;
-        border-radius: 5px;
-    }
-
-    .btn-toolbar {
-        margin-bottom: 20px;
-    }
-</style>
-{% endblock %}
-
-{% block content %}
-<div class="no-print">
-    <section class="content-header">
-        <div class="container-fluid">
-            <div class="row mb-2">
-                <div class="col-sm-6">
-                    <h1>مستخرج جزاءات</h1>
-                </div>
-                <div class="col-sm-6">
-                    <ol class="breadcrumb float-sm-right">
-                        <li class="breadcrumb-item"><a href="{% url 'penalties:dashboard' %}">الجزاءات</a></li>
-                        <li class="breadcrumb-item"><a href="{% url 'penalties:record_list' %}">السجلات</a></li>
-                        <li class="breadcrumb-item active">مستخرج جزاءات</li>
-                    </ol>
-                </div>
-            </div>
+    <div class="page">
+        <!-- الترويسة -->
+        <div class="header">
+            وزارة الداخلية<br>
+            قطاع التدريب<br>
+            الإدارة العامة للتدريب<br>
+            إدارة موسيقات الشرطة
         </div>
-    </section>
 
-    <section class="content">
-        <div class="container-fluid">
-            <div class="btn-toolbar mb-3" role="toolbar">
-                <div class="btn-group mr-2" role="group">
-                    <button type="button" class="btn btn-primary" onclick="window.print()">
-                        <i class="fas fa-print"></i> طباعة
-                    </button>
-                    <button type="button" class="btn btn-success" onclick="exportToExcel()">
-                        <i class="fas fa-file-excel"></i> تصدير Excel
-                    </button>
-                    <a href="{% url 'penalties:penalty_extract_select' %}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-right"></i> رجوع
-                    </a>
-                </div>
-            </div>
+        <!-- العنوان -->
+        <div class="title">مستخرج جزاءات</div>
+
+        <!-- بيانات الموظف -->
+        <div class="employee">
+            {{ employee.rank }} / <span class="ar-num">{{ employee.name }}</span> ، من قـوة الادارة
         </div>
-    </section>
-</div>
 
-<section class="content">
-    <div class="container-fluid">
-        <div class="print-container">
-            <!-- Official Header -->
-            <div class="official-header">
-                <h2>وزارة الداخلية</h2>
-                <h3>قطاع التدريب</h3>
-                <h3>الإدارة العامة للتدريب</h3>
-                <h3>إدارة موســـــيقات الشـــرطة</h3>
-            </div>
-
-            <!-- Document Title -->
-            <div class="document-title">
-                مستخرج جزاءات
-            </div>
-
-            <!-- Employee Info -->
-            <div class="employee-info">
-                الدرجة / {{ employee.rank|default:"غير محدد" }} - {{ employee.name }}
-            </div>
-
-            <!-- Penalties Table -->
-            <table class="penalties-table" id="penalties-table">
-                <thead>
+        <!-- جدول الجزاءات -->
+        <table class="table" id="penalties-table">
+            <thead>
+                <tr>
+                    <th style="width:40px">م</th>
+                    <th style="width:110px">التاريخ</th>
+                    <th>بيان المخالفة</th>
+                    <th style="width:150px">الجزاء</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if penalties %}
+                    {% for penalty in penalties %}
                     <tr>
-                        <th class="serial-col">مسلسل</th>
-                        <th class="violation-col">المخالفة</th>
-                        <th class="penalty-col">مقدار الجزاء</th>
+                        <td class="ar-num">{{ forloop.counter }}</td>
+                        <td class="ar-num">{{ penalty.penalty_date|date:"Y/m/d" }}</td>
+                        <td class="violation">{{ penalty.violation_description }}</td>
+                        <td>
+                            {% if penalty.penalty_amount %}
+                                <span class="ar-num">{{ penalty.penalty_amount.name }}</span>
+                            {% elif penalty.penalty_applied %}
+                                {{ penalty.penalty_applied.name }}
+                            {% else %}
+                                ---
+                            {% endif %}
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    {% if penalties %}
-                        {% for penalty in penalties %}
-                        <tr>
-                            <td class="serial-col">{{ forloop.counter }}</td>
-                            <td class="violation-col">{{ penalty.violation_description|default:"غير محدد" }}</td>
-                            <td class="penalty-col">
-                                {% if penalty.penalty_amount %}
-                                    {{ penalty.penalty_amount.name }}
-                                {% elif penalty.penalty_applied %}
-                                    {{ penalty.penalty_applied.name }}
-                                {% else %}
-                                    غير محدد
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    {% else %}
-                        <tr>
-                            <td colspan="3" class="no-penalties-message">
-                                <i class="fas fa-info-circle"></i><br>
-                                لا توجد جزاءات مسجلة لهذا الفرد
-                            </td>
-                        </tr>
-                    {% endif %}
-                </tbody>
-            </table>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="4" style="padding:40px">لا توجد جزاءات مقيدة</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
 
-            {% if penalties %}
-            <div class="summary-section">
-                <div class="summary-item">
-                    <i class="fas fa-calculator"></i>
-                    إجمالي عدد الجزاءات: <span style="color: #d32f2f;">{{ total_penalties }}</span>
+        <!-- التوقيعات -->
+        <div class="signatures">
+            <div class="sign-flex">
+                <div>
+                    <h4>بلوكامين الشئون</h4>
+                    <h4>أ.ش / ...................</h4>
+                </div>
+                <div>
+                    <h4>رئيس قسم الشئون</h4>
+                    <h4>مقدم / ...................</h4>
+                </div>
+                <div>
+                    <h4>مدير إدارة موسيقات الشرطة</h4>
+                    <h4>عميد / ...................</h4>
                 </div>
             </div>
-            {% endif %}
         </div>
     </div>
-</section>
-{% endblock %}
 
-{% block scripts %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script>
-function exportToExcel() {
-    // Get the table
-    const table = document.getElementById('penalties-table');
-    
-    // Create workbook and worksheet
-    const wb = XLSX.utils.book_new();
-    
-    // Convert table to worksheet
-    const ws = XLSX.utils.table_to_sheet(table);
-    
-    // Add employee info at the top
-    XLSX.utils.sheet_add_aoa(ws, [
-        ['وزارة الداخلية'],
-        ['قطاع التدريب'],
-        ['الإدارة العامة للتدريب'],
-        ['إدارة موســـــيقات الشـــرطة'],
-        [''],
-        ['مستخرج جزاءات'],
-        [''],
-        ['الدرجة / {{ employee.rank|default:"غير محدد" }} - {{ employee.name }}'],
-        ['']
-    ], {origin: 'A1'});
-    
-    // Adjust column widths
-    ws['!cols'] = [
-        {wch: 10},  // مسلسل
-        {wch: 50},  // المخالفة
-        {wch: 25}   // مقدار الجزاء
-    ];
-    
-    // Add worksheet to workbook
-    XLSX.utils.book_append_sheet(wb, ws, 'مستخرج جزاءات');
-    
-    // Generate filename
-    const filename = 'مستخرج_جزاءات_{{ employee.name }}_' + new Date().toISOString().split('T')[0] + '.xlsx';
-    
-    // Save file
-    XLSX.writeFile(wb, filename);
-}
-</script>
-{% endblock %}
+    <script>
+        // وظيفة لتحويل الأرقام إلى الأرقام العربية (المشرقية)
+        function toArabicDigits(text) {
+            const id = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+            return text.replace(/[0-9]/g, function(w) {
+                return id[+w];
+            });
+        }
+
+        // تحويل كافة العناصر التي تحتوي على أرقام
+        document.addEventListener("DOMContentLoaded", function() {
+            const elements = document.querySelectorAll('.ar-num, .table td, .table th');
+            elements.forEach(el => {
+                if (el.children.length === 0) {
+                    el.innerText = toArabicDigits(el.innerText);
+                } else {
+                    // إذا كان هناك أبناء، نقوم بالتحويل للنص المباشر فقط لتجنب تخريب الوسوم
+                    for (let node of el.childNodes) {
+                        if (node.nodeType === Node.TEXT_NODE) {
+                            node.textContent = toArabicDigits(node.textContent);
+                        }
+                    }
+                }
+            });
+        });
+
+        function exportExcel() {
+            const table = document.getElementById("penalties-table");
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.table_to_sheet(table);
+            XLSX.utils.book_append_sheet(wb, ws, "الجزاءات");
+            XLSX.writeFile(wb, "penalties_{{ employee.name }}.xlsx");
+        }
+    </script>
+</body>
+</html>

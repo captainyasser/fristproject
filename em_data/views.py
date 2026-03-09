@@ -269,7 +269,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
             'nickname', 'operation', 'police_number', 'insurance_number', 'date_of_edara',
             'date_of_appointment', 'phone_number', 'alt_phone_number', 'marital_status',
             'gender', 'governorate', 'district', 'address', 'health_status', 'tmamam',
-            'food', 'rahatcounter', 'department', 'total_leave', 'bus', 'nots', 'dryfood', 'mony_out'
+            'food', 'rahatcounter', 'department', 'total_leave', 'bus', 'nots', 'dryfood', 'mony_out', 'batch_number'
         ]
 
         if field not in allowed_fields:
@@ -532,7 +532,8 @@ class FilterDataAPIView(APIView):
                     'rahatcounter': emp.rahatcounter or 0,
                     'rank': emp.rank.name if emp.rank else '',
                     'department': emp.department.name if emp.department else '',
-                    'mony_out': 'نعم' if emp.mony_out else 'لا'
+                    'mony_out': 'نعم' if emp.mony_out else 'لا',
+                    'batch_number': emp.batch_number or ''
                 }
                 data.append(employee_data)
             except AttributeError:
@@ -567,7 +568,8 @@ class FilterDataAPIView(APIView):
             {'data': 'total_leave', 'title': 'الإجازات'},
             {'data': 'nots', 'title': 'ملاحظات'},
             {'data': 'rahatcounter', 'title': 'عداد الراحات'},
-            {'data': 'mony_out', 'title': 'مستحقات خارجي'}
+            {'data': 'mony_out', 'title': 'مستحقات خارجي'},
+            {'data': 'batch_number', 'title': 'رقم الدفعة'}
         ]
 
 

@@ -55,6 +55,7 @@
                                 <option value="bus">يستقل الأتوبيس</option>
                                 <option value="nots">ملاحظات</option>
                                 <option value="operation">التشغيل</option>
+                                <option value="batch_number">رقم الدفعة</option>
                                 <option value="dryfood">dryfood</option>
                                 <option value="mony_out">مستحقات مالية خارج الإدارة</option>
                             </select>
@@ -208,7 +209,7 @@
         }
 
         function getInputField(employee, field) {
-            if (["name", "id_number", "nickname", "police_number", "insurance_number", "phone_number", "alt_phone_number", "governorate", "district", "address"].includes(field)) {
+            if (["name", "id_number", "nickname", "police_number", "insurance_number", "phone_number", "alt_phone_number", "governorate", "district", "address", "batch_number"].includes(field)) {
                 return `<input type="text" class="form-control edit-value" data-id="${employee.id}" value="${employee[field] || ''}">`;
             }
             if (field === "department") {

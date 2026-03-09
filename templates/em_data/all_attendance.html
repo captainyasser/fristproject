@@ -40,25 +40,29 @@
     }
 
     .att-card {
-        border-radius: 12px;
-        padding: 18px 20px;
+        border-radius: 20px;
+        padding: 15px 5px;
         margin-bottom: 15px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         cursor: pointer;
         position: relative;
         overflow: hidden;
         display: flex;
+        flex-direction: column;
         align-items: center;
-        gap: 15px;
+        justify-content: center;
+        gap: 8px;
         text-decoration: none !important;
         color: white !important;
+        aspect-ratio: 1 / 1;
+        width: 100%;
+        text-align: center;
     }
 
     .att-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.25);
-        color: white !important;
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.25);
         text-decoration: none !important;
     }
 
@@ -69,8 +73,8 @@
         left: -100%;
         width: 100%;
         height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
-        transition: left 0.5s;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.6s;
     }
 
     .att-card:hover::before {
@@ -78,32 +82,25 @@
     }
 
     .att-card .card-icon {
-        font-size: 28px;
-        opacity: 0.9;
-        min-width: 40px;
-        text-align: center;
-    }
-
-    .att-card .card-content {
-        flex: 1;
+        font-size: 70px;
+        margin-bottom: 5px;
+        opacity: 0.95;
     }
 
     .att-card .card-title {
-        font-size: 16px;
+        font-size: 20px;
         font-weight: bold;
-        margin: 0 0 3px 0;
-        text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        margin: 0;
+        line-height: 1.2;
+        text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
     }
 
     .att-card .card-desc {
-        font-size: 12px;
-        opacity: 0.85;
-        margin: 0;
+        display: none;
     }
 
     .att-card .open-icon {
-        font-size: 14px;
-        opacity: 0.7;
+        display: none;
     }
 
     /* Color themes */
@@ -114,7 +111,7 @@
 
     @media (max-width: 768px) {
         .att-card .card-title { font-size: 14px; }
-        .att-card .card-icon  { font-size: 22px; }
+        .att-card .card-icon  { font-size: 32px; }
     }
 </style>
 {% endblock %}
@@ -130,55 +127,45 @@
     </div>
 
     <div class="row">
-
         <!-- التشغيل -->
-        <div class="col-md-6 col-lg-6">
-            <a href="{% url 'attendance_3w' %}" target="_blank" class="att-card card-blue">
+        <div class="col-4 col-md-2">
+            <a href="{% url 'attendance_3w' %}" class="att-card card-blue">
                 <i class="fas fa-cogs card-icon"></i>
                 <div class="card-content">
                     <p class="card-title">التشغيل</p>
-                    <p class="card-desc">إدارة وعرض حالات التشغيل اليومي للأفراد</p>
                 </div>
-                <i class="fas fa-external-link-alt open-icon"></i>
             </a>
         </div>
 
         <!-- مخالفات الحضور -->
-        <div class="col-md-6 col-lg-6">
-            <a href="{% url 'attendance_validation' %}" target="_blank" class="att-card card-red">
+        <div class="col-4 col-md-2">
+            <a href="{% url 'attendance_validation' %}" class="att-card card-red">
                 <i class="fas fa-exclamation-circle card-icon"></i>
                 <div class="card-content">
                     <p class="card-title">مخالفات الحضور</p>
-                    <p class="card-desc">عرض وتحليل مخالفات الحضور والغياب</p>
                 </div>
-                <i class="fas fa-external-link-alt open-icon"></i>
             </a>
         </div>
 
         <!-- تشغيل فردي -->
-        <div class="col-md-6 col-lg-6">
-            <a href="{% url 'one_employee_view' %}" target="_blank" class="att-card card-green">
+        <div class="col-4 col-md-2">
+            <a href="{% url 'one_employee_view' %}" class="att-card card-green">
                 <i class="fas fa-user-check card-icon"></i>
                 <div class="card-content">
                     <p class="card-title">تشغيل فردي</p>
-                    <p class="card-desc">عرض وتعديل حالات التشغيل لفرد بعينه</p>
                 </div>
-                <i class="fas fa-external-link-alt open-icon"></i>
             </a>
         </div>
 
         <!-- اختلافات التشغيل -->
-        <div class="col-md-6 col-lg-6">
-            <a href="{% url 'irregular_attendance' %}" target="_blank" class="att-card card-orange">
+        <div class="col-4 col-md-2">
+            <a href="{% url 'irregular_attendance' %}" class="att-card card-orange">
                 <i class="fas fa-random card-icon"></i>
                 <div class="card-content">
                     <p class="card-title">اختلافات التشغيل</p>
-                    <p class="card-desc">رصد الاختلافات وعدم الانتظام في التشغيل</p>
                 </div>
-                <i class="fas fa-external-link-alt open-icon"></i>
             </a>
         </div>
-
     </div>
 </div>
 {% endblock %}

@@ -24,7 +24,8 @@ urlpatterns = [
     path('add_tarkya_for_many/', views.add_tarkya_for_many, name='add_tarkya_for_many'),
     path('ameen_tarkyat/', views.ameen_tarkyat, name='ameen_tarkyat'),
     path('daragaola_tarkya/', views.daragaola_tarkya, name='daragaola_tarkya'),
-    path('training/', views.tarkyat_training, name='tarkyat_training'),  # المسار الجديد
+    path('training/', views.tarkyat_training, name='tarkyat_training'),
+    path('training/add/', views.add_training_qualification, name='add_training_qualification'),
     path('next_tarkya/', views.next_tarkya, name='next_tarkya'),
     path('m3awn_tarkyat/', views.m3awn_tarkyat, name='m3awn_tarkyat'),
 
