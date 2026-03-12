@@ -430,7 +430,7 @@ class FilterDataAPIView(APIView):
 
     def get_filter_options(self):
         filter_options = {
-            'names': list(Employee.objects.exclude(name__isnull=True).exclude(name='').order_by('id').values_list('name', flat=True).distinct()),
+            'names': list(dict.fromkeys(Employee.objects.exclude(name__isnull=True).exclude(name='').order_by('sort_number').values_list('name', flat=True))),
             'ranks': list(Rank.objects.order_by('id').values('id', 'name')),
             'departments': list(Department.objects.values('id', 'name')),
             'marital_statuses': list(Employee.objects.exclude(marital_status__isnull=True).exclude(marital_status='').values_list('marital_status', flat=True).distinct()),
@@ -484,6 +484,22 @@ class FilterDataAPIView(APIView):
 
         if filter_query:
             employees = employees.filter(filter_query)
+
+        attendance_conditions_str = request.GET.get('attendance_conditions')
+        if attendance_conditions_str:
+            import json
+            try:
+                attendance_conditions = json.loads(attendance_conditions_str)
+                for cond in attendance_conditions:
+                    date = cond.get('date')
+                    states = cond.get('states', [])
+                    if date and states:
+                        employees = employees.filter(
+                            attendances__date=date,
+                            attendances__state__in=states
+                        ).distinct()
+            except Exception as e:
+                pass
 
         sort_direction = request.GET.get('sort_direction', 'asc')
         sort_field = request.GET.get('sort_by', 'sort_number')

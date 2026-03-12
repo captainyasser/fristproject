@@ -2,7 +2,7 @@ git status
 
 git add .
 
-git commit -m "update 10 add move in or out"
+git commit -m "update 11 fix filter"
 
 git push
 

@@ -250,7 +250,7 @@
                             <fieldset>
                                 <legend><i class="fas fa-user"></i> اختر الأسماء:</legend>
                                 <button type="button" id="toggle-names" class="btn btn-secondary mb-2">عرض الأسماء</button>
-                                <div id="name-options" class="filter-options" style="display: none;"></div>
+                                <div id="name-options" class="filter-options" style="display: none; flex-direction: column; max-height: 300px; overflow-y: auto; flex-wrap: nowrap;"></div>
                             </fieldset>
                             
                             <fieldset>
@@ -302,7 +302,48 @@
                             </fieldset>
                         </div>
                     </div>
-                    
+                    <fieldset>
+                        <legend><i class="fas fa-calendar-check"></i> فلترة الحضور والانصراف المتقدمة:</legend>
+                        <div class="row align-items-end mb-3">
+                            <div class="col-md-4">
+                                <label for="attendance-date">التاريخ:</label>
+                                <input type="date" id="attendance-date" class="form-control">
+                            </div>
+                            <div class="col-md-5">
+                                <label for="attendance-states">الحالة (يمكن اختيار أكثر من حالة):</label>
+                                <select id="attendance-states" class="form-control" multiple style="height: 100px;">
+                                    <option value="نوبتجي">نوبتجي</option>
+                                    <option value="يومي">يومي</option>
+                                    <option value="راحة">راحة</option>
+                                    <option value="دورية">دورية</option>
+                                    <option value="ر بديلة">ر بديلة</option>
+                                    <option value="طارئة">طارئة</option>
+                                    <option value="مأمورية">مأمورية</option>
+                                    <option value="مأمورية خ">مأمورية خ</option>
+                                    <option value="فرقة">فرقة</option>
+                                    <option value="انتداب">انتداب</option>
+                                    <option value="مرضي">مرضي</option>
+                                    <option value="ج وضع">ج وضع</option>
+                                    <option value="خاصه">خاصه</option>
+                                    <option value="8 صباحاً">8 صباحاً</option>
+                                    <option value="ت دوري">ت دوري</option>
+                                    <option value="ت تكراري">ت تكراري</option>
+                                    <option value="منحة">منحة</option>
+                                    <option value="عطلة">عطلة</option>
+                                    <option value="غياب">غياب</option>
+                                    <option value="قرار66">قرار66</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <button type="button" id="add-attendance-condition" class="btn btn-secondary w-100"><i class="fas fa-plus"></i> إضافة شرط</button>
+                            </div>
+                        </div>
+                        <div id="attendance-conditions-container" class="mb-2" style="display: flex; flex-wrap: wrap; gap: 10px;">
+                            <!-- Conditions will be added here -->
+                        </div>
+                        <input type="hidden" name="attendance_conditions" id="attendance_conditions_input" value="[]">
+                    </fieldset>
+
                     <fieldset>
                         <legend><i class="fas fa-columns"></i> اختر ما تحتاج من بيانات:</legend>
                         <div id="columns-options" class="filter-options">
@@ -544,9 +585,16 @@
 
             // Toggle button for names
             $('#toggle-names').on('click', function() {
-                $('#name-options').toggle();
+                const el = $('#name-options');
+                if (el.is(':visible')) {
+                    el.hide();
+                } else {
+                    el.css('display', 'flex');
+                }
                 $(this).text( $(this).text() === 'عرض الأسماء' ? 'إخفاء الأسماء' : 'عرض الأسماء' );
             });
+
+            let attendanceConditionsList = [];
 
             fetchData();
 
@@ -562,6 +610,10 @@
                 if (urlParams.has('q')) {
                     params.set('q', urlParams.get('q'));
                 }
+                
+                // Set attendance conditions properly
+                params.set('attendance_conditions', JSON.stringify(attendanceConditionsList));
+
                 const queryString = params.toString();
                 const selectedFilters = {};
                 formData.forEach((value, key) => {
@@ -584,6 +636,52 @@
                         $('#error-message').text('حدث خطأ أثناء جلب البيانات');
                     });
             }
+
+            $('#add-attendance-condition').click(function() {
+                const date = $('#attendance-date').val();
+                const states = $('#attendance-states').val();
+
+                if (!date || !states || states.length === 0) {
+                    alert('يرجى اختيار التاريخ وحالة واحدة على الأقل.');
+                    return;
+                }
+
+                // Check for duplicates
+                const exists = attendanceConditionsList.some(cond => cond.date === date);
+                if (exists) {
+                    alert('تم إضافة شرط لهذا التاريخ مسبقاً. احذفه أولاً إذا أردت تعديله.');
+                    return;
+                }
+
+                attendanceConditionsList.push({ date, states });
+                renderAttendanceConditions();
+
+                // Clear inputs
+                $('#attendance-states').val('');
+            });
+
+            window.removeAttendanceCondition = function(index) {
+                attendanceConditionsList.splice(index, 1);
+                renderAttendanceConditions();
+            };
+
+            function renderAttendanceConditions() {
+                const container = $('#attendance-conditions-container');
+                container.empty();
+
+                attendanceConditionsList.forEach((cond, index) => {
+                    const badge = $(`
+                        <span class="badge badge-info" style="font-size: 14px; padding: 8px 12px; background-color: #17a2b8; color: white; border-radius: 20px;">
+                            ${cond.date} - (${cond.states.join('، ')})
+                            <i class="fas fa-times ml-2" style="cursor: pointer; margin-right: 5px;" onclick="removeAttendanceCondition(${index})"></i>
+                        </span>
+                    `);
+                    container.append(badge);
+                });
+
+                $('#attendance_conditions_input').val(JSON.stringify(attendanceConditionsList));
+            }
+
 
             function populateFilters(filters, selectedFilters = {}) {
                 const fillOptions = (containerId, items, transformFn = item => item) => {
