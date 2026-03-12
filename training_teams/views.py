@@ -6,7 +6,7 @@ from django.contrib import messages
 from collections import defaultdict
 import json
 from datetime import datetime, timedelta
-from .models import Employee, TrainingTeam, Places, EmTrainingTeams
+from .models import Employee, TrainingTeam, Places, EmTrainingTeams, PeriodicTraining, EmPeriodicTraining, QualifyingTraining, EmQualifyingTraining
 from attendance.models import Attendance
 
 # 1. عرض صفحة الفرق التدريبية الرئيسية (training.html)
@@ -351,3 +351,129 @@ def current_teams_view(request):
         'selected_date': filter_date
     }
     return render(request, 'training/current_teams.html', context)
+
+# --- Periodic Training Views ---
+
+@login_required(login_url='/login/')
+def periodic_training_dashboard(request):
+    """Dashboard for Periodic Training."""
+    return render(request, 'training/periodic_dashboard.html')
+
+@login_required(login_url='/login/')
+def insert_periodic_training(request):
+    """Insert Periodic Training records and update attendance."""
+    if request.method == "POST":
+        employees = request.POST.getlist('employees')
+        training_type = PeriodicTraining.objects.get(id=request.POST['training_type'])
+        place = Places.objects.get(id=request.POST['place'])
+        start_date = request.POST['start_date']
+        end_date = request.POST['end_date']
+        round_num = request.POST.get('round_num')
+        note = request.POST.get('note', '')
+
+        if not employees:
+            messages.error(request, "يجب اختيار موظف واحد على الأقل")
+            return redirect('insert_periodic_training')
+
+        try:
+            for emp_id in employees:
+                employee = Employee.objects.get(id=emp_id)
+                
+                EmPeriodicTraining.objects.create(
+                    employee=employee,
+                    training_type=training_type,
+                    place=place,
+                    start_date=start_date,
+                    end_date=end_date,
+                    round_num=round_num,
+                    note=note
+                )
+
+                # Add Attendance records with 'ت دوري'
+                start = datetime.strptime(start_date, "%Y-%m-%d").date()
+                end = datetime.strptime(end_date, "%Y-%m-%d").date()
+                delta = end - start
+
+                for i in range(delta.days + 1):
+                    day = start + timedelta(days=i)
+                    Attendance.objects.update_or_create(
+                        employee=employee,
+                        date=day,
+                        defaults={
+                            'state': 'ت دوري',
+                            'note': note
+                        }
+                    )
+            
+            messages.success(request, "تمت عملية إضافة التدريب الدوري وتحديث سجل الحضور.")
+        except Exception as e:
+            messages.error(request, f"حدث خطأ أثناء الحفظ: {str(e)}")
+            
+        return redirect('insert_periodic_training')
+
+    employees = Employee.objects.all().order_by('sort_number')
+    training_types = PeriodicTraining.objects.all().order_by('name')
+    places = Places.objects.all().order_by('name')
+
+    context = {
+        'employees': employees,
+        'training_types': training_types,
+        'places': places
+    }
+    return render(request, 'training/insert_periodic.html', context)
+
+@login_required(login_url='/login/')
+def periodic_training_by_employee(request):
+    """Grid view of periodic training by employee with date filtering."""
+    # Default to Jan 1st of current year
+    default_date = datetime(datetime.now().year, 1, 1).date()
+    filter_date_str = request.GET.get('start_date')
+    
+    if filter_date_str:
+        try:
+            filter_date = datetime.strptime(filter_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            filter_date = default_date
+    else:
+        filter_date = default_date
+
+    employees = Employee.objects.all().order_by('sort_number')
+    # Filter records that cover the period FROM the selected date
+    periodic_records = EmPeriodicTraining.objects.filter(
+        end_date__gte=filter_date
+    ).select_related('employee', 'training_type', 'place').order_by('employee__sort_number', 'start_date')
+
+    employee_periodic = defaultdict(list)
+    for record in periodic_records:
+        employee_periodic[record.employee].append(record)
+
+    # Ensure slot filling for grid display
+    for employee in employees:
+        while len(employee_periodic[employee]) < 15:
+            employee_periodic[employee].append(None)
+
+    context = {
+        'employee_periodic': {employee: employee_periodic[employee] for employee in employees},
+        'selected_date': filter_date,
+    }
+    return render(request, 'training/periodic_by_employee.html', context)
+
+@login_required(login_url='/login/')
+def qualifying_training_by_employee(request):
+    """Grid view of qualifying training by employee."""
+    employees = Employee.objects.all().order_by('sort_number')
+    qualifying_records = EmQualifyingTraining.objects.select_related('employee', 'training_type', 'place').order_by('employee__sort_number', 'start_date')
+
+    employee_qualifying = defaultdict(list)
+    for record in qualifying_records:
+        employee_qualifying[record.employee].append(record)
+
+    # Ensure slot filling for grid display
+    for employee in employees:
+        while len(employee_qualifying[employee]) < 15:
+            employee_qualifying[employee].append(None)
+
+    context = {
+        'employee_qualifying': {employee: employee_qualifying[employee] for employee in employees},
+    }
+    return render(request, 'training/qualifying_by_employee.html', context)

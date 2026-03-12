@@ -16,7 +16,7 @@
             </div>
             <div class="col-md-1">
                 <label class="form-label small" title="خط الأسماء">خط 1:</label>
-                <input type="number" id="font-size-input" class="form-control form-control-sm" value="17" oninput="updateStyles()" />
+                <input type="number" id="font-size-input" class="form-control form-control-sm" value="15" oninput="updateStyles()" />
             </div>
             <div class="col-md-1">
                 <label class="form-label small" title="خط الجدول">خط 2:</label>
@@ -79,8 +79,8 @@
 
 <style>
     :root {
-        --base-font-size: 14px;
-        --summary-font-size: 13px;
+        --base-font-size: 15px;
+        --summary-font-size: 17px;
         --table-width: 100%;
     }
 
@@ -244,8 +244,12 @@
     let reportData = null;
 
     document.addEventListener("DOMContentLoaded", function () {
-        const today = new Date();
-        document.getElementById("date-input").value = today.toISOString().split("T")[0];
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const y = tomorrow.getFullYear();
+        const m = String(tomorrow.getMonth() + 1).padStart(2, '0');
+        const d = String(tomorrow.getDate()).padStart(2, '0');
+        document.getElementById("date-input").value = `${y}-${m}-${d}`;
         
         // إنشاء الـ checkboxes بتصميم مضغوط
         const container = document.getElementById('states-checkboxes');
@@ -259,6 +263,7 @@
             container.appendChild(div);
         });
 
+        updateStyles();
         fetchModernReport();
     });
 

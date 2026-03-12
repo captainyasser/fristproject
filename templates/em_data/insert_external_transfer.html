@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}إضافة فرد منقول (خارجي){% endblock %}
+
+{% block styles %}
+<style>
+    .insert-container {
+        padding: 30px;
+        background-color: #f4f6f9;
+        min-height: 100vh;
+    }
+
+    .form-card {
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border: none;
+        margin-bottom: 25px;
+    }
+
+    .card-header {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        color: white;
+        border-radius: 15px 15px 0 0 !important;
+        font-weight: bold;
+    }
+
+    .employee-list-sidebar {
+        max-height: 600px;
+        overflow-y: auto;
+        border-left: 1px solid #eee;
+        padding-left: 15px;
+    }
+
+    .emp-item {
+        padding: 10px;
+        border-bottom: 1px solid #f0f0f0;
+        cursor: pointer;
+        transition: 0.2s;
+        border-radius: 8px;
+        margin-bottom: 5px;
+    }
+
+    .emp-item:hover { background: #eef4ff; }
+    
+    .selected-display {
+        border-right: 4px solid #007bff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="insert-container">
+    <div class="card form-card">
+        <div class="card-header d-flex align-items-center">
+            <h3 class="mb-0 py-1"><i class="fas fa-user-plus mr-2"></i> إضافة أفراد منقولين (خارجي)</h3>
+            <div class="ml-auto">
+                <a href="{% url 'external_transfers_book' %}" class="btn btn-light btn-sm"><i class="fas fa-arrow-left"></i> رجوع للدفتر</a>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="row no-gutters">
+                <!-- Sidebar Selection -->
+                <div class="col-md-4 bg-light p-3 employee-list-sidebar">
+                    <div class="d-flex align-items-center mb-2">
+                        <label class="mb-0"><i class="fas fa-search mr-1"></i> اختر الأفراد:</label>
+                        <button class="btn btn-xs btn-outline-primary ml-auto" onclick="selectAllVisible()">تحديد الكل</button>
+                        <button class="btn btn-xs btn-outline-secondary ml-1" onclick="deselectAll()">إلغاء</button>
+                    </div>
+                    <input type="text" id="sidebar-search" class="form-control mb-3" placeholder="ابحث بالاسم أو الرقم...">
+                    <div id="sidebar-emp-list">
+                        <!-- Loaded via JS -->
+                    </div>
+                </div>
+
+                <!-- Main Form -->
+                <div class="col-md-8 p-4">
+                    <form id="insertForm">
+                        <div class="alert alert-primary selected-display mb-4" id="selection-summary" style="display:none;">
+                            <i class="fas fa-users mr-2"></i> تم اختيار <strong>0</strong> فرد.
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label>العام</label>
+                                <input type="number" id="year" class="form-control" value="2026">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>تاريخ التنفيذ</label>
+                                <input type="date" class="form-control" id="execution_date">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label>الجهة المنقول منها</label>
+                                <div class="input-group">
+                                    <select class="form-control" id="transferred_from"></select>
+                                    <div class="input-group-append">
+                                        <a href="{% url 'transfer_locations_external' %}" target="_blank" class="btn btn-outline-primary"><i class="fas fa-plus"></i></a>
+                                        <button type="button" class="btn btn-outline-secondary" onclick="loadLocations()"><i class="fas fa-sync-alt"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>الجهة المنقول إليها</label>
+                                <div class="input-group">
+                                    <select class="form-control" id="transferred_to"></select>
+                                    <div class="input-group-append">
+                                        <a href="{% url 'transfer_locations_external' %}" target="_blank" class="btn btn-outline-primary"><i class="fas fa-plus"></i></a>
+                                        <button type="button" class="btn btn-outline-secondary" onclick="loadLocations()"><i class="fas fa-sync-alt"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label>رقم القرار</label>
+                                <input type="text" class="form-control" id="decision_number" placeholder="مثلاً: 123">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>تاريخ القرار</label>
+                                <input type="date" class="form-control" id="decision_date">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>ملاحظات</label>
+                            <textarea id="notes" class="form-control" rows="3"></textarea>
+                        </div>
+
+                        <hr>
+                        <div class="text-right">
+                            <button type="button" class="btn btn-primary btn-lg px-5 shadow" onclick="saveBulk()">
+                                <i class="fas fa-save mr-2"></i> إتمام عملية الإضافة
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const csrfToken = '{{ csrf_token }}';
+    let allEmployees = [];
+    let locations = [];
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadEmployees();
+        loadLocations();
+        
+        $('#sidebar-search').on('keyup', function() {
+            const val = $(this).val().toLowerCase();
+            $('.emp-item').each(function() {
+                const text = $(this).text().toLowerCase();
+                $(this).toggle(text.includes(val));
+            });
+        });
+    });
+
+    function loadEmployees() {
+        fetch("{% url 'employee_search_api' %}")
+            .then(res => res.json())
+            .then(data => {
+                allEmployees = data;
+                renderList();
+            });
+    }
+
+    function renderList() {
+        const list = document.getElementById('sidebar-emp-list');
+        list.innerHTML = '';
+        allEmployees.forEach(emp => {
+            const div = document.createElement('div');
+            div.className = 'emp-item d-flex align-items-center';
+            div.innerHTML = `
+                <div class="custom-control custom-checkbox mr-2">
+                    <input type="checkbox" class="custom-control-input emp-checkbox" id="chk_${emp.id}" value="${emp.id}">
+                    <label class="custom-control-label" for="chk_${emp.id}"></label>
+                </div>
+                <div class="flex-grow-1" style="cursor:pointer" onclick="toggleEmp(${emp.id})">
+                    <strong>${emp.display}</strong>
+                </div>
+            `;
+            list.appendChild(div);
+        });
+    }
+
+    function toggleEmp(id) {
+        const chk = document.getElementById(`chk_${id}`);
+        chk.checked = !chk.checked;
+        updateSummary();
+    }
+
+    $(document).on('change', '.emp-checkbox', updateSummary);
+
+    function updateSummary() {
+        const count = $('.emp-checkbox:checked').length;
+        const summary = $('#selection-summary');
+        if (count > 0) {
+            summary.show().find('strong').text(count);
+        } else {
+            summary.hide();
+        }
+    }
+
+    function selectAllVisible() {
+        $('.emp-item:visible .emp-checkbox').prop('checked', true);
+        updateSummary();
+    }
+
+    function deselectAll() {
+        $('.emp-checkbox').prop('checked', false);
+        updateSummary();
+    }
+
+    function loadLocations() {
+        fetch("{% url 'transfer_locations_api' %}?location_type=external")
+            .then(res => res.json())
+            .then(data => {
+                locations = data;
+                ['transferred_from', 'transferred_to'].forEach(id => {
+                    const select = document.getElementById(id);
+                    const current = select.value;
+                    select.innerHTML = '<option value="">-- اختر الجهة --</option>';
+                    locations.forEach(l => {
+                        const opt = document.createElement('option');
+                        opt.value = l.name;
+                        opt.textContent = l.name;
+                        select.appendChild(opt);
+                    });
+                    select.value = current;
+                });
+            });
+    }
+
+    function saveBulk() {
+        const checked = $('.emp-checkbox:checked');
+        if (checked.length === 0) return alert('يرجى اختيار فرد واحد على الأقل');
+
+        const employees = [];
+        checked.each(function() {
+            const id = $(this).val();
+            const emp = allEmployees.find(e => e.id == id);
+            employees.push({
+                name: emp.name,
+                police_number: emp.police_number,
+                attachment_date: emp.date_of_edara // Taking from employee table
+            });
+        });
+
+        const data = {
+            transfer_type: 'external',
+            year: document.getElementById('year').value,
+            execution_date: document.getElementById('execution_date').value,
+            transferred_from: document.getElementById('transferred_from').value,
+            transferred_to: document.getElementById('transferred_to').value,
+            decision_number: document.getElementById('decision_number').value,
+            decision_date: document.getElementById('decision_date').value,
+            notes: document.getElementById('notes').value,
+            employees: employees
+        };
+
+        fetch("{% url 'transfer_records_api' %}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify(data)
+        })
+        .then(res => res.json())
+        .then(resData => {
+            if (resData.error) alert('خطأ: ' + resData.error);
+            else {
+                alert('تمت الإضافة بنجاح');
+                window.location.href = "{% url 'external_transfers_book' %}";
+            }
+        });
+    }
+</script>
+{% endblock %}

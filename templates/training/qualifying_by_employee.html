@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<title>دفتر الفرق التأهيلية</title>
+<link href="{% static 'offline_libs/bootstrap-5.3.0.min.css' %}" rel="stylesheet">
+<script src="{% static 'offline_libs/xlsx.full.min.js' %}"></script>
+<style>
+    body { background-color: #EEEEEE; color: #373A40; font-family: Arial, sans-serif; }
+    h1 { color: #DC5F00; text-align: center; margin-bottom: 20px; }
+    .table th { background-color: #373A40; color: #EEEEEE; text-align: center; }
+    .table-striped tbody tr:nth-of-type(odd) { background-color: #f9f9f9; }
+    .btn-export { background-color: #DC5F00; color: #EEEEEE; border: none; padding: 10px 20px; font-size: 16px; border-radius: 5px; margin-bottom: 15px; transition: background-color 0.3s ease; }
+    .btn-export:hover { background-color: #373A40; }
+    .alert-warning { background-color: #DC5F00; color: #EEEEEE; border: none; }
+    .employee-table, .training-table { background-color: #EEEEEE; color: #373A40; border: 1px solid #686D76; margin-bottom: 20px; }
+    .employee-table th, .training-table th { background-color: #373A40; color: #EEEEEE; }
+    .training-table td { border: 1px solid #686D76; }
+    .text-success { color: green; }
+    .text-danger { color: red; }
+    .text-warning-custom { color: #c09100; }
+    
+    @media print {
+        .btn-export, h1 + button, nav, .footer { display: none !important; }
+        body { background-color: white !important; }
+        .employee-table, .training-table { border: 1px solid #000 !important; }
+        .employee-table th, .training-table th { background-color: #eee !important; color: #000 !important; border: 1px solid #000 !important; }
+        .training-table td { border: 1px solid #000 !important; }
+    }
+</style>
+
+<div class="container mt-5">
+    <h1>دفتر الفرق التأهيلية</h1>
+    <div class="d-flex justify-content-between no-print">
+        <button class="btn btn-export" onclick="exportToExcel()">📥 تصدير إلى Excel</button>
+        <button class="btn btn-secondary mb-3" onclick="window.print()">🖨️ طباعة</button>
+    </div>
+    
+    {% for employee, records in employee_qualifying.items %}
+        <table class="table table-bordered mt-3 employee-table" data-employee-name="{{ employee.name }}" dir="rtl">
+            <tbody>
+                <tr><th style="width: 20%;">الدرجة</th><td>{{ employee.rank }}</td></tr>
+                <tr><th>رقم الشرطة</th><td>{{ employee.police_number }}</td></tr>
+                <tr><th>الإسم</th><td>{{ employee.name }}</td></tr>
+            </tbody>
+        </table>
+        <table class="table table-bordered table-striped mt-2 training-table" dir="rtl">
+            <thead>
+                <tr>
+                    <th>م</th><th>نوع الفرقة التأهيلية</th><th>مكان الإنعقاد</th><th>تاريخ البداية</th><th>تاريخ النهاية</th><th>رقم الدورة</th><th>النتيجة</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                <tr>
+                    <td class="text-center">{{ forloop.counter }}</td>
+                    {% if record %}
+                        <td>{{ record.training_type.name }}</td>
+                        <td>{{ record.place.name }}</td>
+                        <td class="text-center">{{ record.start_date|date:"d/m/Y" }}</td>
+                        <td class="text-center">{{ record.end_date|date:"d/m/Y" }}</td>
+                        <td class="text-center">{% if record.round_num %}{{ record.round_num }}{% endif %}</td>
+                        <td class="text-center">
+                            {% if record.result == "ناجح" %}
+                                <span class="text-success fw-bold">ناجح</span>
+                            {% elif record.result == "راسب" %}
+                                <span class="text-danger fw-bold">راسب</span>
+                            {% elif record.result == "إنتظار" %}
+                                <span class="text-warning-custom fw-bold">إنتظار</span>
+                            {% else %}
+                                {{ record.result }}
+                            {% endif %}
+                        </td>
+                    {% else %}
+                        <td colspan="6"></td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div style="page-break-after: always;"></div>
+    {% empty %}
+        <div class="alert alert-warning text-center">لا توجد بيانات متاحة.</div>
+    {% endfor %}
+</div>
+
+<script src="{% static 'offline_libs/bootstrap-5.3.0.bundle.min.js' %}"></script>
+<script>
+    function exportToExcel() {
+        let wb = XLSX.utils.book_new();
+        let tables = document.querySelectorAll('.training-table');
+        tables.forEach((table, index) => {
+            let employeeTable = table.previousElementSibling;
+            let employeeName = employeeTable.dataset.employeeName || `موظف_${index + 1}`;
+            employeeName = employeeName.replace(/[\\\/\*\[\]:\?]/g, "_");
+            let ws = XLSX.utils.table_to_sheet(table);
+            XLSX.utils.book_append_sheet(wb, ws, employeeName.substring(0, 31));
+        });
+        XLSX.writeFile(wb, "الفرق_التأهيلية.xlsx");
+    }
+</script>
+{% endblock %}

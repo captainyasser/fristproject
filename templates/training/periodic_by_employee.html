@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}دفتر التدريب الدوري حسب الفرد{% endblock %}
+
+{% block styles %}
+<style>
+    .grid-container {
+        padding: 20px;
+    }
+    .page-title {
+        background-color: #1a1a2e;
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 25px;
+        text-align: center;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .table-wrapper {
+        overflow-x: auto;
+        border-radius: 10px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+    }
+    .periodic-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+    }
+    .periodic-table th, .periodic-table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: center;
+        font-size: 14px;
+        vertical-align: middle;
+    }
+    .periodic-table th {
+        background-color: #f1f5f9;
+        font-weight: bold;
+        color: #1a202c;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        min-width: 120px;
+    }
+    .emp-name-col {
+        min-width: 250px !important;
+        text-align: right !important;
+        padding-right: 15px !important;
+        background-color: #f8fafc !important;
+    }
+    .training-card {
+        font-size: 12px;
+        line-height: 1.4;
+        text-align: right;
+        padding: 4px;
+        border-radius: 4px;
+        background-color: #f0f7ff;
+        border-right: 3px solid #3182ce;
+        min-height: 50px;
+    }
+    .td-empty {
+        background-color: #fff;
+    }
+    .training-course { font-weight: bold; color: #2c5282; }
+    .training-date { font-size: 11px; color: #718096; }
+    .training-place { font-size: 11px; color: #4a5568; font-style: italic; }
+    @media print {
+        .no-print { display: none !important; }
+        .page-title { background-color: white !important; color: black !important; box-shadow: none !important; border: 1px solid #000; }
+        .periodic-table th { background-color: #f1f5f9 !important; -webkit-print-color-adjust: exact; }
+    }
+    .logo-weapon {
+        font-size: 50px;
+        margin-bottom: 10px;
+        color: #1a1a2e;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="grid-container">
+    <div class="page-title">
+        <div class="logo-weapon">
+            <i class="fas fa-crosshairs"></i>
+        </div>
+        <h1><i class="fas fa-crosshairs mr-2"></i> سجل التدريب الدوري للأفراد</h1>
+        <p class="mb-0">العرض الشبكي لسجلات التدريب الدوري</p>
+    </div>
+
+    <div class="mb-3 d-flex justify-content-between align-items-center no-print">
+        <form method="get" class="form-inline bg-light p-3 rounded border">
+            <label for="start_date" class="mr-2 font-weight-bold">عرض السجلات من بداية تاريخ:</label>
+            <input type="date" name="start_date" id="start_date" value="{{ selected_date|date:'Y-m-d' }}" class="form-control mr-3">
+            <button type="submit" class="btn btn-dark">
+                <i class="fas fa-filter mr-1"></i> فلترة
+            </button>
+        </form>
+        
+        <div>
+            <a href="{% url 'periodic_dashboard' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-right mr-1"></i> رجوع
+            </a>
+            <button onclick="window.print()" class="btn btn-primary ml-2">
+                <i class="fas fa-print mr-1"></i> طباعة الدفتر
+            </button>
+        </div>
+    </div>
+
+    <div class="table-wrapper">
+        <table class="periodic-table">
+            <thead>
+                <tr>
+                    <th rowspan="2" class="emp-name-col">اســـــم الفرد والدرجة</th>
+                    <th colspan="15">سجلات التدريب الدوري (من الأحدث للأقدم)</th>
+                </tr>
+                <tr>
+                    {% for i in "123456789012345"|make_list %}
+                    <th style="min-width: 150px;">دورة ({{ forloop.counter }})</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for employee, records in employee_periodic.items %}
+                <tr>
+                    <td class="emp-name-col">
+                        <strong>{{ employee.rank }} / {{ employee.name }}</strong>
+                        <br><small class="text-muted">رقم شرطة: {{ employee.police_number }}</small>
+                    </td>
+                    {% for record in records %}
+                    <td class="{% if not record %}td-empty{% endif %}">
+                        {% if record %}
+                        <div class="training-card">
+                            <div class="training-course">{{ record.training_type.name }}</div>
+                            <div class="training-place">{{ record.place.name }}</div>
+                            <div class="training-date">
+                                {{ record.start_date|date:"Y/m/d" }} - {{ record.end_date|date:"Y/m/d" }}
+                            </div>
+                            {% if record.round_num %}
+                            <div class="training-date">الدفعة: {{ record.round_num }}</div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

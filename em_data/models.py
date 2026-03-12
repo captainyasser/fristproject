@@ -5,6 +5,57 @@ from ranks.models import Rank
 from institutes.models import Institute
 from datetime import datetime
 
+class TransferLocation(models.Model):
+    LOCATION_TYPES = [
+        ('internal', 'داخلي'),
+        ('external', 'خارجي'),
+    ]
+
+    id = models.BigAutoField(primary_key=True)
+    name = models.CharField(max_length=255, verbose_name="اسم الجهة")
+    location_type = models.CharField(max_length=20, choices=LOCATION_TYPES, verbose_name="نوع النقل")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'transfer_locations'
+        verbose_name = 'جهة نقل'
+        verbose_name_plural = 'جهات النقل'
+        ordering = ['name']
+        unique_together = ('name', 'location_type')
+
+    def __str__(self):
+        return f"{self.name} ({self.get_location_type_display()})"
+
+
+class TransferRecord(models.Model):
+    TRANSFER_TYPES = [
+        ('internal', 'نقل داخلي'),
+        ('external', 'نقل خارجي'),
+    ]
+
+    id = models.BigAutoField(primary_key=True)
+    transfer_type = models.CharField(max_length=20, choices=TRANSFER_TYPES, verbose_name="نوع النقل")
+    year = models.IntegerField(verbose_name="العام")
+    police_number = models.CharField(max_length=50, null=True, blank=True, verbose_name="رقم الشرطة")
+    name = models.CharField(max_length=255, verbose_name="الأسم")
+    attachment_date = models.CharField(max_length=100, null=True, blank=True, verbose_name="تاريخ الحاقة بالإدارة")
+    transferred_from = models.CharField(max_length=255, null=True, blank=True, verbose_name="الجهة المنقول منها")
+    transferred_to = models.CharField(max_length=255, null=True, blank=True, verbose_name="الجهة المنقول اليها")
+    decision_number = models.CharField(max_length=100, null=True, blank=True, verbose_name="رقم القرار")
+    decision_date = models.CharField(max_length=100, null=True, blank=True, verbose_name="تاريخ القرار")
+    execution_date = models.CharField(max_length=100, null=True, blank=True, verbose_name="تاريخ التنفيذ")
+    notes = models.TextField(null=True, blank=True, verbose_name="ملاحظات")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'transfer_records'
+        verbose_name = 'سجل نقل'
+        verbose_name_plural = 'سجلات النقل'
+        ordering = ['id']
+
+    def __str__(self):
+        return f"{self.get_transfer_type_display()} - {self.name} - {self.year}"
 
 class Employee(models.Model):
     # Operation Choices

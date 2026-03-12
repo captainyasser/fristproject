@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block styles %}
+<style>
+    .locations-container {
+        padding: 30px;
+        background-color: #f4f6f9;
+        min-height: 100vh;
+    }
+    .card-header {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        color: white;
+        border-radius: 15px 15px 0 0 !important;
+        font-weight: bold;
+    }
+    .form-card {
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border: none;
+    }
+    .table th { background-color: #f8f9fa; color: #1e3c72; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="locations-container">
+    <div class="card form-card">
+        <div class="card-header d-flex align-items-center">
+            <h3 class="mb-0"><i class="fas fa-map-marker-alt mr-2"></i> {{ title }}</h3>
+            <div class="ml-auto">
+                <button class="btn btn-light btn-sm" onclick="openModal()"><i class="fas fa-plus"></i> إضافة جهة</button>
+                <button class="btn btn-secondary btn-sm" onclick="window.close()"><i class="fas fa-times"></i> إغلاق</button>
+            </div>
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered table-striped mt-3">
+                <thead>
+                    <tr>
+                        <th style="width: 10%;">#</th>
+                        <th>اسم الجهة</th>
+                        <th style="width: 20%;">الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for loc in locations %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ loc.name }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-info" onclick="openModal('{{ loc.id }}', '{{ loc.name }}')"><i class="fas fa-edit"></i> تعديل</button>
+                            <form method="POST" style="display:inline;" onsubmit="return confirm('هل أنت متأكد من الحذف؟')">
+                                {% csrf_token %}
+                                <input type="hidden" name="location_id" value="{{ loc.id }}">
+                                <input type="hidden" name="action" value="delete">
+                                <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i> حذف</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center text-muted">لا توجد جهات مضافة بعد.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal fade" id="locationModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content" style="border-radius: 15px; overflow: hidden;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white;">
+        <h5 class="modal-title" id="modalTitle">إضافة جهة</h5>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form method="POST">
+          {% csrf_token %}
+          <div class="modal-body">
+            <input type="hidden" name="location_id" id="form_location_id">
+            <input type="hidden" name="action" value="save">
+            <div class="form-group">
+                <label>اسم الجهة:</label>
+                <input type="text" name="name" id="form_name" class="form-control" required placeholder="ادخل اسم الجهة هنا...">
+            </div>
+          </div>
+          <div class="modal-footer bg-light">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">إلغاء</button>
+            <button type="submit" class="btn btn-primary">حفظ البيانات</button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+    function openModal(id='', name='') {
+        document.getElementById('form_location_id').value = id;
+        document.getElementById('form_name').value = name;
+        document.getElementById('modalTitle').innerText = id ? 'تعديل جهة' : 'إضافة جهة جديدة';
+        $('#locationModal').modal('show');
+    }
+</script>
+{% endblock %}

@@ -251,6 +251,36 @@
             </a>
         </div>
 
+        <!-- دفتر التدريب الدوري -->
+        <div class="col-4 col-md-2">
+            <a href="{% url 'periodic_dashboard' %}" class="book-card card-blue">
+                <i class="fas fa-crosshairs card-icon"></i>
+                <div class="card-content">
+                    <p class="card-title">دفتر التدريب الدوري</p>
+                </div>
+            </a>
+        </div>
+
+        <!-- دفتر الفرق التأهيلية -->
+        <div class="col-4 col-md-2">
+            <a href="{% url 'qualifying_by_employee' %}" class="book-card card-lime">
+                <i class="fas fa-user-graduate card-icon"></i>
+                <div class="card-content">
+                    <p class="card-title">دفتر الفرق التأهيلية</p>
+                </div>
+            </a>
+        </div>
+
+        <!-- دفاتر النقل -->
+        <div class="col-4 col-md-2">
+            <a href="{% url 'transfer_books_menu' %}" class="book-card card-purple">
+                <i class="fas fa-exchange-alt card-icon"></i>
+                <div class="card-content">
+                    <p class="card-title">دفاتر النقل</p>
+                </div>
+            </a>
+        </div>
+
     </div>
 </div>
 {% endblock %}

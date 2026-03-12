@@ -565,9 +565,13 @@ def update_attendance(request):
             elif state in ["راحة", "ر بديلة", "8 صباحاً"]:
                 attendance.food = False
                 attendance.in_or_out = "out"
+            elif state == "قرار66":
+                attendance.food = False
+                attendance.in_or_out = "out"
             else:
                 attendance.food = False
                 attendance.in_or_out = "out"
+
 
             # Override food if provided specifically via checkbox
             if food is not None:
@@ -740,6 +744,8 @@ def insert_attendance_for_date(request):
                 state_value = "خاصه"
             elif operation == "ج وضع":
                 state_value = "ج وضع"
+            elif operation == "قرار66":
+                state_value = "قرار66"
             elif operation == "عمل يومي":
                 if day_of_week in [0, 1, 2, 3, 5, 6]:
                     state_value = "يومي"
@@ -749,8 +755,13 @@ def insert_attendance_for_date(request):
             in_or_out_value = (
                 "in"
                 if state_value == "نوبتجي"
-                else ("going" if state_value == "يومي" else "out")
+                else (
+                    "going" if state_value == "يومي"
+                    else ("out")
+                )
             )
+            # Add exemption for 'قرار66' and 'مرضي' and 'خاصه' and 'ج وضع' as out. They are already out by default but let's be explicit if needed.
+            
             food_value = "1" if state_value == "نوبتجي" else "0"
 
             if state_value == "نوبتجي":

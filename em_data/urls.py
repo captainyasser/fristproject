@@ -8,7 +8,11 @@ from .views import (
     department_operation_report_view, DepartmentOperationReportAPIView,
     professional_profile, department_numbers_view,
     all_reports_view, AllReportsAPIView, females_report_view, male_musicians_report_view,
-    all_diaries_view, all_attendance_view, all_employees_view, all_books_view
+    all_diaries_view, all_attendance_view, all_employees_view, all_books_view,
+    transfer_books_menu, internal_transfers_book, external_transfers_book,
+    insert_internal_transfer, insert_external_transfer,
+    TransferRecordAPIView, TransferLocationAPIView, EmployeeSearchAPIView,
+    transfer_locations_list_view
 )
 
 router = DefaultRouter()
@@ -37,6 +41,16 @@ urlpatterns = [
     path('all-attendance/', all_attendance_view, name='all_attendance'),
     path('all-employees/', all_employees_view, name='all_employees'),
     path('all-books/', all_books_view, name='all_books'),
+    path('transfer-books-menu/', transfer_books_menu, name='transfer_books_menu'),
+    path('transfer-books-internal/', internal_transfers_book, name='internal_transfers_book'),
+    path('transfer-books-external/', external_transfers_book, name='external_transfers_book'),
+    path('api/transfer-records/', TransferRecordAPIView.as_view(), name='transfer_records_api'),
+    path('api/transfer-locations/', TransferLocationAPIView.as_view(), name='transfer_locations_api'),
+    path('api/employee-search/', EmployeeSearchAPIView.as_view(), name='employee_search_api'),
+    path('transfer-locations-internal/', transfer_locations_list_view, {'loc_type': 'internal'}, name='transfer_locations_internal'),
+    path('transfer-locations-external/', transfer_locations_list_view, {'loc_type': 'external'}, name='transfer_locations_external'),
+    path('insert-internal-transfer/', insert_internal_transfer, name='insert_internal_transfer'),
+    path('insert-external-transfer/', insert_external_transfer, name='insert_external_transfer'),
 ]
 
 # from django.urls import path

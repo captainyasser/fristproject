@@ -234,13 +234,26 @@
         <div class="row">
             <div class="col-md-12">
                 <!-- Undo/Redo Buttons -->
-                <div class="mb-3" style="text-align: left; margin-bottom: 15px;">
-                    <button type="button" class="btn btn-warning btn-sm" onclick="globalUndo()">
-                        <i class="fas fa-undo"></i> ↩ تراجع (Undo)
-                    </button>
-                    <button type="button" class="btn btn-info btn-sm" onclick="globalRedo()">
-                        <i class="fas fa-redo"></i> ↪ إعادة (Redo)
-                    </button>
+                <div class="mb-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <button type="button" class="btn btn-warning btn-sm" onclick="globalUndo()">
+                            <i class="fas fa-undo"></i> ↩ تراجع (Undo)
+                        </button>
+                        <button type="button" class="btn btn-info btn-sm" onclick="globalRedo()">
+                            <i class="fas fa-redo"></i> ↪ إعادة (Redo)
+                        </button>
+                    </div>
+                    <div>
+                        <a href="{% url 'insert_training' %}" class="btn btn-success btn-sm ml-2">
+                            <i class="fas fa-plus-circle"></i> إضافة فرقة تدريبية
+                        </a>
+                        <a href="{% url 'add_training_qualification' %}" class="btn btn-primary btn-sm ml-2">
+                            <i class="fas fa-user-graduate"></i> إضافة فرقة تأهيلية للترقي
+                        </a>
+                        <a href="{% url 'insert_periodic_training' %}" class="btn btn-dark btn-sm">
+                            <i class="fas fa-crosshairs"></i> إضافة تدريب دوري
+                        </a>
+                    </div>
                 </div>
 
                 <form method="get" action="{% url 'attendance_3w' %}">

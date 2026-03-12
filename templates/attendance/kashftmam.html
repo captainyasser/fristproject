@@ -45,8 +45,42 @@
                     </div>
                     
                     <div class="col-md-2">
-                        <label for="padding_size">التباعد الداخلي:</label>
-                        <input type="number" id="padding_size" name="padding_size" class="form-control" min="1" max="50" value="1">
+                        <label for="padding_size">التأطير:</label>
+                        <input type="number" id="padding_size" name="padding_size" class="form-control" min="1" max="50" value="4">
+                    </div>
+                </div>
+
+                <div class="row mt-2">
+                    <div class="col-md-2">
+                        <label for="name_font_size">خط الاسم:</label>
+                        <input type="number" id="name_font_size" name="name_font_size" class="form-control" min="8" max="40" value="17">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="dept_font_size">خط القسم:</label>
+                        <input type="number" id="dept_font_size" name="dept_font_size" class="form-control" min="8" max="40" value="11">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="op_font_size">خط التشغيل:</label>
+                        <input type="number" id="op_font_size" name="op_font_size" class="form-control" min="8" max="40" value="11">
+                    </div>
+                </div>
+
+                <div class="row mt-2">
+                    <div class="col-md-2">
+                        <label for="name_width">عرض الاسم:</label>
+                        <input type="number" id="name_width" name="name_width" class="form-control" min="50" max="600" value="280">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="dept_width">عرض القسم:</label>
+                        <input type="number" id="dept_width" name="dept_width" class="form-control" min="10" max="300" value="25">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="op_width">عرض التشغيل:</label>
+                        <input type="number" id="op_width" name="op_width" class="form-control" min="10" max="300" value="25">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="days_width">عرض أعمدة الأيام:</label>
+                        <input type="number" id="days_width" name="days_width" class="form-control" min="20" max="200" value="30">
                     </div>
                 </div>
                 
@@ -59,11 +93,11 @@
             </form>
 
             <div class="my-3">
-                <button class="btn btn-info" onclick="fetchData(1, 38, 1)">الصفحة 1 (1-38)</button>
-                <button class="btn btn-info" onclick="fetchData(39, 75, 1)">الصفحة 2 (39-75)</button>
-                <button class="btn btn-info" onclick="fetchData(76, 113, 3)">الصفحة 3 (76-113)</button>
-                <button class="btn btn-info" onclick="fetchData(114, 147, 6)">الصفحة 4 (114-147)</button>
-                <button class="btn btn-info" onclick="fetchData(148, 222, 6)">الصفحة 5 (148-222)</button>
+                <button class="btn btn-info" onclick="document.getElementById('start').value=1; document.getElementById('end').value=38; fetchData(1, 38, 4)">الصفحة 1 (1-38)</button>
+                <button class="btn btn-info" onclick="document.getElementById('start').value=39; document.getElementById('end').value=75; fetchData(39, 75, 4)">الصفحة 2 (39-75)</button>
+                <button class="btn btn-info" onclick="document.getElementById('start').value=76; document.getElementById('end').value=113; fetchData(76, 113, 4)">الصفحة 3 (76-113)</button>
+                <button class="btn btn-info" onclick="document.getElementById('start').value=114; document.getElementById('end').value=147; fetchData(114, 147, 4)">الصفحة 4 (114-147)</button>
+                <button class="btn btn-info" onclick="document.getElementById('start').value=148; document.getElementById('end').value=222; fetchData(148, 222, 4)">الصفحة 5 (148-222)</button>
             </div>
 
             <table class="table table-bordered" dir="rtl" id="attendance-table" style="display: none;">
@@ -88,6 +122,12 @@
     }
     @media print {
         #date-form, .btn { display: none; }
+        #attendance-table {
+            width: auto !important;
+            table-layout: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
         #attendance-table td, #attendance-table th {
             border: 1px solid black !important;
         }
@@ -117,6 +157,14 @@
     }
 
     async function fetchData(start, end, paddingSize) {
+        const nameFontSize = document.getElementById('name_font_size').value;
+        const deptFontSize = document.getElementById('dept_font_size').value;
+        const opFontSize = document.getElementById('op_font_size').value;
+        const nameWidth = document.getElementById('name_width').value;
+        const deptWidth = document.getElementById('dept_width').value;
+        const opWidth = document.getElementById('op_width').value;
+        const daysWidth = document.getElementById('days_width').value;
+
         const date = document.getElementById('date').value;
         if (!date) {
             alert('يرجى تحديد تاريخ بداية الأسبوع أولاً!');
@@ -145,14 +193,14 @@
                 throw new Error(`فشل في جلب البيانات: ${response.status} - ${errorText}`);
             }
             const data = await response.json();
-            renderTable(data, paddingSize);
+            renderTable(data, paddingSize, nameFontSize, deptFontSize, opFontSize, nameWidth, deptWidth, opWidth, daysWidth);
         } catch (error) {
             console.error('Error:', error);
             alert(error.message);
         }
     }
 
-    function renderTable(data, paddingSize) {
+    function renderTable(data, paddingSize, nameFontSize, deptFontSize, opFontSize, nameWidth, deptWidth, opWidth, daysWidth) {
         const table = document.getElementById('attendance-table');
         const header = document.getElementById('table-header');
         const body = document.getElementById('table-body');
@@ -170,12 +218,12 @@
         header.innerHTML = '';
         body.innerHTML = '';
 
-        let headerRow = '<tr><th>م</th><th>الاســـــــــــم</th><th>القسم</th><th>التشغيل</th>';
+        let headerRow = `<tr><th>م</th><th style="width:${nameWidth}px !important; min-width:${nameWidth}px !important;">الاســـــــــــم</th><th style="width:${deptWidth}px !important; min-width:${deptWidth}px !important;">القسم</th><th style="width:${opWidth}px !important; min-width:${opWidth}px !important;">التشغيل</th>`;
         data.date_range.forEach(date => {
             const d = new Date(date);
             const dayName = d.toLocaleDateString('ar', { weekday: 'long' });
             const dateStr = `${d.getMonth() + 1}/${d.getDate()}`;
-            headerRow += `<th style="width:70px;">${dayName}_${dateStr}</th>`;
+            headerRow += `<th style="width:${daysWidth}px !important; min-width:${daysWidth}px !important;">${dayName}_${dateStr}</th>`;
         });
         headerRow += '<th>ر</th></tr>';
         header.innerHTML = headerRow;
@@ -202,10 +250,10 @@
             
             let row = `
                 <tr class="${rowClass}" style="background-color:${rowClass ? 'rgb(162, 172, 173)' : ''}">
-                    <td style="font-weight:bolder; text-align:center; font-size:12px; width:5px; padding:${paddingSize}px;">${employee.serial_number}</td>
-                    <td style="font-weight:bolder; text-align:center; font-size:17px; width:320px; padding:${paddingSize}px;">${employee.name}</td>
-                    <td style="font-weight:bolder; text-align:right; font-size:17px; width:50px; padding:${paddingSize}px;">${departmentDisplay}</td>
-                    <td style="font-weight:bolder; text-align:right; font-size:18px; width:5px; padding:${paddingSize}px;">${operationDisplay}</td>
+                    <td style="font-weight:bolder; text-align:center; font-size:12px; width:5px; padding:${paddingSize}px !important;">${employee.serial_number}</td>
+                    <td style="font-weight:bolder; text-align:center; font-size:${nameFontSize}px !important; width:${nameWidth}px !important; min-width:${nameWidth}px !important; padding:${paddingSize}px !important;">${employee.name}</td>
+                    <td style="font-weight:bolder; text-align:right; font-size:${deptFontSize}px !important; width:${deptWidth}px !important; min-width:${deptWidth}px !important; padding:${paddingSize}px !important;">${departmentDisplay}</td>
+                    <td style="font-weight:bolder; text-align:right; font-size:${opFontSize}px !important; width:${opWidth}px !important; min-width:${opWidth}px !important; padding:${paddingSize}px !important;">${operationDisplay}</td>
             `;
             data.date_range.forEach(date => {
                 const record = data.attendance_data.find(r => r.employee.id === employee.id && r.date === date);
@@ -213,7 +261,7 @@
                 const rawState = record ? record.state : '';
                 const isSpecialState = ['انتداب', 'مرضي', 'فرقة', 'خاصه', 'طارئة', 'دورية', 'ج وضع'].includes(rawState);
                 row += `
-                    <td style="text-align:left; font-size:11px; width:70px; padding:${paddingSize}px;
+                    <td style="text-align:left; font-size:11px; width:${daysWidth}px !important; min-width:${daysWidth}px !important; padding:${paddingSize}px !important;
                         background-color:${isSpecialState ? 'rgb(255, 255, 255)' : 'inherit'};
                         color:${isSpecialState ? 'rgb(0, 0, 0)' : '#3D3D3D'}">
                         ${state}

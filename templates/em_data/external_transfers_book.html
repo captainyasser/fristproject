@@ -1,0 +1,564 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}دفتر النقل الخارجي{% endblock %}
+
+{% block styles %}
+<style>
+    .book-container {
+        padding: 30px;
+        background-color: #f4f6f9;
+        min-height: 100vh;
+    }
+
+    .form-card {
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border: none;
+        margin-bottom: 25px;
+    }
+
+    .card-header {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        color: white;
+        border-radius: 15px 15px 0 0 !important;
+        font-weight: bold;
+    }
+
+    .controls-panel {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 5px 0;
+    }
+
+    .table-container {
+        background: white;
+        padding: 2px;
+        border-radius: 0 0 15px 15px;
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    th, td {
+        border: 1px solid #dee2e6;
+        padding: 12px 8px;
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    th {
+        background-color: #f8f9fa;
+        color: #1e3c72;
+        font-weight: bold;
+    }
+
+    .modal-content {
+        border-radius: 15px;
+        overflow: hidden;
+        border: none;
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        color: white;
+        border: none;
+    }
+
+    .modal-title { font-weight: bold; }
+
+    .employee-list-sidebar {
+        max-height: 500px;
+        overflow-y: auto;
+        border-left: 1px solid #eee;
+        padding-left: 15px;
+    }
+
+    .emp-item {
+        padding: 10px;
+        border-bottom: 1px solid #f0f0f0;
+        cursor: pointer;
+        transition: 0.2s;
+        border-radius: 8px;
+        margin-bottom: 5px;
+    }
+
+    .emp-item:hover { background: #eef4ff; }
+    .emp-item.selected { background: #007bff; color: white; }
+
+    @media print {
+        .no-print { display: none !important; }
+        .book-container { padding: 0; background: white; }
+        .form-card { box-shadow: none; border: 1px solid black; border-radius: 0; }
+        .card-header { background: white !important; color: black !important; border-bottom: 1px solid black; }
+        table, th, td { border: 1px solid black !important; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="book-container">
+    <div class="card form-card no-print">
+        <div class="card-header">
+            <h3 class="mb-0 py-1"><i class="fas fa-cog mr-2"></i> لوحة التحكم في الدفتر</h3>
+        </div>
+        <div class="card-body">
+            <div class="controls-panel">
+                <div class="form-inline">
+                    <label class="mr-2" for="yearSelect">اختر العام:</label>
+                    <input type="number" id="yearSelect" class="form-control" style="width: 100px;" value="2026" onchange="updateYear()">
+                </div>
+                <div class="ml-auto">
+                    <a href="{% url 'insert_external_transfer' %}" class="btn btn-primary"><i class="fas fa-plus-circle mr-1"></i> إضافة منقول</a>
+                    <button class="btn btn-success" onclick="copyTableToExcel()"><i class="fas fa-file-excel mr-1"></i> إكسل</button>
+                    <button class="btn btn-info" onclick="window.print()"><i class="fas fa-print mr-1"></i> طباعة</button>
+                    <a href="{% url 'transfer_books_menu' %}" class="btn btn-secondary"><i class="fas fa-arrow-left mr-1"></i> رجوع</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card form-card">
+        <div class="card-header text-center">
+            <h2 class="mb-0">دفتر النقل الخارجي</h2>
+            <p class="mb-0 mt-1">لعام <span id="display-year">2026</span> - حسب تاريخ التنفيذ</p>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-container">
+                <table id="transfer-table" class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>مسلسل</th>
+                            <th>رقم الشرطة</th>
+                            <th>الأسم</th>
+                            <th>تاريخ إلحاق بالإدارة</th>
+                            <th>الجهة المنقول منها</th>
+                            <th>الجهة المنقول إليها</th>
+                            <th>رقم القرار</th>
+                            <th>تاريخ القرار</th>
+                            <th>تاريخ التنفيذ</th>
+                            <th>ملاحظات</th>
+                            <th class="no-print">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transfer-table-body">
+                        <!-- Data populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal fade" id="transferModal" tabindex="-1" role="dialog" aria-labelledby="transferModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="transferModalLabel"><i class="fas fa-user-plus mr-2"></i> إضافة فرد منقول</h5>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body p-0">
+        <div class="row no-gutters">
+            <div class="col-md-4 bg-light p-3 employee-list-sidebar">
+                <div class="d-flex align-items-center mb-2">
+                    <label class="mb-0"><i class="fas fa-search mr-1"></i> ابحث عن فرد:</label>
+                    <button class="btn btn-xs btn-outline-primary ml-auto" onclick="selectAllVisible()">تحديد الكل</button>
+                    <button class="btn btn-xs btn-outline-secondary ml-1" onclick="deselectAll()">إلغاء</button>
+                </div>
+                <input type="text" id="sidebar-search" class="form-control mb-3" placeholder="الاسم أو الرقم...">
+                <div id="sidebar-emp-list">
+                    <!-- List of employees will be loaded here with checkboxes -->
+                </div>
+            </div>
+            
+            <div class="col-md-8 p-4">
+                <form id="transferForm">
+                    <input type="hidden" id="record_id">
+                    <input type="hidden" id="police_number">
+                    <input type="hidden" id="name">
+                    
+                    <div class="alert alert-info py-2 mb-3" id="selected-emp-display" style="display:none;">
+                        <i class="fas fa-user mr-1"></i> تم اختيار: <strong></strong>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label>تاريخ إلحاق بالإدارة</label>
+                            <input type="date" class="form-control" id="attachment_date">
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>تاريخ التنفيذ</label>
+                            <input type="date" class="form-control" id="execution_date">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label>الجهة المنقول منها</label>
+                            <div class="input-group">
+                                <select class="form-control" id="transferred_from"></select>
+                                <div class="input-group-append">
+                                    <a class="btn btn-outline-primary" href="{% url 'transfer_locations_external' %}" target="_blank" title="إدارة الجهات"><i class="fas fa-plus"></i></a>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="loadLocations()" title="تحديث القائمة"><i class="fas fa-sync-alt"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>الجهة المنقول إليها</label>
+                            <div class="input-group">
+                                <select class="form-control" id="transferred_to"></select>
+                                <div class="input-group-append">
+                                    <a class="btn btn-outline-primary" href="{% url 'transfer_locations_external' %}" target="_blank" title="إدارة الجهات"><i class="fas fa-plus"></i></a>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="loadLocations()" title="تحديث القائمة"><i class="fas fa-sync-alt"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label>رقم القرار</label>
+                            <input type="text" class="form-control" id="decision_number">
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label>تاريخ القرار</label>
+                            <input type="date" class="form-control" id="decision_date">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>ملاحظات</label>
+                        <textarea class="form-control" id="notes" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+        </div>
+      </div>
+      <div class="modal-footer bg-light">
+        <button type="button" class="btn btn-secondary px-4" data-dismiss="modal">إلغاء</button>
+        <button type="button" class="btn btn-primary px-4" onclick="saveRecord()"><i class="fas fa-save mr-1"></i> حفظ التعديلات</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Location Modal Removed -->
+
+<script>
+    const csrfToken = '{{ csrf_token }}';
+    let currentRecords = [];
+    let locations = [];
+    let allEmployees = [];
+
+    $(document).ready(function() {
+        $('#sidebar-search').on('keyup', function() {
+            const val = $(this).val().toLowerCase();
+            $('.emp-item').each(function() {
+                const text = $(this).text().toLowerCase();
+                $(this).toggle(text.includes(val));
+            });
+        });
+    });
+
+    function loadAllEmployees() {
+        fetch("{% url 'employee_search_api' %}")
+            .then(res => res.json())
+            .then(data => {
+                allEmployees = data;
+                renderSidebarList();
+            })
+            .catch(err => console.error('Error loading employees:', err));
+    }
+
+    function renderSidebarList() {
+        const list = document.getElementById('sidebar-emp-list');
+        list.innerHTML = '';
+        allEmployees.forEach(emp => {
+            const div = document.createElement('div');
+            div.className = 'emp-item d-flex align-items-center';
+            div.id = `sidebar-emp-${emp.id}`;
+            div.innerHTML = `
+                <div class="custom-control custom-checkbox mr-2">
+                    <input type="checkbox" class="custom-control-input emp-checkbox" id="chk_${emp.id}" value="${emp.id}">
+                    <label class="custom-control-label" for="chk_${emp.id}"></label>
+                </div>
+                <div class="flex-grow-1" style="cursor:pointer" onclick="toggleEmpCheck(${emp.id})">
+                    <strong>${emp.display}</strong>
+                </div>
+            `;
+            list.appendChild(div);
+        });
+    }
+
+    function toggleEmpCheck(id) {
+        const chk = document.getElementById(`chk_${id}`);
+        chk.checked = !chk.checked;
+        updateSelectedDisplay();
+    }
+
+    $(document).on('change', '.emp-checkbox', function() {
+        updateSelectedDisplay();
+    });
+
+    function selectAllVisible() {
+        $('.emp-item:visible .emp-checkbox').prop('checked', true);
+        updateSelectedDisplay();
+    }
+
+    function deselectAll() {
+        $('.emp-checkbox').prop('checked', false);
+        updateSelectedDisplay();
+    }
+
+    function updateSelectedDisplay() {
+        const checked = $('.emp-checkbox:checked');
+        const display = document.getElementById('selected-emp-display');
+        if (checked.length > 0) {
+            display.style.display = 'block';
+            display.querySelector('strong').innerText = `${checked.length} فرد تم اختيارهم`;
+        } else {
+            display.style.display = 'none';
+        }
+    }
+
+    function selectEmployee(emp) {
+        const chk = document.getElementById(`chk_${emp.id}`);
+        if(chk) {
+            chk.checked = true;
+            updateSelectedDisplay();
+        }
+    }
+
+    function updateYear() {
+        const year = document.getElementById('yearSelect').value;
+        document.getElementById('display-year').innerText = year;
+        loadRecords();
+    }
+
+    function loadLocations() {
+        fetch("{% url 'transfer_locations_api' %}?location_type=external")
+            .then(res => res.json())
+            .then(data => {
+                locations = data;
+                populateLocationSelects();
+            })
+            .catch(err => console.error('Error loading locations:', err));
+    }
+
+    function populateLocationSelects() {
+        const selects = ['transferred_from', 'transferred_to'];
+        selects.forEach(id => {
+            const select = document.getElementById(id);
+            if (!select) return;
+            const currentValue = select.value;
+            select.innerHTML = '<option value="">-- اختر --</option>';
+            locations.forEach(loc => {
+                const opt = document.createElement('option');
+                opt.value = loc.name;
+                opt.textContent = loc.name;
+                select.appendChild(opt);
+            });
+            if (currentValue) select.value = currentValue;
+        });
+    }
+
+    function openAddLocationModal(targetId) {
+        document.getElementById('new_location_name').value = '';
+        document.getElementById('target_select_id').value = targetId;
+        $('#locationModal').modal('show');
+    }
+
+    function saveLocation() { }
+
+    function loadRecords() {
+        const year = document.getElementById('yearSelect').value;
+        fetch(`{% url 'transfer_records_api' %}?transfer_type=external&year=${year}`)
+            .then(res => res.json())
+            .then(data => {
+                currentRecords = data;
+                renderTable();
+            })
+            .catch(err => console.error('Error loading records:', err));
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('transfer-table-body');
+        tbody.innerHTML = '';
+        currentRecords.forEach((record, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${record.police_number || ''}</td>
+                <td>${record.name || ''}</td>
+                <td>${record.attachment_date || ''}</td>
+                <td>${record.transferred_from || ''}</td>
+                <td>${record.transferred_to || ''}</td>
+                <td>${record.decision_number || ''}</td>
+                <td>${record.decision_date || ''}</td>
+                <td>${record.execution_date || ''}</td>
+                <td>${record.notes || ''}</td>
+                <td class="no-print">
+                    <button class="btn btn-sm btn-primary" onclick="openEditModal(${index})"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteRecord(${record.id})"><i class="fas fa-trash"></i></button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+        for (let i = currentRecords.length; i < 10; i++) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${i + 1}</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="no-print"></td>`;
+            tbody.appendChild(tr);
+        }
+    }
+
+    function openAddModal() {
+        document.getElementById('record_id').value = '';
+        document.getElementById('police_number').value = '';
+        document.getElementById('name').value = '';
+        document.getElementById('attachment_date').value = '';
+        document.getElementById('decision_number').value = '';
+        document.getElementById('decision_date').value = '';
+        document.getElementById('execution_date').value = '';
+        document.getElementById('notes').value = '';
+        $('.emp-item').removeClass('selected');
+        document.getElementById('selected-emp-display').style.display = 'none';
+        if($('#transferred_from').length) $('#transferred_from').val('').trigger('change');
+        if($('#transferred_to').length) $('#transferred_to').val('').trigger('change');
+        document.getElementById('transferModalLabel').innerHTML = '<i class="fas fa-plus-circle mr-2"></i> إضافة فرد منقول (خارجي)';
+        $('#transferModal').modal('show');
+    }
+
+    function openEditModal(index) {
+        const record = currentRecords[index];
+        document.getElementById('record_id').value = record.id;
+        document.getElementById('police_number').value = record.police_number || '';
+        document.getElementById('name').value = record.name || '';
+        const emp = allEmployees.find(e => e.name === record.name);
+        if(emp) selectEmployee(emp);
+        document.getElementById('attachment_date').value = record.attachment_date || '';
+        if (document.getElementById('transferred_from')) document.getElementById('transferred_from').value = record.transferred_from || '';
+        if (document.getElementById('transferred_to')) document.getElementById('transferred_to').value = record.transferred_to || '';
+        document.getElementById('decision_number').value = record.decision_number || '';
+        document.getElementById('decision_date').value = record.decision_date || '';
+        document.getElementById('execution_date').value = record.execution_date || '';
+        document.getElementById('notes').value = record.notes || '';
+        document.getElementById('transferModalLabel').innerHTML = '<i class="fas fa-edit mr-2"></i> تعديل بيانات المنقول';
+        $('#transferModal').modal('show');
+    }
+
+    function saveRecord() {
+        const id = document.getElementById('record_id').value;
+        const year = document.getElementById('yearSelect').value;
+        const checkedEmps = $('.emp-checkbox:checked');
+        
+        if (checkedEmps.length === 0 && !id) {
+            alert('يجب اختيار فرد واحد على الأقل!');
+            return;
+        }
+
+        const employees = [];
+        checkedEmps.each(function() {
+            const empId = $(this).val();
+            const emp = allEmployees.find(e => e.id == empId);
+            if (emp) {
+                employees.push({
+                    name: emp.name,
+                    police_number: emp.police_number
+                });
+            }
+        });
+
+        const data = {
+            transfer_type: 'external',
+            year: year,
+            attachment_date: document.getElementById('attachment_date').value,
+            transferred_from: document.getElementById('transferred_from').value,
+            transferred_to: document.getElementById('transferred_to').value,
+            decision_number: document.getElementById('decision_number').value,
+            decision_date: document.getElementById('decision_date').value,
+            execution_date: document.getElementById('execution_date').value,
+            notes: document.getElementById('notes').value,
+            employees: employees
+        };
+
+        const method = id ? 'PUT' : 'POST';
+        if (id) {
+            data.id = id;
+            if (employees.length > 0) {
+                data.name = employees[0].name;
+                data.police_number = employees[0].police_number;
+            } else {
+                data.name = document.getElementById('name').value;
+                data.police_number = document.getElementById('police_number').value;
+            }
+        }
+
+        fetch("{% url 'transfer_records_api' %}", {
+            method: method,
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify(data)
+        })
+        .then(res => res.json())
+        .then(resData => {
+            if (resData.error) alert('خطأ: ' + resData.error);
+            else {
+                $('#transferModal').modal('hide');
+                loadRecords();
+            }
+        });
+    }
+
+    function deleteRecord(id) {
+        if (!confirm('هل أنت متأكد من حذف هذا السجل؟')) return;
+        fetch("{% url 'transfer_records_api' %}", {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({id: id})
+        })
+        .then(res => res.json())
+        .then(resData => {
+            if (resData.error) alert('خطأ: ' + resData.error);
+            else loadRecords();
+        });
+    }
+
+    function copyTableToExcel() {
+        const tempTextarea = document.createElement("textarea");
+        const table = document.getElementById("transfer-table");
+        let excelData = "";
+        for (let i = 0; i < table.rows.length; i++) {
+            const row = table.rows[i];
+            let rowData = [];
+            let numCells = row.cells.length;
+            if (row.cells[numCells - 1].classList.contains("no-print")) numCells -= 1;
+            for (let j = 0; j < numCells; j++) rowData.push(row.cells[j].innerText.trim());
+            excelData += rowData.join("\t") + "\n";
+        }
+        tempTextarea.value = excelData;
+        document.body.appendChild(tempTextarea);
+        tempTextarea.select();
+        try {
+            document.execCommand("copy");
+            alert("تم نسخ الجدول بنجاح! يمكنك الآن لصقه في ملف إكسل (Ctrl+V)");
+        } catch (err) {
+            alert("فشل في نسخ الجدول.");
+        }
+        document.body.removeChild(tempTextarea);
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        const currentYear = new Date().getFullYear();
+        document.getElementById('yearSelect').value = currentYear;
+        loadAllEmployees();
+        loadLocations();
+        updateYear();
+    });
+</script>
+{% endblock %}

@@ -161,6 +161,7 @@ DATABASES = {
 }
 
 
+
 LOGIN_URL = '/'
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = '/users/login/'

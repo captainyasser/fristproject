@@ -2,7 +2,7 @@ git status
 
 git add .
 
-git commit -m "update 9 add planty extract"
+git commit -m "update 10 add move in or out"
 
 git push
 
@@ -12,3 +12,4 @@ git push
 python manage.py runserver 0.0.0.0:5000
 
 
+python manage.py collectstatic

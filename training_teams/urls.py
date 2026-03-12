@@ -22,10 +22,9 @@ urlpatterns = [
     path("places/", views.places_page, name="places_page"),
     # 9. الفرق التدريبية الحالية
     path("current-teams/", views.current_teams_view, name="current_teams"),
-    
-    
-    
-    
-    
-    
+    # 10. التدريب الدوري
+    path('periodic-dashboard/', views.periodic_training_dashboard, name='periodic_dashboard'),
+    path('periodic/insert/', views.insert_periodic_training, name='insert_periodic_training'),
+    path('periodic/by-employee/', views.periodic_training_by_employee, name='periodic_by_employee'),
+    path('qualifying/by-employee/', views.qualifying_training_by_employee, name='qualifying_by_employee'),
 ]

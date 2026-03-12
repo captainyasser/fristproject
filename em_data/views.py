@@ -158,7 +158,7 @@
         
         
 
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.db import transaction
@@ -173,7 +173,7 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from datetime import datetime, timedelta
 from django.utils import timezone
 from django.db.models import F, Count, Sum
-from .models import Employee
+from .models import Employee, TransferRecord, TransferLocation
 from departments.models import Department
 from .serializers import EmployeeSerializer, EmployeeStatementSerializer
 
@@ -1305,21 +1305,32 @@ def edit_employee(request, employee_id):
 
 # def employee_statement(request):
 #     employees = Employee.objects.all().order_by('sort_number')
-#     selected_employee = None
+#     selected_employee = 
+@login_required(login_url='/login/')
+def transfer_locations_list_view(request, loc_type):
+    """View to manage transfer locations (internal/external)."""
+    locations = TransferLocation.objects.filter(location_type=loc_type).order_by('name')
+    
+    if request.method == "POST":
+        action = request.POST.get('action')
+        if action == 'delete':
+            loc_id = request.POST.get('location_id')
+            TransferLocation.objects.filter(id=loc_id).delete()
+        elif action == 'save':
+            loc_id = request.POST.get('location_id')
+            name = request.POST.get('name')
+            if loc_id:
+                TransferLocation.objects.filter(id=loc_id).update(name=name)
+            else:
+                TransferLocation.objects.create(name=name, location_type=loc_type)
+        return redirect(request.path)
 
-#     if request.method == 'GET' and 'employee' in request.GET:
-#         employee_id = request.GET.get('employee')
-#         if employee_id:
-#             selected_employee = Employee.objects.get(id=employee_id)
-
-#     return render(request, 'em_data/employee_statement.html', {
-#         'employees': employees,
-#         'selected_employee': selected_employee,
-#     })
-    
-    
-    
-    
+    context = {
+        'locations': locations,
+        'location_type': loc_type,
+        'title': 'إدارة الجهات الداخلية' if loc_type == 'internal' else 'إدارة الجهات الخارجية'
+    }
+    return render(request, 'em_data/transfer_locations.html', context)   
     
 
 
@@ -1742,6 +1753,31 @@ def male_musicians_report_view(request):
     check_protection()
     return render(request, 'em_data/male_musicians_report.html')
 
+@login_required
+def transfer_books_menu(request):
+    check_protection()
+    return render(request, 'em_data/transfer_books_menu.html')
+
+@login_required
+def internal_transfers_book(request):
+    check_protection()
+    return render(request, 'em_data/internal_transfers_book.html')
+
+@login_required
+def external_transfers_book(request):
+    check_protection()
+    return render(request, 'em_data/external_transfers_book.html')
+
+@login_required
+def insert_internal_transfer(request):
+    check_protection()
+    return render(request, 'em_data/insert_internal_transfer.html')
+
+@login_required
+def insert_external_transfer(request):
+    check_protection()
+    return render(request, 'em_data/insert_external_transfer.html')
+
 class AllReportsAPIView(APIView):
     def get(self, request):
         report_type = request.GET.get('type', '')
@@ -1767,3 +1803,122 @@ class AllReportsAPIView(APIView):
             })
         
         return Response({'employees': emp_list})
+
+class TransferRecordAPIView(APIView):
+    def get(self, request):
+        transfer_type = request.GET.get('transfer_type')
+        year = request.GET.get('year')
+        
+        if not transfer_type or not year:
+            return Response({'error': 'transfer_type and year are required'}, status=400)
+            
+        records = TransferRecord.objects.filter(transfer_type=transfer_type, year=year).values()
+        return Response(list(records))
+
+    def post(self, request):
+        data = request.data
+        if not data.get('transfer_type') or not data.get('year'):
+            return Response({'error': 'Missing required fields'}, status=400)
+            
+        employees = data.get('employees', [])
+        if not employees and data.get('name'):
+            # Fallback for old single selection if still used
+            employees = [{'name': data.get('name'), 'police_number': data.get('police_number', '')}]
+            
+        if not employees:
+            return Response({'error': 'No employees selected'}, status=400)
+            
+        created_records = []
+        for emp_data in employees:
+            record = TransferRecord.objects.create(
+                transfer_type=data.get('transfer_type'),
+                year=data.get('year'),
+                police_number=emp_data.get('police_number', ''),
+                name=emp_data.get('name'),
+                attachment_date=emp_data.get('attachment_date', ''),
+                transferred_from=data.get('transferred_from', ''),
+                transferred_to=data.get('transferred_to', ''),
+                decision_number=data.get('decision_number', ''),
+                decision_date=data.get('decision_date', ''),
+                execution_date=data.get('execution_date', ''),
+                notes=data.get('notes', '')
+            )
+            created_records.append({'id': record.id})
+            
+        return Response({'message': 'Created successfully', 'count': len(created_records)})
+
+    def put(self, request):
+        data = request.data
+        record_id = data.get('id')
+        if not record_id:
+            return Response({'error': 'ID is required'}, status=400)
+            
+        try:
+            record = TransferRecord.objects.get(id=record_id)
+            for field in ['police_number', 'name', 'attachment_date', 'transferred_from', 'transferred_to', 'decision_number', 'decision_date', 'execution_date', 'notes']:
+                if field in data:
+                    setattr(record, field, data[field])
+            record.save()
+            return Response({'message': 'Updated successfully'})
+        except TransferRecord.DoesNotExist:
+            return Response({'error': 'Record not found'}, status=404)
+
+    def delete(self, request):
+        record_id = request.data.get('id') or request.GET.get('id')
+        if not record_id:
+            return Response({'error': 'ID is required'}, status=400)
+            
+        try:
+            record = TransferRecord.objects.get(id=record_id)
+            record.delete()
+            return Response({'message': 'Deleted successfully'})
+        except TransferRecord.DoesNotExist:
+            return Response({'error': 'Record not found'}, status=404)
+
+class TransferLocationAPIView(APIView):
+    def get(self, request):
+        location_type = request.GET.get('location_type')
+        if not location_type:
+            return Response({'error': 'location_type is required'}, status=400)
+            
+        locations = TransferLocation.objects.filter(location_type=location_type).values('id', 'name').order_by('name')
+        return Response(list(locations))
+
+    def post(self, request):
+        data = request.data
+        name = data.get('name')
+        location_type = data.get('location_type')
+        
+        if not name or not location_type:
+            return Response({'error': 'name and location_type are required'}, status=400)
+            
+        try:
+            location, created = TransferLocation.objects.get_or_create(
+                name=name,
+                location_type=location_type
+            )
+            return Response({'id': location.id, 'name': location.name, 'created': created})
+        except Exception as e:
+            return Response({'error': str(e)}, status=400)
+
+
+class EmployeeSearchAPIView(APIView):
+    def get(self, request):
+        employees = Employee.objects.filter(deleted_at__isnull=True).values(
+            'id', 'name', 'police_number', 'sort_number', 'rank__name', 'date_of_edara'
+        ).order_by('sort_number', 'name')
+        result = []
+        for emp in employees:
+            display_name = f"{emp['rank__name'] or ''} / {emp['name']}"
+            if emp['police_number']:
+                display_name += f" [{emp['police_number']}]"
+            
+            result.append({
+                'id': emp['id'],
+                'name': emp['name'],
+                'police_number': emp['police_number'] or '',
+                'rank': emp['rank__name'] or '',
+                'date_of_edara': emp['date_of_edara'].strftime('%Y-%m-%d') if emp['date_of_edara'] else '',
+                'display': display_name
+            })
+        return Response(result)
