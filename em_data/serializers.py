@@ -1,6 +1,6 @@
 
 from rest_framework import serializers
-from .models import Employee
+from .models import Employee, MusicalInstrument
 from ranks.models import Rank
 from departments.models import Department
 from datetime import datetime
@@ -14,6 +14,11 @@ class DepartmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Department
         fields = ['id', 'name']
+
+class MusicalInstrumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MusicalInstrument
+        fields = ['id', 'name', 'description', 'image', 'category']
 
 class EmployeeSerializer(serializers.ModelSerializer):
     rank = RankSerializer(read_only=True)
@@ -68,6 +73,25 @@ class EmployeeSerializer(serializers.ModelSerializer):
     dryfood = serializers.BooleanField(required=False, allow_null=True, default=False)
     mony_out = serializers.BooleanField(required=False, allow_null=True, default=False)
     batch_number = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    job_title = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    job_description = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+
+    primary_instrument = MusicalInstrumentSerializer(read_only=True)
+    primary_instrument_id = serializers.PrimaryKeyRelatedField(
+        queryset=MusicalInstrument.objects.all(),
+        source='primary_instrument',
+        write_only=True,
+        allow_null=True,
+        required=False
+    )
+    secondary_instruments = MusicalInstrumentSerializer(many=True, read_only=True)
+    secondary_instrument_ids = serializers.PrimaryKeyRelatedField(
+        queryset=MusicalInstrument.objects.all(),
+        source='secondary_instruments',
+        many=True,
+        write_only=True,
+        required=False
+    )
 
     class Meta:
         model = Employee
@@ -79,7 +103,8 @@ class EmployeeSerializer(serializers.ModelSerializer):
             'insurance_number', 'health_status', 'rank', 'department', 
             'operation', 'image', 'amen_or_ola', 'rank_kind', 
             'dep_sort', 'mainornot', 'bus', 'tmamam', 'food', 'rahatcounter', 'institute_id',
-            'total_leave', 'rank_id', 'nots', 'department_id', 'idcard_expir', 'idcard_work', 'idcard_social', 'is_driver', 'dryfood', 'mony_out', 'batch_number'
+            'total_leave', 'rank_id', 'nots', 'department_id', 'idcard_expir', 'idcard_work', 'idcard_social', 'is_driver', 'dryfood', 'mony_out', 'batch_number', 'job_title', 'job_description',
+            'primary_instrument', 'primary_instrument_id', 'secondary_instruments', 'secondary_instrument_ids'
         ]
         read_only_fields = []
 

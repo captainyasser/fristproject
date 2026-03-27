@@ -3,6 +3,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
     EmployeeViewSet, home, FilterDataAPIView, filterdata_view, edit_multi_view,
+    MusicalInstrumentViewSet, instruments_manage_view,
     EmployeeStatementAPIView, employee_statement_html, idcard_data_view,
     idcard_filter_view, IDCardFilterAPIView,
     department_operation_report_view, DepartmentOperationReportAPIView,
@@ -12,12 +13,13 @@ from .views import (
     transfer_books_menu, internal_transfers_book, external_transfers_book,
     insert_internal_transfer, insert_external_transfer,
     TransferRecordAPIView, TransferLocationAPIView, EmployeeSearchAPIView,
-    transfer_locations_list_view
+    transfer_locations_list_view, job_description_card_view
 )
 from attendance.views import state_daily_report_view, dry_food_report_view, ranks_numerical_report_view
 
 router = DefaultRouter()
 router.register(r'employees', EmployeeViewSet)
+router.register(r'instruments', MusicalInstrumentViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
@@ -25,7 +27,9 @@ urlpatterns = [
     path('professional-profile/', professional_profile, name='professional_profile'),
     path('filterdata/', FilterDataAPIView.as_view(), name='filterdata_api'),
     path('filter/', filterdata_view, name='filterdata'),
+    path('instruments-manage/', instruments_manage_view, name='instruments_manage'),
     path('edit-multi/', edit_multi_view, name='edit_multi'),
+    path('job-description/<int:employee_id>/', job_description_card_view, name='job_description_card'),
     path('api/employee-statement/', EmployeeStatementAPIView.as_view(), name='employee-statement-api'),
     path('employee-statement/', employee_statement_html, name='employee-statement-html'),
     path('idcard-data/', idcard_data_view, name='idcard_data'),

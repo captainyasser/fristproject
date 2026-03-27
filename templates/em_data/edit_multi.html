@@ -58,6 +58,9 @@
                                 <option value="batch_number">رقم الدفعة</option>
                                 <option value="dryfood">dryfood</option>
                                 <option value="mony_out">مستحقات مالية خارج الإدارة</option>
+                                <option value="job_title">المسمى الوظيفي</option>
+                                <option value="job_description">الوصف الوظيفي</option>
+                                <option value="primary_instrument">الآلة الموسيقية</option>
                             </select>
                         </div>
                     </form>
@@ -93,12 +96,13 @@
     </div>
 
     <script>
-        const token = "{{ token }}";
+        // token is already defined in base.html
         const apiUrl = "/api/employees/";
         const csrfToken = "{{ csrf_token }}";
         let employeesData = [];
         let departments = [];
         let ranks = [];
+        let instruments = [];
 
         document.addEventListener("DOMContentLoaded", function() {
             Promise.all([
@@ -108,6 +112,9 @@
                 fetch("/api/ranks/", { headers: { "Authorization": `Token ${token}` } })
                     .then(res => res.json())
                     .then(data => ranks = data),
+                fetch("/api/em_data/instruments/", { headers: { "Authorization": `Token ${token}` } })
+                    .then(res => res.json())
+                    .then(data => instruments = data),
                 loadEmployees()
             ]).catch(error => {
                 console.error("Error loading initial data:", error);
@@ -200,6 +207,7 @@
         function getCurrentValue(employee, field) {
             if (field === "department" && employee.department) return employee.department.name || "-";
             if (field === "rank" && employee.rank) return employee.rank.name || "-";
+            if (field === "primary_instrument" && employee.primary_instrument) return employee.primary_instrument.name || "-";
             if (["tmamam", "food", "bus", "amen_or_ola", "dryfood", "mony_out"].includes(field)) return employee[field] ? "نعم" : "لا";
             if (["date_of_edara", "date_of_appointment", "date_of_birth", "date_of_retirement"].includes(field)) {
                 return employee[field] ? new Date(employee[field]).toLocaleDateString("ar-EG") : "-";
@@ -209,7 +217,7 @@
         }
 
         function getInputField(employee, field) {
-            if (["name", "id_number", "nickname", "police_number", "insurance_number", "phone_number", "alt_phone_number", "governorate", "district", "address", "batch_number"].includes(field)) {
+            if (["name", "id_number", "nickname", "police_number", "insurance_number", "phone_number", "alt_phone_number", "governorate", "district", "address", "batch_number", "job_title"].includes(field)) {
                 return `<input type="text" class="form-control edit-value" data-id="${employee.id}" value="${employee[field] || ''}">`;
             }
             if (field === "department") {
@@ -222,6 +230,12 @@
                 return `<select class="form-control edit-value" data-id="${employee.id}">
                     <option value="">-- اختر درجة --</option>
                     ${ranks.map(r => `<option value="${r.id}" ${employee.rank && employee.rank.id === r.id ? "selected" : ""}>${r.name}</option>`).join('')}
+                </select>`;
+            }
+            if (field === "primary_instrument") {
+                return `<select class="form-control edit-value" data-id="${employee.id}">
+                    <option value="">-- اختر آلة --</option>
+                    ${instruments.map(i => `<option value="${i.id}" ${employee.primary_instrument && employee.primary_instrument.id === i.id ? "selected" : ""}>${i.name}</option>`).join('')}
                 </select>`;
             }
             if (["tmamam", "food", "bus", "amen_or_ola", "mainornot", "dryfood", "mony_out"].includes(field)) {
@@ -286,7 +300,7 @@
                     <option value="خاصه" ${employee[field] === "خاصه" ? "selected" : ""}>خاصه</option>
                 </select>`;
             }
-            if (field === "nots") {
+            if (field === "nots" || field === "job_description") {
                 return `<textarea class="form-control edit-value" data-id="${employee.id}">${employee[field] || ''}</textarea>`;
             }
             if (field === "image") {
@@ -360,7 +374,7 @@
                     value = input.value ? parseInt(input.value) : null;
                 } else if (field === "rahatcounter") {
                     value = input.value !== "" ? parseInt(input.value) : null;
-                } else if (["department", "rank"].includes(field)) {
+                } else if (["department", "rank", "primary_instrument"].includes(field)) {
                     value = input.value ? parseInt(input.value) : null;
                 } else {
                     value = input.value || null;
@@ -413,7 +427,7 @@
             if (["tmamam", "food", "bus", "amen_or_ola", "dryfood", "mony_out"].includes(field)) {
                 return employee[field];
             }
-            if (["department", "rank"].includes(field)) {
+            if (["department", "rank", "primary_instrument"].includes(field)) {
                 return employee[field] ? employee[field].id : null;
             }
             if (["date_of_edara", "date_of_appointment", "date_of_birth", "date_of_retirement"].includes(field)) {

@@ -57,6 +57,27 @@ class TransferRecord(models.Model):
     def __str__(self):
         return f"{self.get_transfer_type_display()} - {self.name} - {self.year}"
 
+class MusicalInstrument(models.Model):
+    CATEGORY_CHOICES = [
+        ('خشبية', 'خشبية'),
+        ('نحاسية', 'نحاسية'),
+        ('وترية', 'وترية'),
+        ('إيقاعية', 'إيقاعية'),
+        ('إلكترونية', 'إلكترونية'),
+        ('دبوس', 'دبوس'),
+    ]
+    name = models.CharField(max_length=100, verbose_name="اسم الآلة")
+    description = models.TextField(blank=True, null=True, verbose_name="وصف الآلة")
+    image = models.ImageField(upload_to='instruments/', blank=True, null=True, verbose_name="صورة الآلة")
+    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, verbose_name="تصنيف الآلة")
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = "آلة موسيقية"
+        verbose_name_plural = "الآلات الموسيقية"
+
 class Employee(models.Model):
     # Operation Choices
     OPERATION_CHOICES = [
@@ -143,6 +164,22 @@ class Employee(models.Model):
     is_driver = models.BooleanField(default=False, verbose_name="سائق")
     dryfood = models.BooleanField(default=False, verbose_name="dryfood")
     mony_out = models.BooleanField(default=False, verbose_name="مستحقات خارج الإدارة")
+    job_title = models.CharField(max_length=255, null=True, blank=True, verbose_name="المسمى الوظيفي")
+    job_description = models.TextField(null=True, blank=True, verbose_name="الوصف الوظيفي")
+    primary_instrument = models.ForeignKey(
+        MusicalInstrument, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='primary_players',
+        verbose_name="الآلة الموسيقية"
+    )
+    secondary_instruments = models.ManyToManyField(
+        MusicalInstrument, 
+        blank=True, 
+        related_name='secondary_players',
+        verbose_name="الآلات الفرعية"
+    )
 
     class Meta:
         db_table = 'employees'

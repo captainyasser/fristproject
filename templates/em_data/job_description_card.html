@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}بطاقة الوصف الوظيفي - {{ employee.name }}{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
+<style>
+    .report-container { padding: 30px; font-family: 'Sakkal Majalla', 'Traditional Arabic', Arial, sans-serif; }
+    .card { border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: none; margin-bottom: 20px; }
+    .card-header { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; border-radius: 15px 15px 0 0 !important; font-weight: bold; padding: 15px 20px; }
+    
+    .official-header { display: flex; justify-content: space-between; margin-bottom: 30px; border-bottom: 2px solid #1e3c72; padding-bottom: 10px; }
+    .header-right, .header-left { text-align: center; }
+    .header-center { text-align: center; font-weight: bold; font-size: 1.5rem; color: #1e3c72; margin-top: 20px; }
+    
+    .info-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    .info-table th { background-color: #f8f9fa; color: #1e3c72; width: 25%; text-align: right; padding: 12px; border: 1px solid #dee2e6; }
+    .info-table td { text-align: right; padding: 12px; border: 1px solid #dee2e6; }
+    
+    .job-description-box { background-color: #fff; border: 1px solid #dee2e6; padding: 20px; border-radius: 10px; margin-top: 20px; min-height: 50px; height: auto; white-space: pre-wrap; transition: font-size 0.2s; }
+    
+    .font-controls { margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 8px; display: inline-block; border: 1px solid #ddd; }
+    #printableCard { font-size: 22px; transition: font-size 0.2s; }
+    #printableCard table { font-size: 22px; }
+    .section-title { color: #1e3c72; font-weight: bold; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 20px; margin-bottom: 10px; }
+
+    .no-print { margin-bottom: 20px; }
+    
+    @media print {
+        .no-print, #notification-bar, .main-sidebar, .main-header, .main-footer { display: none !important; }
+        .content-wrapper { margin-right: 0 !important; margin-left: 0 !important; padding: 0 !important; }
+        .card { box-shadow: none; border: none; margin: 0; }
+        .report-container { padding: 0; width: 100%; }
+        body { background: white; margin: 0; padding: 0; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="report-container" dir="rtl">
+    <!-- أزرار التحكم -->
+    <div class="no-print text-center">
+        <button class="btn btn-primary ml-2" onclick="window.print()">
+            <i class="fas fa-print"></i> طباعة
+        </button>
+        <button class="btn btn-success ml-2" id="btn-excel">
+            <i class="fas fa-file-excel"></i> إكسل
+        </button>
+        <button class="btn btn-info ml-2" id="btn-copy">
+            <i class="fas fa-copy"></i> نسخ
+        </button>
+        <a href="{% url 'home' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-right"></i> عودة
+        </a>
+        <div class="font-controls ml-2">
+            <span class="mr-2 h6">حجم الخط:</span>
+            <button class="btn btn-outline-dark btn-sm" onclick="changeFontSize(1)">
+                <i class="fas fa-plus"></i> تكبير
+            </button>
+            <button class="btn btn-outline-dark btn-sm" onclick="changeFontSize(-1)">
+                <i class="fas fa-minus"></i> تصغير
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="resetFontSize()">
+                <i class="fas fa-sync"></i> إعادة ضبط
+            </button>
+        </div>
+    </div>
+
+    <div class="card" id="printableCard">
+        <div class="card-body p-5">
+            <!-- الترويسة الرسمية -->
+            <div class="official-header">
+                <div class="header-right">
+                    وزارة الداخلية<br>
+                    قطاع التدريب<br>
+                    إدارة موسيقات الشرطة
+                </div>
+                <div class="header-center">
+                    بطاقة الوصف الوظيفي
+                </div>
+                <div class="header-left">
+                    تاريخ الطباعة: {{ now|date:"Y-m-d" }}
+                </div>
+            </div>
+
+            <!-- بيانات الفرد الأساسية -->
+            <div class="section-title"><i class="fas fa-user-circle mr-2"></i> بيانات الفرد</div>
+            <table class="info-table">
+                <tr>
+                    <th>الاسم:</th>
+                    <td>{{ employee.name }}</td>
+                    <th>الدرجة:</th>
+                    <td>{{ employee.rank.name|default:"-" }}</td>
+                </tr>
+                <tr>
+                    <th>رقم الشرطة:</th>
+                    <td>{{ employee.police_number|default:"-" }}</td>
+                    <th>القسم:</th>
+                    <td>{{ employee.department.name|default:"-" }}</td>
+                </tr>
+                <tr>
+                    <th>تاريخ الميلاد:</th>
+                    <td>{{ employee.date_of_birth|date:"Y-m-d"|default:"-" }}</td>
+                    <th>العمر:</th>
+                    <td>{{ employee.age|default:"-" }} عام</td>
+                </tr>
+                <tr>
+                    <th>تاريخ التعيين:</th>
+                    <td>{{ employee.date_of_appointment|date:"Y-m-d"|default:"-" }}</td>
+                    <th>تاريخ دخول الإدارة:</th>
+                    <td>{{ employee.date_of_edara|date:"Y-m-d"|default:"-" }}</td>
+                </tr>
+                <tr>
+                    <th>تاريخ آخر ترقية:</th>
+                    <td class="font-weight-bold">{{ latest_promotion.promotion_date|date:"Y-m-d"|default:"-" }}</td>
+                    {% if employee.department.id == 14 %}
+                    <th>الدور:</th>
+                    <td class="font-weight-bold text-primary">معلم آلة {{ employee.primary_instrument.name|default:"-" }}</td>
+                    {% else %}
+                    <th>التشغيل:</th>
+                    <td>{{ employee.operation|default:"-" }}</td>
+                    {% endif %}
+                </tr>
+                <tr>
+                    {% if employee.department.id == 14 %}
+                    <th>التشغيل:</th>
+                    <td>{{ employee.operation|default:"-" }}</td>
+                    {% endif %}
+                    <th>تاريخ التقاعد:</th>
+                    <td class="text-danger">{{ employee.date_of_retirement|date:"Y-m-d"|default:"-" }}</td>
+                    {% if employee.department.id != 14 %}
+                    <th>المسمى الوظيفي:</th>
+                    <td class="font-weight-bold">{{ employee.job_title|default:"" }}</td>
+                    {% endif %}
+                </tr>
+                {% if employee.department.id == 14 %}
+                <tr>
+                    <th>المسمى الوظيفي:</th>
+                    <td colspan="3" class="font-weight-bold">{{ employee.job_title|default:"" }}</td>
+                </tr>
+                {% endif %}
+            </table>
+
+            <!-- الخبرات الفنية -->
+            <div class="section-title"><i class="fas fa-star mr-2"></i> الخبرات الفنية (الفرق التدريبية)</div>
+            <div class="row">
+                <div class="col-12">
+                    <table class="table table-bordered table-sm text-center">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>اسم الفرقة</th>
+                                <th>مكان الانعقاد</th>
+                                <th>من تاريخ</th>
+                                <th>إلى تاريخ</th>
+                                <th>النتيجة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tech in tech_experiences %}
+                            <tr>
+                                <td>{{ tech.training_team.name }}</td>
+                                <td>{{ tech.place.name }}</td>
+                                <td>{{ tech.start_date|date:"Y-m-d" }}</td>
+                                <td>{{ tech.end_date|date:"Y-m-d" }}</td>
+                                <td>{{ tech.result }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-muted">لا توجد فرق تدريبية </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- الوصف الوظيفي -->
+            <div class="section-title"><i class="fas fa-file-alt mr-2"></i> الوصف الوظيفي</div>
+            <div class="job-description-box">
+                {{ employee.job_description|default:"" }}
+            </div>
+
+            <!-- التوقيعات (اختياري للطباعة) -->
+            <div class="row mt-5 pt-5 text-center">
+                <div class="col-4">
+                    / .....................
+                    <div class="mt-2"><strong>( توقيع الفرد )</strong></div>
+                </div>
+                
+                <div class="col-4">
+                    مقدم / 
+                    ......................
+                    <div class="mt-2"><strong>رئيس القسم </strong></div>
+                </div>
+
+                <div class="col-4">
+                    عميد / 
+                    ......................
+                    <div class="mt-2"><strong>مدير إدارة موسيقات الشرطة</strong></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- جدول مخفي لتسهيل التصدير عبر DataTables -->
+    <div class="d-none">
+        <table id="exportTable">
+            <thead>
+                <tr>
+                    <th>اسم الفرد</th>
+                    <th>الدرجة</th>
+                    <th>رقم الشرطة</th>
+                    <th>المسمى الوظيفي</th>
+                    <th>الوصف الوظيفي</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{{ employee.name }}</td>
+                    <td>{{ employee.rank.name|default:"-" }}</td>
+                    <td>{{ employee.police_number|default:"-" }}</td>
+                    <td>{{ employee.job_title|default:"-" }}</td>
+                    <td>{{ employee.job_description|default:"-" }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        var table = $('#exportTable').DataTable({
+            dom: 'Bfrtip',
+            buttons: [
+                {
+                    extend: 'copy',
+                    text: 'نسخ',
+                    title: 'بطاقة وصف وظيفي - {{ employee.name }}'
+                },
+                {
+                    extend: 'excel',
+                    text: 'إكسل',
+                    title: 'بطاقة وصف وظيفي - {{ employee.name }}'
+                }
+            ]
+        });
+
+        $('#btn-copy').on('click', function() { table.button('.buttons-copy').trigger(); });
+        $('#btn-excel').on('click', function() { table.button('.buttons-excel').trigger(); });
+    });
+
+    let currentFontSize = 22;
+    function changeFontSize(delta) {
+        currentFontSize += delta;
+        if (currentFontSize < 10) currentFontSize = 10;
+        if (currentFontSize > 40) currentFontSize = 40;
+        document.getElementById('printableCard').style.fontSize = currentFontSize + 'px';
+        
+        // Update all tables font size too
+        const tables = document.querySelectorAll('#printableCard table');
+        tables.forEach(t => t.style.fontSize = currentFontSize + 'px');
+    }
+
+    function resetFontSize() {
+        currentFontSize = 22;
+        document.getElementById('printableCard').style.fontSize = '22px';
+        const tables = document.querySelectorAll('#printableCard table');
+        tables.forEach(t => t.style.fontSize = '22px');
+    }
+</script>
+{% endblock %}

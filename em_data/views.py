@@ -173,9 +173,9 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from datetime import datetime, timedelta
 from django.utils import timezone
 from django.db.models import F, Count, Sum
-from .models import Employee, TransferRecord, TransferLocation
+from .models import Employee, TransferRecord, TransferLocation, MusicalInstrument
 from departments.models import Department
-from .serializers import EmployeeSerializer, EmployeeStatementSerializer
+from .serializers import EmployeeSerializer, EmployeeStatementSerializer, MusicalInstrumentSerializer
 
 
 @login_required
@@ -269,7 +269,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
             'nickname', 'operation', 'police_number', 'insurance_number', 'date_of_edara',
             'date_of_appointment', 'phone_number', 'alt_phone_number', 'marital_status',
             'gender', 'governorate', 'district', 'address', 'health_status', 'tmamam',
-            'food', 'rahatcounter', 'department', 'total_leave', 'bus', 'nots', 'dryfood', 'mony_out', 'batch_number'
+            'food', 'rahatcounter', 'department', 'total_leave', 'bus', 'nots', 'dryfood', 'mony_out', 'batch_number', 'job_title', 'job_description', 'primary_instrument'
         ]
 
         if field not in allowed_fields:
@@ -309,6 +309,13 @@ class EmployeeViewSet(viewsets.ModelViewSet):
                                 if rank != current_value:
                                     setattr(employee, field, rank)
                                     updated_items.append(employee)
+                        elif field == 'primary_instrument':
+                            if new_value:
+                                from .models import MusicalInstrument
+                                instr = MusicalInstrument.objects.get(id=new_value)
+                                if instr != current_value:
+                                    setattr(employee, field, instr)
+                                    updated_items.append(employee)
                         elif field in ['rahatcounter', 'age', 'sort_number', 'seniority_order', 'dep_sort', 'total_leave', 'rank_kind', 'mainornot']:
                             new_int = int(new_value) if new_value else None
                             if new_int != current_value:
@@ -317,6 +324,14 @@ class EmployeeViewSet(viewsets.ModelViewSet):
                         else:
                             if new_value != current_value:
                                 setattr(employee, field, new_value)
+                                if field == 'id_number' and new_value:
+                                    birth_date = employee.extract_birth_date()
+                                    if birth_date:
+                                        employee.date_of_birth = birth_date
+                                        today = timezone.now().date()
+                                        age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
+                                        employee.age = age
+                                        employee.date_of_retirement = birth_date.replace(year=birth_date.year + 60)
                                 updated_items.append(employee)
 
                     except Employee.DoesNotExist:
@@ -325,7 +340,10 @@ class EmployeeViewSet(viewsets.ModelViewSet):
                         return Response({'error': 'القسم أو الدرجة المُدخلة غير موجودة'}, status=status.HTTP_400_BAD_REQUEST)
 
                 if updated_items:
-                    Employee.objects.bulk_update(updated_items, [field])
+                    fields_to_update = [field]
+                    if field == 'id_number':
+                        fields_to_update.extend(['date_of_birth', 'age', 'date_of_retirement'])
+                    Employee.objects.bulk_update(updated_items, fields_to_update)
                     return Response({
                         'message': f'تم تعديل حقل {field} لـ {len(updated_items)} فرد بنجاح',
                         'updated_count': len(updated_items)
@@ -336,6 +354,11 @@ class EmployeeViewSet(viewsets.ModelViewSet):
             return Response({'error': f'خطأ في تنسيق القيمة: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({'error': f'حدث خطأ أثناء التعديل: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class MusicalInstrumentViewSet(viewsets.ModelViewSet):
+    queryset = MusicalInstrument.objects.all()
+    serializer_class = MusicalInstrumentSerializer
+    permission_classes = [IsAuthenticated]
 
     @action(detail=False, methods=['get'], url_path='get-seniority-calculation')
     def get_seniority_calculation(self, request):
@@ -599,11 +622,45 @@ def filterdata_view(request):
 
 
 @login_required
+def instruments_manage_view(request):
+    check_protection()
+    token, created = Token.objects.get_or_create(user=request.user)
+    return render(request, 'em_data/instruments_manage.html', {
+        'token': token.key
+    })
+
+@login_required
 def edit_multi_view(request):
     check_protection()
     token, created = Token.objects.get_or_create(user=request.user)
     return render(request, 'em_data/edit_multi.html', {
         'token': token.key
+    })
+
+@login_required
+def job_description_card_view(request, employee_id):
+    check_protection()
+    from django.shortcuts import get_object_or_404
+    employee = Employee.objects.select_related('rank', 'department', 'primary_instrument').prefetch_related(
+        'training_teams', 'training_teams__training_team', 'training_teams__place'
+    ).get(id=employee_id)
+    
+    # Calculate tech experiences
+    tech_experiences = employee.training_teams.all().order_by('-start_date')
+    
+    # Latest Promotion
+    latest_promotion = None
+    try:
+        from tarkyat.models import Promotion
+        latest_promotion = Promotion.objects.filter(employee=employee).order_by('-promotion_date').first()
+    except (ImportError, Exception):
+        pass
+
+    return render(request, 'em_data/job_description_card.html', {
+        'employee': employee,
+        'tech_experiences': tech_experiences,
+        'latest_promotion': latest_promotion,
+        'now': datetime.now()
     })
 
 class EmployeeStatementAPIView(APIView):

@@ -410,6 +410,14 @@
                                                 </select>
                                             </div>
                                             <div class="form-group">
+                                                <label for="edit_job_title">المسمى الوظيفي</label>
+                                                <input type="text" class="form-control" id="edit_job_title" name="job_title">
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="edit_job_description">الوصف الوظيفي</label>
+                                                <textarea class="form-control" id="edit_job_description" name="job_description" rows="3"></textarea>
+                                            </div>
+                                            <div class="form-group">
                                                 <label for="edit_image">الصورة</label>
                                                 <input type="file" class="form-control" id="edit_image" name="image">
                                                 <small class="form-text text-muted">يجب أن تكون الصورة بصيغة JPG أو PNG</small>
@@ -684,10 +692,11 @@
                     employee.date_of_birth || '-', // تاريخ الميلاد
                     employee.date_of_appointment || '-', // تاريخ التعيين
                     {% if user.is_staff %}
-                        `<button class="btn btn-sm btn-warning" onclick="editEmployee(${employee.id}, '${employee.name}')">تعديل</button>
+                        `<a href="/api/em_data/job-description/${employee.id}/" class="btn btn-sm btn-info" target="_blank">بطاقة الوصف</a>
+                         <button class="btn btn-sm btn-warning" onclick="editEmployee(${employee.id}, '${employee.name}')">تعديل</button>
                          <button class="btn btn-sm btn-danger" onclick="deleteEmployee(${employee.id})">حذف</button>`
                     {% else %}
-                        ''
+                        `<a href="/api/em_data/job-description/${employee.id}/" class="btn btn-sm btn-info" target="_blank">بطاقة الوصف</a>`
                     {% endif %}
                 ]);
 
@@ -893,6 +902,8 @@
                 document.getElementById('edit_nots').value = employee.nots || '';
                 document.getElementById('edit_is_driver').checked = employee.is_driver || false;
                 document.getElementById('edit_mony_out').checked = employee.mony_out || false;
+                document.getElementById('edit_job_title').value = employee.job_title || '';
+                document.getElementById('edit_job_description').value = employee.job_description || '';
 
                 $('#editEmployeeModal').modal('show');
             } else {

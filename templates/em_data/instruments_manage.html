@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid" dir="rtl">
+    <div class="row pt-3">
+        <div class="col-12">
+            <div class="card card-primary card-outline">
+                <div class="card-header">
+                    <h3 class="card-title text-right" style="float: right;">إدارة الآلات الموسيقية</h3>
+                    <div class="card-tools" style="float: left;">
+                        <button type="button" class="btn btn-success" data-toggle="modal" data-target="#instrumentModal" onclick="prepareAdd()">
+                            <i class="fas fa-plus mr-1"></i> إضافة آلة جديدة
+                        </button>
+                    </div>
+                </div>
+                <!-- /.card-header -->
+                <div class="card-body">
+                    <table id="instrumentsTable" class="table table-bordered table-striped text-center">
+                        <thead>
+                            <tr>
+                                <th>م</th>
+                                <th>الصورة</th>
+                                <th>اسم الآلة</th>
+                                <th>التصنيف</th>
+                                <th>الوصف</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="instrumentsBody">
+                            <!-- سيتم التحميل عبر JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <!-- /.card-body -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal إضافة/تعديل -->
+<div class="modal fade" id="instrumentModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modalTitle">إضافة آلة</h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form id="instrumentForm">
+                <div class="modal-body">
+                    <input type="hidden" id="instrumentId">
+                    <div class="form-group">
+                        <label>اسم الآلة</label>
+                        <input type="text" id="name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>التصنيف</label>
+                        <select id="category" class="form-control" required>
+                            <option value="خشبية">خشبية</option>
+                            <option value="نحاسية">نحاسية</option>
+                            <option value="وترية">وترية</option>
+                            <option value="إيقاعية">إيقاعية</option>
+                            <option value="إلكترونية">إلكترونية</option>
+                            <option value="دبوس">دبوس</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>الوصف</label>
+                        <textarea id="description" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>صورة الآلة</label>
+                        <input type="file" id="imageFile" class="form-control-file">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // token is already defined in base.html
+    const apiUrl = "/api/em_data/instruments/";
+    let table;
+
+    $(document).ready(function() {
+        console.log("Instruments Manage V4 DOM Ready");
+        
+        try {
+            loadInstruments();
+        } catch (err) {
+            console.error("Initial load failed:", err);
+        }
+
+        $('#instrumentForm').on('submit', function(e) {
+            console.log("Submit event caught!");
+            e.preventDefault();
+            saveInstrument();
+        });
+        
+        console.log("Listeners attached");
+    });
+
+    function loadInstruments() {
+        console.log("loadInstruments started, apiUrl:", apiUrl);
+        if (!token) {
+            console.error("Token is missing!");
+            return;
+        }
+
+        if ($.fn.DataTable.isDataTable('#instrumentsTable')) {
+            $('#instrumentsTable').DataTable().destroy();
+        }
+
+        fetch(apiUrl, {
+            headers: { 'Authorization': `Token ${token}` }
+        })
+        .then(res => {
+            console.log("Fetch response status:", res.status);
+            if (!res.ok) throw new Error("Load failed with status " + res.status);
+            return res.json();
+        })
+        .then(data => {
+            console.log("Data loaded:", data.length, "items");
+            let html = '';
+            data.forEach((item, index) => {
+                const imgSrc = item.image ? item.image : '{% static "adminlte/dist/img/no-image.png" %}';
+                html += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td><img src="${imgSrc}" width="50" class="img-thumbnail"></td>
+                        <td>${item.name}</td>
+                        <td><span class="badge badge-info">${item.category}</span></td>
+                        <td>${item.description || '-'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#instrumentModal" onclick="editInstrument(${item.id})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteInstrument(${item.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            $('#instrumentsBody').html(html);
+            table = $('#instrumentsTable').DataTable({
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Arabic.json"
+                },
+                "responsive": true
+            });
+        });
+    }
+
+    function prepareAdd() {
+        console.log("Preparing modal for Add...");
+        $('#instrumentForm')[0].reset();
+        $('#instrumentId').val('');
+        $('#modalTitle').text('إضافة آلة موسيقية جديدة');
+        // No need for .modal('show') as data-toggle handles it
+    }
+
+    function editInstrument(id) {
+        fetch(`${apiUrl}${id}/`, {
+            headers: { 'Authorization': `Token ${token}` }
+        })
+        .then(res => res.json())
+        .then(item => {
+            $('#instrumentId').val(item.id);
+            $('#name').val(item.name);
+            $('#category').val(item.category);
+            $('#description').val(item.description);
+            $('#modalTitle').text('تعديل بيانات الآلة');
+            $('#instrumentModal').modal('show');
+        });
+    }
+
+    function saveInstrument() {
+        console.log("saveInstrument called");
+        const id = $('#instrumentId').val();
+        const formData = new FormData();
+        
+        const nameVal = $('#name').val();
+        const catVal = $('#category').val();
+        
+        console.log("Form values:", { id, nameVal, catVal });
+        
+        if (!nameVal) {
+            alert("اسم الآلة مطلوب");
+            return;
+        }
+
+        formData.append('name', nameVal);
+        formData.append('category', catVal);
+        
+        // Handle optional description
+        const desc = $('#description').val();
+        if (desc) {
+            formData.append('description', desc);
+        } else {
+            formData.append('description', ''); // Send empty string if null
+        }
+        
+        // Handle optional image
+        const fileInput = document.getElementById('imageFile');
+        if (fileInput.files.length > 0) {
+            formData.append('image', fileInput.files[0]);
+        }
+
+        const method = id ? 'PATCH' : 'POST';
+        const url = id ? `${apiUrl}${id}/` : apiUrl;
+
+        fetch(url, {
+            method: method,
+            headers: {
+                'Authorization': `Token ${token}`,
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: formData
+        })
+        .then(res => {
+            if (res.ok) {
+                $('#instrumentModal').modal('hide');
+                loadInstruments();
+                Swal.fire('نجاح', 'تم حفظ بيانات الآلة بنجاح', 'success');
+            } else {
+                return res.json().then(data => {
+                    let errorMsg = 'فشل حفظ البيانات';
+                    if (data && typeof data === 'object') {
+                        errorMsg += ': ' + Object.entries(data).map(([k, v]) => `${k}: ${v}`).join(', ');
+                    }
+                    Swal.fire('خطأ', errorMsg, 'error');
+                });
+            }
+        })
+        .catch(error => {
+            console.error("Save error:", error);
+            Swal.fire('خطأ', 'حدث خطأ غير متوقع أثناء الاتصال بالخادم', 'error');
+        });
+    }
+
+    function deleteInstrument(id) {
+        Swal.fire({
+            title: 'هل أنت متأكد؟',
+            text: "لن تتمكن من التراجع عن هذا!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'نعم، احذف!',
+            cancelButtonText: 'إلغاء'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`${apiUrl}${id}/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    }
+                })
+                .then(res => {
+                    if (res.status === 204) {
+                        loadInstruments();
+                        Swal.fire('حذف!', 'تم حذف الآلة بنجاح.', 'success');
+                    }
+                });
+            }
+        });
+    }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+{% endblock %}
