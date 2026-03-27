@@ -46,6 +46,9 @@ urlpatterns = [
     path('names-index/', views.names_index_view, name='names_index'),
     path('irregular/', views.irregular_attendance, name='irregular_attendance'),
     path('irregular/validation/', validation_views.irregular_validation_view, name='irregular_validation'),
+    path('state-daily-report/', views.state_daily_report_view, name='state_daily_report'),
+    path('dry-food-report/', views.dry_food_report_view, name='dry_food_report'),
+    path('ranks-numerical-report/', views.ranks_numerical_report_view, name='ranks_numerical_report'),
     ]
 
 

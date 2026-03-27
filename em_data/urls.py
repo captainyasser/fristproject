@@ -14,6 +14,7 @@ from .views import (
     TransferRecordAPIView, TransferLocationAPIView, EmployeeSearchAPIView,
     transfer_locations_list_view
 )
+from attendance.views import state_daily_report_view, dry_food_report_view, ranks_numerical_report_view
 
 router = DefaultRouter()
 router.register(r'employees', EmployeeViewSet)
@@ -51,6 +52,9 @@ urlpatterns = [
     path('transfer-locations-external/', transfer_locations_list_view, {'loc_type': 'external'}, name='transfer_locations_external'),
     path('insert-internal-transfer/', insert_internal_transfer, name='insert_internal_transfer'),
     path('insert-external-transfer/', insert_external_transfer, name='insert_external_transfer'),
+    path('state-daily-report/', state_daily_report_view, name='state_daily_report'),
+    path('dry-food-report/', dry_food_report_view, name='dry_food_report'),
+    path('ranks-numerical-report/', ranks_numerical_report_view, name='ranks_numerical_report'),
 ]
 
 # from django.urls import path

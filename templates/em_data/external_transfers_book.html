@@ -125,7 +125,7 @@
     <div class="card form-card">
         <div class="card-header text-center">
             <h2 class="mb-0">دفتر النقل الخارجي</h2>
-            <p class="mb-0 mt-1">لعام <span id="display-year">2026</span> - حسب تاريخ التنفيذ</p>
+            <p class="mb-0 mt-1">لعام <span id="display-year">2026</span></p>
         </div>
         <div class="card-body p-0">
             <div class="table-container">
@@ -138,8 +138,7 @@
                             <th>تاريخ إلحاق بالإدارة</th>
                             <th>الجهة المنقول منها</th>
                             <th>الجهة المنقول إليها</th>
-                            <th>رقم القرار</th>
-                            <th>تاريخ القرار</th>
+                            <th>رقم وتاريخ القرار</th>
                             <th>تاريخ التنفيذ</th>
                             <th>ملاحظات</th>
                             <th class="no-print">إجراءات</th>
@@ -201,17 +200,17 @@
 
                     <div class="row">
                         <div class="col-md-6 form-group">
-                            <label>الجهة المنقول منها</label>
+                            <label>الجهة المنقول منها (مكان داخلي)</label>
                             <div class="input-group">
                                 <select class="form-control" id="transferred_from"></select>
                                 <div class="input-group-append">
-                                    <a class="btn btn-outline-primary" href="{% url 'transfer_locations_external' %}" target="_blank" title="إدارة الجهات"><i class="fas fa-plus"></i></a>
+                                    <a class="btn btn-outline-primary" href="{% url 'transfer_locations_internal' %}" target="_blank" title="إدارة الجهات"><i class="fas fa-plus"></i></a>
                                     <button class="btn btn-outline-secondary" type="button" onclick="loadLocations()" title="تحديث القائمة"><i class="fas fa-sync-alt"></i></button>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-6 form-group">
-                            <label>الجهة المنقول إليها</label>
+                            <label>الجهة المنقول إليها (مكان خارجي)</label>
                             <div class="input-group">
                                 <select class="form-control" id="transferred_to"></select>
                                 <div class="input-group-append">
@@ -342,31 +341,54 @@
         loadRecords();
     }
 
+    let locationsInternal = [];
+    let locationsExternal = [];
+
     function loadLocations() {
+        fetch("{% url 'transfer_locations_api' %}?location_type=internal")
+            .then(res => res.json())
+            .then(data => {
+                locationsInternal = data;
+                populateLocationSelects();
+            })
+            .catch(err => console.error('Error loading internal locations:', err));
+
         fetch("{% url 'transfer_locations_api' %}?location_type=external")
             .then(res => res.json())
             .then(data => {
-                locations = data;
+                locationsExternal = data;
                 populateLocationSelects();
             })
-            .catch(err => console.error('Error loading locations:', err));
+            .catch(err => console.error('Error loading external locations:', err));
     }
 
     function populateLocationSelects() {
-        const selects = ['transferred_from', 'transferred_to'];
-        selects.forEach(id => {
-            const select = document.getElementById(id);
-            if (!select) return;
-            const currentValue = select.value;
-            select.innerHTML = '<option value="">-- اختر --</option>';
-            locations.forEach(loc => {
+        const selectFrom = document.getElementById('transferred_from');
+        const selectTo = document.getElementById('transferred_to');
+        
+        if (selectFrom && locationsInternal) {
+            const currentFrom = selectFrom.value;
+            selectFrom.innerHTML = '<option value="">-- اختر الجهة الداخلية --</option>';
+            locationsInternal.forEach(loc => {
                 const opt = document.createElement('option');
                 opt.value = loc.name;
                 opt.textContent = loc.name;
-                select.appendChild(opt);
+                selectFrom.appendChild(opt);
             });
-            if (currentValue) select.value = currentValue;
-        });
+            if (currentFrom) selectFrom.value = currentFrom;
+        }
+
+        if (selectTo && locationsExternal) {
+            const currentTo = selectTo.value;
+            selectTo.innerHTML = '<option value="">-- اختر الجهة الخارجية --</option>';
+            locationsExternal.forEach(loc => {
+                const opt = document.createElement('option');
+                opt.value = loc.name;
+                opt.textContent = loc.name;
+                selectTo.appendChild(opt);
+            });
+            if (currentTo) selectTo.value = currentTo;
+        }
     }
 
     function openAddLocationModal(targetId) {
@@ -400,8 +422,10 @@
                 <td>${record.attachment_date || ''}</td>
                 <td>${record.transferred_from || ''}</td>
                 <td>${record.transferred_to || ''}</td>
-                <td>${record.decision_number || ''}</td>
-                <td>${record.decision_date || ''}</td>
+                <td>
+                    ${record.decision_number ? `(${record.decision_number})<br>` : ''}
+                    ${record.decision_date || ''}
+                </td>
                 <td>${record.execution_date || ''}</td>
                 <td>${record.notes || ''}</td>
                 <td class="no-print">
@@ -413,7 +437,7 @@
         });
         for (let i = currentRecords.length; i < 10; i++) {
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td>${i + 1}</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="no-print"></td>`;
+            tr.innerHTML = `<td>${i + 1}</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td class="no-print"></td>`;
             tbody.appendChild(tr);
         }
     }

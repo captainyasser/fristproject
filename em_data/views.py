@@ -1787,12 +1787,16 @@ def external_transfers_book(request):
 @login_required
 def insert_internal_transfer(request):
     check_protection()
-    return render(request, 'em_data/insert_internal_transfer.html')
+    from rest_framework.authtoken.models import Token
+    token, _ = Token.objects.get_or_create(user=request.user)
+    return render(request, 'em_data/insert_internal_transfer.html', {'token': token.key})
 
 @login_required
 def insert_external_transfer(request):
     check_protection()
-    return render(request, 'em_data/insert_external_transfer.html')
+    from rest_framework.authtoken.models import Token
+    token, _ = Token.objects.get_or_create(user=request.user)
+    return render(request, 'em_data/insert_external_transfer.html', {'token': token.key})
 
 class AllReportsAPIView(APIView):
     def get(self, request):

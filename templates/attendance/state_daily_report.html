@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}يومية حالة معينة{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
+<style>
+    .report-container { padding: 30px; }
+    .card { border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: none; margin-bottom: 20px; }
+    .card-header { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; border-radius: 15px 15px 0 0 !important; font-weight: bold; padding: 15px 20px; }
+    .btn-custom { border-radius: 10px; padding: 10px 20px; font-weight: 600; transition: all 0.3s; }
+    .btn-custom:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+    .table thead th { background-color: #f8f9fa !important; border-top: none; padding: 15px; color: #1e3c72 !important; }
+    .badge-date { background-color: #e9ecef; color: #495057; margin: 2px; padding: 5px 10px; border-radius: 5px; display: inline-block; font-size: 0.85rem; }
+    
+    .stats-label { color: #6c757d; font-size: 0.9rem; }
+    
+    .hidden { display: none !important; }
+    
+    /* DataTables Custom Styling */
+    .dataTables_wrapper .dataTables_filter { margin-bottom: 15px; }
+    .dt-buttons { margin-bottom: 15px; }
+    .dt-button { 
+        border-radius: 8px !important; 
+        padding: 5px 15px !important; 
+        font-weight: 600 !important;
+        background: #f8f9fa !important;
+        border: 1px solid #ddd !important;
+    }
+    
+    @media print {
+        .no-print { display: none !important; }
+        .card { box-shadow: none; border: 1px solid #ddd; }
+        .report-container { padding: 0; }
+        body { background: white; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="report-container" dir="rtl">
+    <div class="card no-print">
+        <div class="card-header">
+            <i class="fas fa-filter mr-2"></i> إعدادات التقرير
+        </div>
+        <div class="card-body filter-section">
+            <form method="GET" action="">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label>الحالة:</label>
+                        <select name="state" class="form-control">
+                            {% for s in states %}
+                            <option value="{{ s }}" {% if state_filter == s %}selected{% endif %}>{{ s }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label>تاريخ البدء:</label>
+                        <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label>نوع التقرير:</label>
+                        <select name="report_type" class="form-control" id="report_type">
+                            <option value="all" {% if report_type == 'all' %}selected{% endif %}>كل الأفراد (خلال الفترة)</option>
+                            <option value="individual" {% if report_type == 'individual' %}selected{% endif %}>فرد معين (كل السجل)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3 {% if report_type != 'individual' %}hidden{% endif %}" id="employee_select_div">
+                        <label>اختر الفرد:</label>
+                        <input list="employee_list" name="employee_id_search" class="form-control" placeholder="اكتب الاسم..." value="{% for emp in employees %}{% if emp.id|stringformat:'i' == employee_id %}{{ emp.name }}{% endif %}{% endfor %}">
+                        <datalist id="employee_list">
+                            {% for emp in employees %}
+                            <option value="{{ emp.name }}" data-id="{{ emp.id }}">
+                            {% endfor %}
+                        </datalist>
+                        <input type="hidden" name="employee_id" id="employee_id" value="{{ employee_id }}">
+                    </div>
+                </div>
+                <div class="text-center mt-3">
+                    <button type="submit" class="btn btn-primary btn-custom">
+                        <i class="fas fa-search mr-1"></i> عرض التقرير
+                    </button>
+                    <button type="button" class="btn btn-success btn-custom mr-2" onclick="window.print()">
+                        <i class="fas fa-print mr-1"></i> طباعة التقرير
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-file-alt mr-2"></i> تقرير حالة: {{ state_filter }}</span>
+            <div class="no-print">
+                <button class="btn btn-sm btn-info ml-1" id="btn-copy">
+                    <i class="fas fa-copy"></i> نسخ
+                </button>
+                <button class="btn btn-sm btn-success ml-1" id="btn-excel">
+                    <i class="fas fa-file-excel"></i> إكسل
+                </button>
+                <span>ابتداءً من: {{ start_date }}</span>
+            </div>
+        </div>
+        <div class="card-body p-4">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0 text-center" id="stateReportTable">
+                    <thead>
+                        <tr>
+                            <th width="50">م</th>
+                            <th>الرتبة / الدرجة</th>
+                            <th>الاسم</th>
+                            <th width="100">عدد الأيام</th>
+                            <th class="text-right">التواريخ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for res in results %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ res.employee.rank.name }}</td>
+                            <td class="font-weight-bold">{{ res.employee.name }}</td>
+                            <td><span class="badge badge-primary p-2" style="font-size: 1rem;">{{ res.count }}</span></td>
+                            <td class="text-right">
+                                {% for d in res.dates %}
+                                    <span class="badge-date">{{ d }}</span>
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="py-5 text-muted">
+                                <i class="fas fa-info-circle mb-2" style="font-size: 2rem; display: block;"></i>
+                                لا توجد سجلات مطابقة لمعايير البحث المطلوبة
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        var table = $('#stateReportTable').DataTable({
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/ar.json',
+            },
+            dom: 'Bfrtip',
+            buttons: [
+                {
+                    extend: 'copy',
+                    text: 'نسخ',
+                    className: 'd-none'
+                },
+                {
+                    extend: 'excel',
+                    text: 'إكسل',
+                    className: 'd-none',
+                    title: 'تقرير حالة ' + '{{ state_filter }}' + ' من ' + '{{ start_date }}'
+                }
+            ],
+            pageLength: 50,
+            order: [[0, 'asc']]
+        });
+
+        $('#btn-copy').on('click', function() { table.button('.buttons-copy').trigger(); });
+        $('#btn-excel').on('click', function() { table.button('.buttons-excel').trigger(); });
+
+        document.getElementById('report_type').addEventListener('change', function() {
+            var div = document.getElementById('employee_select_div');
+            if (this.value === 'individual') {
+                div.classList.remove('hidden');
+            } else {
+                div.classList.add('hidden');
+            }
+        });
+
+        // Handle datalist selection to get ID
+        document.querySelector('input[name="employee_id_search"]').addEventListener('input', function(e) {
+            var input = e.target;
+            var listId = input.getAttribute('list');
+            var options = document.getElementById(listId).options;
+            var hiddenInput = document.getElementById('employee_id');
+            
+            var foundFlag = false;
+            for (var i = 0; i < options.length; i++) {
+                if (options[i].value === input.value) {
+                    hiddenInput.value = options[i].getAttribute('data-id');
+                    foundFlag = true;
+                    break;
+                }
+            }
+            if(!foundFlag && input.value === "") {
+                hiddenInput.value = "";
+            }
+        });
+
+        // Ensure hidden input is set if user selected from list via mouse click/enter
+        document.querySelector('input[name="employee_id_search"]').addEventListener('change', function(e) {
+            var input = e.target;
+            var listId = input.getAttribute('list');
+            var options = document.getElementById(listId).options;
+            var hiddenInput = document.getElementById('employee_id');
+            
+            for (var i = 0; i < options.length; i++) {
+                if (options[i].value === input.value) {
+                    hiddenInput.value = options[i].getAttribute('data-id');
+                    break;
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

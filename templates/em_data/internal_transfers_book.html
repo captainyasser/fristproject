@@ -125,7 +125,7 @@
     <div class="card form-card">
         <div class="card-header text-center">
             <h2 class="mb-0">دفتر النقل الداخلي</h2>
-            <p class="mb-0 mt-1">لعام <span id="display-year">2026</span> - حسب تاريخ التنفيذ</p>
+            <p class="mb-0 mt-1">لعام <span id="display-year">2026</span></p>
         </div>
         <div class="card-body p-0">
             <div class="table-container">
@@ -138,8 +138,7 @@
                             <th>تاريخ إلحاق بالإدارة</th>
                             <th>الجهة المنقول منها</th>
                             <th>الجهة المنقول إليها</th>
-                            <th>رقم القرار</th>
-                            <th>تاريخ القرار</th>
+                            <th>رقم وتاريخ القرار</th>
                             <th>تاريخ التنفيذ</th>
                             <th>ملاحظات</th>
                             <th class="no-print">إجراءات</th>
@@ -332,6 +331,43 @@
         }
     }
 
+    function updateYear() {
+        const year = document.getElementById('yearSelect').value;
+        document.getElementById('display-year').innerText = year;
+        loadRecords();
+    }
+
+    function toggleEmpCheck(id) {
+        const chk = document.getElementById(`chk_${id}`);
+        chk.checked = !chk.checked;
+        updateSelectedDisplay();
+    }
+
+    $(document).on('change', '.emp-checkbox', function() {
+        updateSelectedDisplay();
+    });
+
+    function selectAllVisible() {
+        $('.emp-item:visible .emp-checkbox').prop('checked', true);
+        updateSelectedDisplay();
+    }
+
+    function deselectAll() {
+        $('.emp-checkbox').prop('checked', false);
+        updateSelectedDisplay();
+    }
+
+    function updateSelectedDisplay() {
+        const checked = $('.emp-checkbox:checked');
+        const display = document.getElementById('selected-emp-display');
+        if (checked.length > 0) {
+            display.style.display = 'block';
+            display.querySelector('strong').innerText = `${checked.length} فرد تم اختيارهم`;
+        } else {
+            display.style.display = 'none';
+        }
+    }
+
     function selectEmployee(emp) {
         // Fallback for single select if needed
         const chk = document.getElementById(`chk_${emp.id}`);
@@ -411,8 +447,10 @@
                 <td>${record.attachment_date || ''}</td>
                 <td>${record.transferred_from || ''}</td>
                 <td>${record.transferred_to || ''}</td>
-                <td>${record.decision_number || ''}</td>
-                <td>${record.decision_date || ''}</td>
+                <td>
+                    ${record.decision_number ? `(${record.decision_number})<br>` : ''}
+                    ${record.decision_date || ''}
+                </td>
                 <td>${record.execution_date || ''}</td>
                 <td>${record.notes || ''}</td>
                 <td class="no-print">

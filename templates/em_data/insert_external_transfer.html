@@ -46,6 +46,12 @@
     .selected-display {
         border-right: 4px solid #007bff;
     }
+
+    @media print {
+        .navbar, .main-header, .main-sidebar, .sidebar, .breadcrumb-wrap {
+            display: none !important;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -64,8 +70,7 @@
                 <div class="col-md-4 bg-light p-3 employee-list-sidebar">
                     <div class="d-flex align-items-center mb-2">
                         <label class="mb-0"><i class="fas fa-search mr-1"></i> اختر الأفراد:</label>
-                        <button class="btn btn-xs btn-outline-primary ml-auto" onclick="selectAllVisible()">تحديد الكل</button>
-                        <button class="btn btn-xs btn-outline-secondary ml-1" onclick="deselectAll()">إلغاء</button>
+                        <button class="btn btn-xs btn-outline-secondary ml-auto" onclick="deselectAll()">إلغاء</button>
                     </div>
                     <input type="text" id="sidebar-search" class="form-control mb-3" placeholder="ابحث بالاسم أو الرقم...">
                     <div id="sidebar-emp-list">
@@ -93,17 +98,17 @@
 
                         <div class="row">
                             <div class="col-md-6 form-group">
-                                <label>الجهة المنقول منها</label>
+                                <label>الجهة المنقول منها (مكان داخلي)</label>
                                 <div class="input-group">
                                     <select class="form-control" id="transferred_from"></select>
                                     <div class="input-group-append">
-                                        <a href="{% url 'transfer_locations_external' %}" target="_blank" class="btn btn-outline-primary"><i class="fas fa-plus"></i></a>
+                                        <a href="{% url 'transfer_locations_internal' %}" target="_blank" class="btn btn-outline-primary"><i class="fas fa-plus"></i></a>
                                         <button type="button" class="btn btn-outline-secondary" onclick="loadLocations()"><i class="fas fa-sync-alt"></i></button>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-6 form-group">
-                                <label>الجهة المنقول إليها</label>
+                                <label>الجهة المنقول إليها (مكان خارجي)</label>
                                 <div class="input-group">
                                     <select class="form-control" id="transferred_to"></select>
                                     <div class="input-group-append">
@@ -145,6 +150,7 @@
 
 <script>
     const csrfToken = '{{ csrf_token }}';
+    const authToken = '{{ token }}';
     let allEmployees = [];
     let locations = [];
 
@@ -218,26 +224,42 @@
     }
 
     function loadLocations() {
+        // Load internal locations for 'transferred_from'
+        fetch("{% url 'transfer_locations_api' %}?location_type=internal")
+            .then(res => res.json())
+            .then(data => {
+                const selectFrom = document.getElementById('transferred_from');
+                const currentFrom = selectFrom.value;
+                selectFrom.innerHTML = '<option value="">-- اختر الجهة الداخلية --</option>';
+                data.forEach(l => {
+                    const opt = document.createElement('option');
+                    opt.value = l.name;
+                    opt.textContent = l.name;
+                    selectFrom.appendChild(opt);
+                });
+                selectFrom.value = currentFrom;
+            });
+
+        // Load external locations for 'transferred_to'
         fetch("{% url 'transfer_locations_api' %}?location_type=external")
             .then(res => res.json())
             .then(data => {
-                locations = data;
-                ['transferred_from', 'transferred_to'].forEach(id => {
-                    const select = document.getElementById(id);
-                    const current = select.value;
-                    select.innerHTML = '<option value="">-- اختر الجهة --</option>';
-                    locations.forEach(l => {
-                        const opt = document.createElement('option');
-                        opt.value = l.name;
-                        opt.textContent = l.name;
-                        select.appendChild(opt);
-                    });
-                    select.value = current;
+                const selectTo = document.getElementById('transferred_to');
+                const currentTo = selectTo.value;
+                selectTo.innerHTML = '<option value="">-- اختر الجهة الخارجية --</option>';
+                data.forEach(l => {
+                    const opt = document.createElement('option');
+                    opt.value = l.name;
+                    opt.textContent = l.name;
+                    selectTo.appendChild(opt);
                 });
+                selectTo.value = currentTo;
             });
     }
 
-    function saveBulk() {
+    let pendingData = null;
+
+    function saveBulk(forceOverride = false) {
         const checked = $('.emp-checkbox:checked');
         if (checked.length === 0) return alert('يرجى اختيار فرد واحد على الأقل');
 
@@ -248,7 +270,7 @@
             employees.push({
                 name: emp.name,
                 police_number: emp.police_number,
-                attachment_date: emp.date_of_edara // Taking from employee table
+                attachment_date: emp.date_of_edara
             });
         });
 
@@ -264,6 +286,46 @@
             employees: employees
         };
 
+        if (!forceOverride) {
+            const year = data.year;
+            const headers = authToken ? { 'Authorization': `Token ${authToken}` } : {};
+            fetch(`{% url 'transfer_records_api' %}?transfer_type=external&year=${year}`, { headers })
+                .then(res => {
+                    if (!res.ok) throw new Error('API error: ' + res.status);
+                    return res.json();
+                })
+                .then(existingRecords => {
+                    if (!Array.isArray(existingRecords)) {
+                        doSave(data);
+                        return;
+                    }
+                    const duplicates = employees.filter(emp =>
+                        existingRecords.some(r =>
+                            (emp.police_number && r.police_number === emp.police_number) ||
+                            r.name === emp.name
+                        )
+                    );
+                    if (duplicates.length > 0) {
+                        const names = duplicates.map(e => e.name).join('، ');
+                        document.getElementById('dup-names').textContent = names;
+                        pendingData = data;
+                        $('#dupWarningModal').modal('show');
+                    } else {
+                        doSave(data);
+                    }
+                })
+                .catch(err => {
+                    console.error('Duplicate check failed:', err);
+                    if (confirm('تعذّر التحقق من التكرار. هل تريد المتابعة وحفظ البيانات؟')) {
+                        doSave(data);
+                    }
+                });
+        } else {
+            doSave(pendingData || data);
+        }
+    }
+
+    function doSave(data) {
         fetch("{% url 'transfer_records_api' %}", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
@@ -273,10 +335,32 @@
         .then(resData => {
             if (resData.error) alert('خطأ: ' + resData.error);
             else {
+                $('#dupWarningModal').modal('hide');
                 alert('تمت الإضافة بنجاح');
                 window.location.href = "{% url 'external_transfers_book' %}";
             }
         });
     }
 </script>
+
+<!-- Duplicate Warning Modal -->
+<div class="modal fade" id="dupWarningModal" tabindex="-1" role="dialog" aria-labelledby="dupWarningModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content border-warning">
+      <div class="modal-header bg-warning">
+        <h5 class="modal-title" id="dupWarningModalLabel"><i class="fas fa-exclamation-triangle mr-2"></i> تحذير: تكرار بيانات</h5>
+        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <p>الأفراد التالية مدرجون مسبقاً في هذا دفتر لنفس العام:</p>
+        <p class="font-weight-bold text-danger" id="dup-names"></p>
+        <p>هل تريد التأكيد وحفظ البيانات برغم ذلك؟</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal"><i class="fas fa-times mr-1"></i> إلغاء</button>
+        <button type="button" class="btn btn-danger" onclick="saveBulk(true)"><i class="fas fa-save mr-1"></i> تأكيد الحفظ</button>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

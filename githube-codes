@@ -1,8 +1,12 @@
+السحب اولا
+
+git pull
+
 git status
 
 git add .
 
-git commit -m "update 11 fix filter"
+git commit -m "update 12 from home"
 
 git push
 

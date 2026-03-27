@@ -311,6 +311,46 @@
                 <i class="fas fa-external-link-alt open-icon"></i>
             </a>
         </div>
+        <!-- يومية الحالة -->
+        <div class="col-4 col-md-2">
+            <a href="{% url 'state_daily_report' %}" class="diary-card card-teal">
+                <i class="fas fa-calendar-check card-icon"></i>
+                <div class="card-content">
+                    <p class="card-title">يومية حالة معينة</p>
+                </div>
+                <i class="fas fa-external-link-alt open-icon"></i>
+            </a>
+        </div>
+        <!-- يومية تعيينات جافة -->
+        <div class="col-4 col-md-2">
+            <a href="{% url 'dry_food_report' %}" class="diary-card card-dark">
+                <i class="fas fa-box-open card-icon"></i>
+                <div class="card-content">
+                    <p class="card-title">يومية تعيينات جافة</p>
+                </div>
+                <i class="fas fa-external-link-alt open-icon"></i>
+            </a>
+        </div>
+        <!-- يومية عددية للدرجات -->
+        <div class="col-4 col-md-2">
+            <a href="{% url 'ranks_numerical_report' %}" class="diary-card card-indigo">
+                <i class="fas fa-list-ol card-icon"></i>
+                <div class="card-content">
+                    <p class="card-title">يومية عددية للدرجات</p>
+                </div>
+                <i class="fas fa-external-link-alt open-icon"></i>
+            </a>
+        </div>
+        <!-- يومية خوارج حديثة -->
+        <div class="col-4 col-md-2">
+            <a href="{% url 'modern_outs_diary_page' %}" class="diary-card card-blue">
+                <i class="fas fa-user-clock card-icon"></i>
+                <div class="card-content">
+                    <p class="card-title">يومية خوارج حديثة</p>
+                </div>
+                <i class="fas fa-external-link-alt open-icon"></i>
+            </a>
+        </div>
     </div>
 </div>
 {% endblock %}

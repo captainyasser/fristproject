@@ -4512,6 +4512,187 @@ def names_index_view(request):
     return render(request, 'attendance/names_index.html', context)
 
 
+@login_required
+def state_daily_report_view(request):
+    check_protection()
+    
+    state_filter = request.GET.get('state', 'غياب')
+    start_date_str = request.GET.get('start_date')
+    employee_id = request.GET.get('employee_id')
+    report_type = request.GET.get('report_type', 'all') # 'all' or 'individual'
+    
+    today = datetime.today().date()
+    
+    if start_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            start_date = today.replace(day=1)
+    else:
+        # Default to 1st of current month
+        start_date = today.replace(day=1)
+
+    results = []
+    
+    if report_type == 'individual' and employee_id:
+        # One employee, all records of this state from start_date
+        records = Attendance.objects.filter(
+            employee_id=employee_id,
+            state=state_filter,
+            date__gte=start_date
+        ).select_related('employee', 'employee__rank').order_by('-date')
+        
+        if records.exists():
+            employee = records[0].employee
+            dates = [r.date.strftime('%Y-%m-%d') for r in records]
+            results.append({
+                'employee': employee,
+                'count': records.count(),
+                'dates': dates
+            })
+    else:
+        # All employees, records of this state from start_date
+        attendances = Attendance.objects.filter(
+            state=state_filter,
+            date__gte=start_date
+        ).select_related('employee', 'employee__rank').order_by('employee__rank__id', 'employee__sort_number', '-date')
+        
+        # Group by employee while maintaining order
+        from collections import OrderedDict
+        grouped = OrderedDict()
+        for att in attendances:
+            if att.employee not in grouped:
+                grouped[att.employee] = []
+            grouped[att.employee].append(att.date.strftime('%Y-%m-%d'))
+            
+        for employee, dates in grouped.items():
+            results.append({
+                'employee': employee,
+                'count': len(dates),
+                'dates': dates
+            })
+
+    context = {
+        'results': results,
+        'state_filter': state_filter,
+        'start_date': start_date.strftime('%Y-%m-%d'),
+        'employee_id': employee_id,
+        'report_type': report_type,
+        'states': [s[0] for s in Attendance._meta.get_field('state').choices if s[0] != '_'],
+        'employees': Employee.objects.filter(mainornot=1).order_by('name')
+    }
+    
+    return render(request, 'attendance/state_daily_report.html', context)
+
+
+@login_required
+def dry_food_report_view(request):
+    check_protection()
+    
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+    
+    today = datetime.today().date()
+    
+    if start_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            start_date = today.replace(day=1)
+    else:
+        start_date = today.replace(day=1)
+        
+    if end_date_str:
+        try:
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            end_date = today
+    else:
+        end_date = today
+
+    # Filter employees who have dryfood=True
+    employees = Employee.objects.filter(dryfood=True, mainornot=1).select_related('rank').order_by('rank__id', 'sort_number')
+    
+    # Get attendance records where food=True in the range for these employees
+    attendances = Attendance.objects.filter(
+        employee__in=employees,
+        date__range=[start_date, end_date],
+        food=True
+    ).values('employee_id', 'date')
+    
+    # Map counts and dates
+    stats = {}
+    for att in attendances:
+        emp_id = att['employee_id']
+        if emp_id not in stats:
+            stats[emp_id] = []
+        stats[emp_id].append(att['date'].strftime('%Y-%m-%d'))
+        
+    results = []
+    for emp in employees:
+        dates = stats.get(emp.id, [])
+        results.append({
+            'employee': emp,
+            'count': len(dates),
+            'dates': ", ".join(dates)
+        })
+
+    context = {
+        'results': results,
+        'start_date': start_date.strftime('%Y-%m-%d'),
+        'end_date': end_date.strftime('%Y-%m-%d'),
+        'total_employees': employees.count(),
+        'total_meals': len(attendances)
+    }
+    
+    return render(request, 'attendance/dry_food_report.html', context)
+
+
+@login_required
+def ranks_numerical_report_view(request):
+    check_protection()
+    from ranks.models import Rank
+    from django.db.models import Case, When, Value, IntegerField, Count
+    
+    # Get all active ranks sorted by type priority and then by order descending
+    all_ranks = Rank.objects.filter(is_active=True).annotate(
+        type_priority=Case(
+            When(rank_type='police_officer', then=Value(1)),
+            When(rank_type='primary', then=Value(2)),
+            When(rank_type='security_assistant', then=Value(3)),
+            default=Value(4),
+            output_field=IntegerField(),
+        )
+    ).order_by('type_priority', '-order')
+    
+    # Count employees per rank
+    rank_stats = Employee.objects.filter(mainornot=1).values('rank_id').annotate(count=Count('id'))
+    
+    # Map counts to rank objects
+    counts_map = {item['rank_id']: item['count'] for item in rank_stats}
+    
+    results = []
+    total_count = 0
+    for rank in all_ranks:
+        count = counts_map.get(rank.id, 0)
+        results.append({
+            'rank': rank,
+            'count': count
+        })
+        total_count += count
+
+    context = {
+        'results': results,
+        'total_count': total_count,
+        'report_date': datetime.now().strftime('%d/%m/%Y')
+    }
+    
+    return render(request, 'attendance/ranks_numerical_report.html', context)
+
+
+
+
+
 
 
 

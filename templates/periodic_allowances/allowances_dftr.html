@@ -15,90 +15,187 @@
             text-align: right;
             background-color: #f8f9fa;
         }
-        h1 {
-            color: #0d6efd;
-            text-align: center;
+        .header-section {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
             margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
+        h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .controls-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .custom-btn {
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-hide-rank { background-color: #6c757d; color: white; }
+        .btn-hide-rank.hidden { background-color: #0d6efd; }
+        .btn-copy { background-color: #17a2b8; color: white; }
+        .btn-excel { background-color: #28a745; color: white; }
+        
+        .custom-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
         table.dataTable thead th {
-            background-color: #e9ecef;
+            background-color: #343a40 !important;
+            color: white !important;
+            border: 1px solid #454d55 !important;
+            text-align: center;
         }
         .container-fluid {
-            padding: 20px;
+            padding: 30px;
         }
-        .year-header {
-            text-align: center;
-            font-weight: bold;
-        }
-        .value-header {
-            text-align: center;
-            font-weight: bold;
-        }
-        .rank-header {
-            text-align: center;
-            font-weight: bold;
-        }
+        .year-header { text-align: center; font-weight: bold; }
+        .value-header { text-align: center; font-weight: bold; }
+        .rank-header { text-align: center; font-weight: bold; }
+        
+        /* Hide DataTables default buttons as we use custom ones */
+        .dt-buttons { display: none; }
     </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid">
-    <h1>دفتر العلاوات الدورية</h1>
+    <div class="header-section text-center">
+        <h1><i class="fas fa-book-open mr-2"></i> دفتر العلاوات الدورية</h1>
+    </div>
 
-    <table id="allowances_table" class="display nowrap" style="width:100%">
-        <thead>
-            <tr>
-                <th>م</th>
-                <th>الدرجة</th>
-                <th>رقم الشرطة</th>
-                <th>الاسم</th>
-                <th>تاريخ الميلاد</th>
-                <th>تاريخ التعيين</th>
-                {% for _ in pair_indices %}
-                    <th class="rank-header">الدرجة</th>
-                    <th class="year-header">العام</th>
-                    <th class="value-header">قيمة العلاوة</th>
-                {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in data_list %}
-            <tr>
-                <td>{{ item.serial }}</td>
-                <td>{{ item.rank_name }}</td>
-                <td>{{ item.police_number }}</td>
-                <td>{{ item.name }}</td>
-                <td>{{ item.dob }}</td>
-                <td>{{ item.appointment }}</td>
-                {% for pair in item.year_value_pairs %}
-                    <td>{{ pair.0 }}</td>
-                    <td>{{ pair.1 }}</td>
-                    <td>{{ pair.2 }}</td>
-                {% endfor %}
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="controls-card">
+        <button id="btn_toggle_rank" class="custom-btn btn-hide-rank">
+            <i class="fas fa-eye-slash"></i> إخفاء أعمدة الدرجة
+        </button>
+        <button id="btn_copy" class="custom-btn btn-copy">
+            <i class="fas fa-copy"></i> نسخ الجدول
+        </button>
+        <button id="btn_excel" class="custom-btn btn-excel">
+            <i class="fas fa-file-excel"></i> تصدير إكسل
+        </button>
+    </div>
+
+    <div class="card shadow-sm border-0 rounded-15 overflow-hidden">
+        <div class="card-body p-0">
+            <table id="allowances_table" class="table table-hover table-bordered display nowrap mb-0" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>م</th>
+                        <th class="rank-col">الدرجة</th>
+                        <th>رقم الشرطة</th>
+                        <th>الاسم</th>
+                        <th>تاريخ الميلاد</th>
+                        <th>تاريخ التعيين</th>
+                        {% for _ in pair_indices %}
+                            <th class="rank-header rank-col">الدرجة</th>
+                            <th class="year-header">العام</th>
+                            <th class="value-header">قيمة العلاوة</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in data_list %}
+                    <tr>
+                        <td>{{ item.serial }}</td>
+                        <td class="rank-col">{{ item.rank_name }}</td>
+                        <td>{{ item.police_number }}</td>
+                        <td>{{ item.name }}</td>
+                        <td>{{ item.dob }}</td>
+                        <td>{{ item.appointment }}</td>
+                        {% for pair in item.year_value_pairs %}
+                            <td class="rank-col">{{ pair.0 }}</td>
+                            <td>{{ pair.1 }}</td>
+                            <td>{{ pair.2 }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
 
 <script>
     $(document).ready(function() {
         var table = $('#allowances_table').DataTable({
-            responsive: true,
+            responsive: false, // Set to false to maintain full table structure for export
+            scrollX: true,
             dom: 'Bfrtip',
-            buttons: ['copy', 'excel', 'print'],
+            buttons: [
+                {
+                    extend: 'copyHtml5',
+                    exportOptions: {
+                        columns: ':visible'
+                    }
+                },
+                {
+                    extend: 'excelHtml5',
+                    title: 'دفتر العلاوات الدورية',
+                    exportOptions: {
+                        columns: ':visible'
+                    }
+                }
+            ],
             lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "الكل"]],
             pageLength: 25,
             language: {
                 url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/ar.json"
             },
-            order: [[0, 'asc']]  // ترتيب افتراضي حسب المسلسل
+            order: [[0, 'asc']]
+        });
+
+        // Toggle Rank Columns
+        var rankHidden = false;
+        $('#btn_toggle_rank').on('click', function() {
+            rankHidden = !rankHidden;
+            
+            // Initial rank is at index 1
+            // Others are at 6, 9, 12... which have class .rank-col
+            // We can use the class to toggle visibility
+            
+            table.columns('.rank-col').visible(!rankHidden);
+            
+            if (rankHidden) {
+                $(this).html('<i class="fas fa-eye"></i> إظهار أعمدة الدرجة').addClass('hidden');
+            } else {
+                $(this).html('<i class="fas fa-eye-slash"></i> إخفاء أعمدة الدرجة').removeClass('hidden');
+            }
+        });
+
+        // Trigger default DataTables buttons via custom buttons
+        $('#btn_copy').on('click', function() {
+            table.button('.buttons-copy').trigger();
+        });
+
+        $('#btn_excel').on('click', function() {
+            table.button('.buttons-excel').trigger();
         });
     });
 </script>

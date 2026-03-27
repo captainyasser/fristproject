@@ -326,34 +326,47 @@
             { key: 'raha', label: 'راحة' },
             { key: 'ghiyab', label: 'غياب' }
         ];
-        const excludedFromKhawarij = ['nobtji', 'yawmi'];
-        const groups = ['m_e', 'm_m', 'f_e', 'f_m'];
-        const groupLabels = {'m_e':'ذكور (إداري)','m_m':'ذكور (موسيقي)','f_e':'إناث (إداري)','f_m':'إناث (موسيقي)'};
+        
+        const combinedGroups = [
+            { id: 'm', label: 'ذكور (إداري + موسيقي)', subGroups: ['m_e', 'm_m'] },
+            { id: 'f', label: 'إناث (إدارية + موسيقيات)', subGroups: ['f_e', 'f_m'] }
+        ];
 
-        let summaryHtml = '<table class="summary-table"><tr><th style="width:140px">الفرد / الحالة</th><th>الإجمالي</th>';
+        let summaryHtml = '<table class="summary-table"><tr><th style="width:180px">الفئة</th><th>الإجمالي</th>';
         summaryCategories.forEach(cat => summaryHtml += `<th>${cat.label}</th>`);
         summaryHtml += '<th>الخوارج</th><th>الموجود</th></tr>';
 
         let columnTotals = new Array(summaryCategories.length).fill(0);
         let grandTotal=0, grandKhawarij=0, grandPresent=0;
 
-        groups.forEach(g => {
-            let gTotal=0, gKhawarij=0, gPresent=0;
-            summaryHtml += `<tr><td class="text-start ps-2 fw-bold">${groupLabels[g]}</td>`;
-            const presCount = (reportData.report_data[g]['nobtji']?.length || 0) + (reportData.report_data[g]['yawmi']?.length || 0);
-            let rowVals = [];
-            summaryCategories.forEach((cat, i) => {
-                const count = reportData.report_data[g][cat.key]?.length || 0;
-                rowVals.push(count); gTotal += count; columnTotals[i] += count;
-                if(!excludedFromKhawarij.includes(cat.key)) gKhawarij += count;
+        combinedGroups.forEach(cg => {
+            let rowTotal=0, rowKhawarij=0, rowPresent=0;
+            let rowVals = new Array(summaryCategories.length).fill(0);
+
+            cg.subGroups.forEach(g => {
+                const presCount = (reportData.report_data[g]['nobtji']?.length || 0) + (reportData.report_data[g]['yawmi']?.length || 0);
+                rowPresent += presCount;
+                
+                summaryCategories.forEach((cat, i) => {
+                    const count = reportData.report_data[g][cat.key]?.length || 0;
+                    rowVals[i] += count;
+                    rowTotal += count;
+                    columnTotals[i] += count;
+                    rowKhawarij += count; 
+                });
             });
-            gTotal += presCount; gPresent = presCount;
-            summaryHtml += `<td class="number-cell text-primary">${gTotal > 0 ? toEasternArabicNumerals(gTotal) : ''}</td>`;
+
+            rowTotal += rowPresent;
+            
+            summaryHtml += `<tr><td class="text-start ps-2 fw-bold">${cg.label}</td>`;
+            summaryHtml += `<td class="number-cell text-primary">${rowTotal > 0 ? toEasternArabicNumerals(rowTotal) : ''}</td>`;
             rowVals.forEach(v => summaryHtml += `<td class="number-cell">${v>0?toEasternArabicNumerals(v):''}</td>`);
-            summaryHtml += `<td class="number-cell text-danger">${gKhawarij>0?toEasternArabicNumerals(gKhawarij):''}</td>`;
-            summaryHtml += `<td class="number-cell text-success">${gPresent>0?toEasternArabicNumerals(gPresent):''}</td></tr>`;
-            grandTotal+=gTotal; grandKhawarij+=gKhawarij; grandPresent+=gPresent;
+            summaryHtml += `<td class="number-cell text-danger">${rowKhawarij>0?toEasternArabicNumerals(rowKhawarij):''}</td>`;
+            summaryHtml += `<td class="number-cell text-success">${rowPresent>0?toEasternArabicNumerals(rowPresent):''}</td></tr>`;
+            
+            grandTotal+=rowTotal; grandKhawarij+=rowKhawarij; grandPresent+=rowPresent;
         });
+        
         summaryHtml += `<tr class="bg-light fw-bold"><td>الإجمالي العام</td><td>${toEasternArabicNumerals(grandTotal)}</td>`;
         columnTotals.forEach(t => summaryHtml += `<td>${t>0?toEasternArabicNumerals(t):''}</td>`);
         summaryHtml += `<td>${toEasternArabicNumerals(grandKhawarij)}</td><td>${toEasternArabicNumerals(grandPresent)}</td></tr></table>`;

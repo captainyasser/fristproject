@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}يومية تعيينات جافة{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
+<style>
+    .report-container { padding: 30px; }
+    .card { border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: none; margin-bottom: 20px; }
+    .card-header { background: linear-gradient(135deg, #2c3e50 0%, #000000 100%); color: white; border-radius: 15px 15px 0 0 !important; font-weight: bold; padding: 15px 20px; }
+    .btn-custom { border-radius: 10px; padding: 10px 20px; font-weight: 600; transition: all 0.3s; }
+    .table thead th { background-color: #f8f9fa !important; border-top: none; padding: 15px; color: #2c3e50 !important; }
+    .stats-card { background: #f8f9fa; border-right: 5px solid #2c3e50; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
+    .stats-value { font-size: 1.5rem; font-weight: bold; color: #2c3e50; }
+    .stats-label { color: #6c757d; font-size: 0.9rem; }
+    
+    /* DataTables Custom Styling */
+    .dataTables_wrapper .dataTables_filter { margin-bottom: 15px; }
+    .dt-buttons { margin-bottom: 15px; }
+    .dt-button { 
+        border-radius: 8px !important; 
+        padding: 8px 16px !important; 
+        font-weight: 600 !important;
+        background: #f8f9fa !important;
+        border: 1px solid #ddd !important;
+        transition: all 0.3s !important;
+    }
+    .dt-button:hover { background: #e9ecef !important; }
+    
+    @media print {
+        .no-print { display: none !important; }
+        .card { box-shadow: none; border: 1px solid #ddd; }
+        .report-container { padding: 0; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="report-container" dir="rtl">
+    <div class="card no-print">
+        <div class="card-header">
+            <i class="fas fa-filter mr-2"></i> إعدادات تقرير التعيينات الجافة
+        </div>
+        <div class="card-body">
+            <form method="GET" action="">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label>من تاريخ:</label>
+                        <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label>إلى تاريخ:</label>
+                        <input type="date" name="end_date" class="form-control" value="{{ end_date }}">
+                    </div>
+                    <div class="col-md-4 mb-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-dark btn-custom w-100">
+                            <i class="fas fa-sync-alt mr-1"></i> تحديث البيانات
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row no-print">
+        <div class="col-md-6">
+            <div class="stats-card">
+                <div class="stats-label">إجمالي الأفراد المستحقين</div>
+                <div class="stats-value">{{ total_employees }} فرد</div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="stats-card">
+                <div class="stats-label">إجمالي الوجبات المستحقة</div>
+                <div class="stats-value">{{ total_meals }} وجبة</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="fas fa-box-open mr-2"></i> بيان استحقاق التعيين الجاف</span>
+            <div class="no-print">
+                <button class="btn btn-sm btn-info ml-1" id="btn-copy">
+                    <i class="fas fa-copy"></i> نسخ الجدول
+                </button>
+                <button class="btn btn-sm btn-success ml-1" id="btn-excel">
+                    <i class="fas fa-file-excel"></i> تصدير إكسل
+                </button>
+                <button class="btn btn-sm btn-light" onclick="window.print()">
+                    <i class="fas fa-print"></i> طباعة التقرير
+                </button>
+            </div>
+        </div>
+        <div class="card-body p-4">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0 text-center" id="dryFoodTable">
+                    <thead>
+                        <tr>
+                            <th width="50">م</th>
+                            <th>الرتبة / الدرجة</th>
+                            <th>الاسم</th>
+                            <th width="150">عدد الوجبات</th>
+                            <th>ملاحظات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for res in results %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ res.employee.rank.name }}</td>
+                            <td class="font-weight-bold text-right">{{ res.employee.name }}</td>
+                            <td>
+                                <span class="badge badge-dark p-2" style="font-size: 1.1rem;">
+                                    {{ res.count }}
+                                </span>
+                            </td>
+                            <td class="text-muted small text-right">
+                                {% if res.dates %}
+                                {{ res.dates }}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="py-5 text-muted">لا يوجد بيانات لهذه الفترة</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    var table = $('#dryFoodTable').DataTable({
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/ar.json',
+        },
+        dom: 'Bfrtip',
+        buttons: [
+            {
+                extend: 'copy',
+                text: 'نسخ',
+                className: 'd-none' // مخفي لأننا نستخدم أزرار مخصصة
+            },
+            {
+                extend: 'excel',
+                text: 'إكسل',
+                className: 'd-none',
+                title: 'تقرير التعيينات الجافة - ' + '{{ start_date }}' + ' إلى ' + '{{ end_date }}'
+            }
+        ],
+        pageLength: 50,
+        order: [[0, 'asc']]
+    });
+
+    // ربط الأزرار المخصصة بـ DataTables
+    $('#btn-copy').on('click', function() {
+        table.button('.buttons-copy').trigger();
+    });
+
+    $('#btn-excel').on('click', function() {
+        table.button('.buttons-excel').trigger();
+    });
+});
+</script>
+{% endblock %}
+
